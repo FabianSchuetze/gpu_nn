@@ -5,6 +5,6 @@
 #include "storage.h"
 
 typedef std::shared_ptr<Storage> SharedStorage;
-void multonGPU(cublasHandle_t handle, SharedStorage& A, SharedStorage& B,
-               SharedStorage& C);
+void multonGPU(cublasHandle_t, const SharedStorage&, const SharedStorage&,
+               SharedStorage&, double, double);
 #endif
