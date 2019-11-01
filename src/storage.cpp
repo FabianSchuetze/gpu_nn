@@ -1,7 +1,7 @@
 #include "../include/storage.h"
 #include <cuda_runtime.h>
-#include "../include/common.h"
 #include <iostream>
+#include "../include/common.h"
 
 Storage::Storage(const Eigen::MatrixXd& data)
     : _data(data),
@@ -12,7 +12,7 @@ Storage::Storage(const Eigen::MatrixXd& data)
 };
 
 Storage::~Storage() {
-    //delete _cpu_pointer; // I don't know how to delete this pointer properly
+    // delete _cpu_pointer; // I don't know how to delete this pointer properly
     cudaFree(_gpu_pointer);
 }
 
@@ -25,7 +25,7 @@ void Storage::initialize_gpu_memory() {
 
 void Storage::sync_to_cpu() {
     if (recent_head == "GPU") {
-        std::cout << "copying to CPU\n"; 
+        std::cout << "copying to CPU\n";
         unsigned int nBytes = _data.rows() * _data.cols() * sizeof(double);
         CHECK(cudaMemcpy(_cpu_pointer, _gpu_pointer, nBytes,
                          cudaMemcpyDeviceToHost));
@@ -35,6 +35,7 @@ void Storage::sync_to_cpu() {
 
 void Storage::sync_to_gpu() {
     if (recent_head == "CPU") {
+        std::cout << "syncing to GPU\n";
         unsigned int nBytes = _data.rows() * _data.cols() * sizeof(double);
         CHECK(cudaMemcpy(_gpu_pointer, _data.data(), nBytes,
                          cudaMemcpyHostToDevice));
@@ -51,7 +52,7 @@ const double* Storage::gpu_pointer_const() {
     sync_to_gpu();
     const double* cp = const_cast<const double*>(_gpu_pointer);
     return cp;
-    //return (const double*)_cpu_pointer;
+    // return (const double*)_cpu_pointer;
 }
 
 double* Storage::cpu_pointer() {
