@@ -37,7 +37,6 @@ void Dense::forward_gpu(const SharedStorage& in, SharedStorage& out) {
     print_Matrix_to_stdout(parameters[0]->return_data_const(),
                            "../debug/weight.txt");
     print_Matrix_to_stdout(out->return_data_const(), "../debug/out.txt");
-    //std::cout << "vistied function\n";
     multonGPU(_handle, parameters[0], in, out, 1, 1);
 }
 
