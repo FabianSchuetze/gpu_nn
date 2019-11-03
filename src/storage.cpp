@@ -3,6 +3,8 @@
 #include <iostream>
 #include "../include/common.h"
 
+Storage::Storage() : _data(), _cpu_pointer(NULL), _gpu_pointer(NULL){};
+
 Storage::Storage(const Eigen::MatrixXd& data)
     : _data(data),
       _cpu_pointer(_data.data()),

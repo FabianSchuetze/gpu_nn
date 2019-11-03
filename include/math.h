@@ -1,3 +1,4 @@
+//#pragma once
 #ifndef math_h
 #define math_h
 #include <memory>
