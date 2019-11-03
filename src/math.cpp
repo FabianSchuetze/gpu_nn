@@ -26,3 +26,12 @@ void my_Dgemv(cublasHandle_t handle, cublasOperation_t transA,
     double* d_C = C->gpu_pointer();
     my_cuda_Dgemv(handle, transA, M, N, &alpha, d_A, d_B, &beta, d_C);
 }
+
+void my_add_vec_to_mat_colwise(SharedStorage&A, const SharedStorage& B) {
+    int rows = A->get_rows();
+    int cols = A->get_cols();
+    double* d_A = A->gpu_pointer();
+    const double* d_B = B->gpu_pointer_const();
+    add_vec_to_mat_colwise(rows, cols, d_A, d_B);
+
+}

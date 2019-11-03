@@ -22,7 +22,7 @@ CUDA_ADD_LIBRARY(cuda_obj STATIC src/cuda_math.cu) # works for me now
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -L /usr/lib/cuda/lib64 -lcudart -lcublas")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC  -lcublas -O3 -Wall -std=c++17")
 add_executable(main src/layer/dense.cpp src/math.cpp src/storage.cpp
-    test/forward.cpp) # only used one c++ class for this test
+    test/backward.cpp) # only used one c++ class for this test
 
 target_link_libraries(main ${CUDA_LIBRARIES})
 target_link_libraries(main cuda_obj) # changed ${cuda_obj} to cuda_obj

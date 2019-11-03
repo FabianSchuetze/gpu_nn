@@ -16,6 +16,7 @@ class Layer {
     virtual void backward_cpu(int, const std::vector<std::shared_ptr<Storage>>&,
                               std::vector<std::shared_ptr<Storage>>&) = 0;
     virtual std::vector<std::shared_ptr<Storage>> return_parameters() = 0;
+    virtual std::vector<std::shared_ptr<Storage>> return_gradients() = 0;
 
    private:
     std::vector<std::shared_ptr<Storage>> parameters;

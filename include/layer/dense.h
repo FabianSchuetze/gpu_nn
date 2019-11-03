@@ -21,6 +21,9 @@ class Dense : public Layer {
     std::vector<std::shared_ptr<Storage>> return_parameters() override {
         return parameters;
     };
+    std::vector<std::shared_ptr<Storage>> return_gradients() override {
+        return gradients;
+    }
 
    private:
     void initialize_weight(int, int);
