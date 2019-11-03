@@ -6,6 +6,9 @@
 #include "storage.h"
 
 typedef std::shared_ptr<Storage> SharedStorage;
-void multonGPU(cublasHandle_t, const SharedStorage&, const SharedStorage&,
-               SharedStorage&, double, double);
+void my_Dgemm(cublasHandle_t, cublasOperation_t, cublasOperation_t,
+              const SharedStorage&, const SharedStorage&, SharedStorage&,
+              double, double);
+void my_Dgemv(cublasHandle_t, cublasOperation_t, const SharedStorage&,
+              const SharedStorage&, SharedStorage&, double, double);
 #endif
