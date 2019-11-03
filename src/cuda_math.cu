@@ -3,13 +3,13 @@
 
 void my_cuda_Dgemm(cublasHandle_t handle, cublasOperation_t transA,
                    cublasOperation_t transB, int M, int N, int K, double* alpha,
-                   const double*& d_A, const double*& d_B, double* beta,
-                   double*& d_C) {
+                   const double*& d_A, int LDA, const double*& d_B, int LDB,
+                   double* beta, double*& d_C, int LDC) {
     // M defines the number of rows in Matrix A and C
     // N Defines the number of columns of the Matrix B and C
     // K defiens the number of columns of the Matrhx A and rows of Matix B
-    cublasDgemm(handle, transA, transB, M, N, K, alpha, d_A, M, d_B, K, beta,
-                d_C, M);
+    cublasDgemm(handle, transA, transB, M, N, K, alpha, d_A, LDA, d_B, LDB,
+                beta, d_C, LDC);
 }
 
 void my_cuda_Dgemv(cublasHandle_t handle, cublasOperation_t transA, int M,

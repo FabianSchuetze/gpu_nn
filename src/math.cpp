@@ -6,14 +6,35 @@ void my_Dgemm(cublasHandle_t handle, cublasOperation_t transA,
               cublasOperation_t transB, const SharedStorage& A,
               const SharedStorage& B, SharedStorage& C, double alpha,
               double beta) {
-    int M = A->get_rows();
-    int N = B->get_cols();
-    int K = A->get_cols();
+    int M(0), N(0), K(0), LDA(0), LDB(0), LDC(0);
+    if (transA == CUBLAS_OP_N) {
+        M = A->get_rows();
+        K = A->get_cols();
+        LDA = M;
+    } else if (transA == CUBLAS_OP_T) {
+        M = A->get_cols();
+        K = A->get_rows();
+        LDA = K;
+    } else {
+        std::cout << "connot find contion\n";
+    }
+    if (transB == CUBLAS_OP_N) {
+        N = B->get_cols();
+        LDB = K;
+    } else if (transB == CUBLAS_OP_T) {
+        N = B->get_rows();
+        LDB = N;
+    } else {
+        std::cout << "connot find contion2\n";
+    }
+    LDC = M;
+    //int N = B->get_cols();
+    //int K = A->get_cols();
     const double* d_A = A->gpu_pointer_const();
     const double* d_B = B->gpu_pointer_const();
     double* d_C = C->gpu_pointer();
-    my_cuda_Dgemm(handle, transA, transB, M, N, K, &alpha, d_A, d_B, &beta,
-                  d_C);
+    my_cuda_Dgemm(handle, transA, transB, M, N, K, &alpha, d_A, LDA, d_B, LDB,
+            &beta, d_C, LDC);
 }
 
 void my_Dgemv(cublasHandle_t handle, cublasOperation_t transA,
