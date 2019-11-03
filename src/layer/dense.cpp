@@ -4,9 +4,12 @@
 #include <iostream>
 #include <memory>
 #include "../../include/common.h"
+#include "../../include/cuda_math.h"
 #include "../../include/layer/layer.h"
 #include "../../include/math.h"
-#include "../../include/cuda_math.h"
+//#include <filesystem>
+// namespace fs = std::filesystem
+
 using Eigen::MatrixXd;
 using std::vector;
 
@@ -37,36 +40,30 @@ void Dense::forward_cpu(const SharedStorage& in, SharedStorage& out) {}
 void Dense::forward_gpu(const SharedStorage& in, SharedStorage& out) {
     cublasOperation_t transA = CUBLAS_OP_N;
     cublasOperation_t transB = CUBLAS_OP_N;
-    // print_Matrix_to_stdout(in->return_data_const(), "../debug/in.txt");
-    // print_Matrix_to_stdout(parameters[0]->return_data_const(),
-    //"../debug/weight.txt");
-    // print_Matrix_to_stdout(out->return_data_const(), "../debug/out.txt");
     my_Dgemm(_handle, transA, transB, parameters[0], in, out, 1, 1);
     my_add_vec_to_mat_colwise(out, parameters[1]);
 }
 
 void Dense::backward_gpu(int, const vector<SharedStorage>& values,
                          vector<SharedStorage>& gradient) {
-    // I need a matrix vector product here
     my_Dgemv(_handle, CUBLAS_OP_N, gradient[1], parameters[2], gradients[1], 1,
              1);
-    //my_Dgemm(_handle, CUBLAS_OP_T, CUBLAS_OP_N, gradient[1], values[0],
-             //gradients[0], 1, 1);
-    //// gradients[0] += gradient_in * values[values_idx--].transpose();
-    //my_Dgemm(_handle, CUBLAS_OP_T, CUBLAS_OP_N, parameters[0], gradient[1],
-             //gradient[0], 1, 1);
+    my_Dgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_T, gradient[1], values[0],
+             gradients[0], 1, 1);
+    my_Dgemm(_handle, CUBLAS_OP_T, CUBLAS_OP_N, parameters[0], gradient[1],
+             gradient[0], 1, 1);
 }
 
 void Dense::backward_cpu(int, const vector<SharedStorage>& values,
-       vector<SharedStorage>& gradient) {}
+                         vector<SharedStorage>& gradient) {}
 
 void Dense::initialize_grad(int rows, int cols) {
     MatrixXd tmp = MatrixXd(rows, cols).setZero();
     MatrixXd bias_tmp = MatrixXd(rows, 1).setZero();
-    //MatrixXd ones = MatrixXd::Ones(rows, 1);
+    MatrixXd ones = MatrixXd::Ones(rows, 1);
     gradients.push_back(std::make_shared<Storage>(tmp));
     gradients.push_back(std::make_shared<Storage>(bias_tmp));
-    //parameters.push_back(std::make_shared<Storage>(ones));
+    parameters.push_back(std::make_shared<Storage>(ones));
 }
 void Dense::initialize_weight(int rows, int cols) {
     MatrixXd mat = MatrixXd::Random(rows, cols);
