@@ -8,8 +8,8 @@ void my_cuda_Dgemm(cublasHandle_t handle, cublasOperation_t transA,
     // M defines the number of rows in Matrix A and C
     // N Defines the number of columns of the Matrix B and C
     // K defiens the number of columns of the Matrhx A and rows of Matix B
-    cublasDgemm(handle, transA, transB, M, N, K, alpha, d_A, LDA, d_B, LDB,
-                beta, d_C, LDC);
+    CHECK_CUBLAS(cublasDgemm(handle, transA, transB, M, N, K, alpha, d_A, LDA,
+                             d_B, LDB, beta, d_C, LDC));
 }
 
 void my_cuda_Dgemv(cublasHandle_t handle, cublasOperation_t transA, int M,
@@ -17,7 +17,10 @@ void my_cuda_Dgemv(cublasHandle_t handle, cublasOperation_t transA, int M,
                    double* beta, double*& d_C) {
     // M defines the number of rows in Matrix A and C
     // N Defines the number of columns of the Matrix B and C
-    cublasDgemv(handle, transA, M, N, alpha, d_A, M, d_B, 1, beta, d_C, 1);
+    CHECK_CUBLAS(
+        cublasDgemv(handle, transA, M, N, alpha, d_A, M, d_B, 1, beta, d_C, 1));
+    // cudaDeviceSynchronize();
+
     // WHAT ABOUT SYNRONIZING THE DEVICE?
 }
 
@@ -66,13 +69,13 @@ __global__ void cuda_relu(int rows, int cols, double* out, const double* in) {
 }
 
 __global__ void cuda_relu_backwards(int rows, int cols, const double* values,
-       const double* grad_in, double* grad_out) {
+                                    const double* grad_in, double* grad_out) {
     unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < rows * cols) {
         if (values[idx] > 0) {
             grad_out[idx] = grad_in[idx];
         } else {
-           grad_out[idx] = 0;
+            grad_out[idx] = 0;
         }
     }
 }
@@ -113,8 +116,8 @@ void relu(int rows, int cols, double* out, const double* in) {
     cuda_relu<<<grid, block>>>(rows, cols, out, in);
 }
 
-void relu_backwards(int rows, int cols, const double* values, 
-        const double* grad_in, double* grad_out) {
+void relu_backwards(int rows, int cols, const double* values,
+                    const double* grad_in, double* grad_out) {
     dim3 block(256);
     dim3 grid((rows * cols + block.x - 1) / block.x);
     cuda_relu_backwards<<<grid, block>>>(rows, cols, values, grad_in, grad_out);

@@ -1,11 +1,13 @@
 #include "../../include/layer/dense.h"
-#include <cuda_runtime.h>
+//#include <cuda_runtime.h>
 #include <eigen-git-mirror/Eigen/Dense>
 #include <iostream>
+#include <fstream>
+#include <iomanip>
 #include <memory>
 #include <stdexcept>
-#include "../../include/common.h"
-#include "../../include/cuda_math.h"
+//#include "../../include/common.h"
+//#include "../../include/cuda_math.h"
 #include "../../include/layer/layer.h"
 #include "../../include/math.h"
 

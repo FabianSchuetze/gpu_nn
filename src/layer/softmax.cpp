@@ -3,8 +3,6 @@
 #include <eigen-git-mirror/Eigen/Dense>
 #include <iostream>
 #include <memory>
-#include "../../include/common.h"
-#include "../../include/cuda_math.h"
 #include "../../include/layer/layer.h"
 #include "../../include/math.h"
 
@@ -24,7 +22,7 @@ void Softmax::forward_cpu(const SharedStorage& in, SharedStorage& out) {
     const MatrixXd& in_ref = in->return_data_const();
     MatrixXd& out_ref = out->return_data();
     for (int i = 0; i < cols; i++)
-        out_ref(all, i) = in_ref(all, i).array() - in_ref(all, i).maxCoeff();
+        out_ref(all, i) = in_ref(all, i).array() - in_ref(all, i).sum();
     out_ref = out_ref.array().exp();
     Eigen::VectorXd summation = out_ref.colwise().sum();
     for (int i = 0; i < cols; i++)

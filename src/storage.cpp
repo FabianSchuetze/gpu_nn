@@ -20,8 +20,8 @@ Storage::~Storage() {
 
 void Storage::initialize_gpu_memory() {
     unsigned int nBytes = _data.rows() * _data.cols() * sizeof(double);
-    CHECK(cudaMalloc((void**)&_gpu_pointer, nBytes));
-    CHECK(
+    MY_CHECK(cudaMalloc((void**)&_gpu_pointer, nBytes));
+    MY_CHECK(
         cudaMemcpy(_gpu_pointer, _cpu_pointer, nBytes, cudaMemcpyHostToDevice));
 }
 
@@ -29,7 +29,7 @@ void Storage::sync_to_cpu() {
     if (recent_head == "GPU") {
         std::cout << "copying to CPU\n";
         unsigned int nBytes = _data.rows() * _data.cols() * sizeof(double);
-        CHECK(cudaMemcpy(_cpu_pointer, _gpu_pointer, nBytes,
+        MY_CHECK(cudaMemcpy(_cpu_pointer, _gpu_pointer, nBytes,
                          cudaMemcpyDeviceToHost));
         recent_head = "SYNC";
     }
@@ -39,7 +39,7 @@ void Storage::sync_to_gpu() {
     if (recent_head == "CPU") {
         std::cout << "syncing to GPU\n";
         unsigned int nBytes = _data.rows() * _data.cols() * sizeof(double);
-        CHECK(cudaMemcpy(_gpu_pointer, _data.data(), nBytes,
+        MY_CHECK(cudaMemcpy(_gpu_pointer, _data.data(), nBytes,
                          cudaMemcpyHostToDevice));
         recent_head = "SYNC";
     }

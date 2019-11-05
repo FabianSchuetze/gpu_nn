@@ -1,10 +1,9 @@
 #include "../../include/layer/relu.h"
-#include <cuda_runtime.h>
+//#include <cuda_runtime.h>
 #include <eigen-git-mirror/Eigen/Dense>
 #include <iostream>
 #include <memory>
-#include "../../include/common.h"
-#include "../../include/cuda_math.h"
+//#include "../../include/cuda_math.h"
 #include "../../include/layer/layer.h"
 #include "../../include/math.h"
 
