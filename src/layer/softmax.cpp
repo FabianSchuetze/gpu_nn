@@ -13,6 +13,7 @@
 using Eigen::MatrixXd;
 using std::make_shared;
 using std::vector;
+using Eigen::all;
 
 typedef std::shared_ptr<Storage> SharedStorage;
 
@@ -22,8 +23,19 @@ Softmax::Softmax(cublasHandle_t& handle)
 //Softmax::~Softmax() {};
 
 void Softmax::forward_cpu(const SharedStorage& in, SharedStorage& out) {
-    return;
+    std::cout << "inside forward cpu\n";
+    int rows = in->get_rows();
+    int cols = in->get_cols();
+    MatrixXd tmp = MatrixXd::Zero(rows, cols);
+    const MatrixXd& val = in->return_data_const(); 
+    for (int i = 0; i < cols; i++)
+        tmp(all, i) = val(all, i).array() - val(all, i).maxCoeff();
+    tmp = tmp.array().exp();
+    Eigen::VectorXd summation = tmp.colwise().sum();
+    for (int i = 0; i < val.cols(); i++)
+        out->return_data()(all, i) = tmp(all, i).array() / summation(i);
 }
+
 void Softmax::forward_gpu(const SharedStorage& in, SharedStorage& out) {
     int rows = in->get_rows();
     int cols = in->get_cols();

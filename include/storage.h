@@ -14,7 +14,7 @@ class Storage {
     double* gpu_pointer();
     int get_rows() { return _data.rows(); }
     int get_cols() { return _data.cols(); }
-    Eigen::MatrixXd return_data();
+    Eigen::MatrixXd& return_data();
     const Eigen::MatrixXd return_data_const();
 
    private:

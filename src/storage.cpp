@@ -74,7 +74,7 @@ const Eigen::MatrixXd Storage::return_data_const() {
     return _data;
 }
 
-Eigen::MatrixXd Storage::return_data() {
+Eigen::MatrixXd& Storage::return_data() {
     sync_to_cpu();
     recent_head = "CPU";
     return _data;
