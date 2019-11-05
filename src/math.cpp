@@ -48,11 +48,39 @@ void my_Dgemv(cublasHandle_t handle, cublasOperation_t transA,
     my_cuda_Dgemv(handle, transA, M, N, &alpha, d_A, d_B, &beta, d_C);
 }
 
-void my_add_vec_to_mat_colwise(SharedStorage&A, const SharedStorage& B) {
+void my_add_vec_to_mat_colwise(SharedStorage&A, const SharedStorage& B,
+        double alpha) {
     int rows = A->get_rows();
     int cols = A->get_cols();
     double* d_A = A->gpu_pointer();
     const double* d_B = B->gpu_pointer_const();
-    add_vec_to_mat_colwise(rows, cols, d_A, d_B);
+    add_vec_to_mat_colwise(rows, cols, d_A, d_B, alpha);
+    //cudaDeviceSyncronize();
+}
+
+void my_add_vec_to_mat_colwise(const SharedStorage&in, const SharedStorage& B,
+        SharedStorage& out, double alpha) {
+    int rows = in->get_rows();
+    int cols = in->get_cols();
+    const double* d_A = in->gpu_pointer_const();
+    const double* d_B = B->gpu_pointer_const();
+    double* d_C = out->gpu_pointer();
+    add_vec_to_mat_colwise(rows, cols, d_A, d_B, d_C, alpha);
+    //cudaDeviceSyncronize();
+}
+
+void my_Exponential(SharedStorage& in) {
+    int rows = in->get_rows();
+    int cols = in->get_cols();
+    double* d_A = in->gpu_pointer();
+    exponential(rows, cols, d_A);
+}
+
+void my_Divide_colwise(SharedStorage&in, const SharedStorage& vec) {
+    int rows = in->get_rows();
+    int cols = in->get_cols();
+    double* d_A = in->gpu_pointer();
+    const double* d_B = vec->gpu_pointer_const();
+    divide_colwise(rows, cols, d_A, d_B);
 
 }

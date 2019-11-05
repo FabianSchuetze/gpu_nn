@@ -41,7 +41,7 @@ void Dense::forward_gpu(const SharedStorage& in, SharedStorage& out) {
     cublasOperation_t transA = CUBLAS_OP_N;
     cublasOperation_t transB = CUBLAS_OP_N;
     my_Dgemm(_handle, transA, transB, parameters[0], in, out, 1, 1);
-    my_add_vec_to_mat_colwise(out, parameters[1]);
+    my_add_vec_to_mat_colwise(out, parameters[1], 1.0f);
 }
 
 void Dense::backward_gpu(int, const vector<SharedStorage>& values,
