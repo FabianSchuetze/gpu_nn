@@ -12,4 +12,6 @@ void add_vec_to_mat_colwise(int, int, const double*, const double*, double*,
         double);
 void exponential(int, int, double*);
 void divide_colwise(int, int, double*, const double*);
+void relu(int, int, double*, const double*);
+void relu_backwards(int, int, const double*, const double*, double*);
 #endif

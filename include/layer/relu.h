@@ -1,5 +1,5 @@
-#ifndef dense_h
-#define dense_h
+#ifndef relu_h
+#define relu_h
 #include <cuda_runtime.h>
 #include <memory>
 #include <vector>
@@ -7,9 +7,9 @@
 #include "../storage.h"
 #include "cublas_v2.h"
 #include "layer.h"
-class Dense : public Layer {
+class Relu : public Layer {
    public:
-    Dense(int, int, cublasHandle_t&);
+    Relu(cublasHandle_t&);
     void forward_gpu(const std::shared_ptr<Storage>&,
                      std::shared_ptr<Storage>&) override;
     void forward_cpu(const std::shared_ptr<Storage>&,
@@ -26,9 +26,6 @@ class Dense : public Layer {
     }
 
    private:
-    void initialize_weight(int, int);
-    void initialize_bias(int, int);
-    void initialize_grad(int, int);
     std::vector<std::shared_ptr<Storage>> parameters;
     std::vector<std::shared_ptr<Storage>> gradients;
     cublasHandle_t _handle;

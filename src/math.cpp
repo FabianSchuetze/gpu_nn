@@ -28,13 +28,13 @@ void my_Dgemm(cublasHandle_t handle, cublasOperation_t transA,
         std::cout << "connot find contion2\n";
     }
     LDC = M;
-    //int N = B->get_cols();
-    //int K = A->get_cols();
+    // int N = B->get_cols();
+    // int K = A->get_cols();
     const double* d_A = A->gpu_pointer_const();
     const double* d_B = B->gpu_pointer_const();
     double* d_C = C->gpu_pointer();
     my_cuda_Dgemm(handle, transA, transB, M, N, K, &alpha, d_A, LDA, d_B, LDB,
-            &beta, d_C, LDC);
+                  &beta, d_C, LDC);
 }
 
 void my_Dgemv(cublasHandle_t handle, cublasOperation_t transA,
@@ -48,25 +48,25 @@ void my_Dgemv(cublasHandle_t handle, cublasOperation_t transA,
     my_cuda_Dgemv(handle, transA, M, N, &alpha, d_A, d_B, &beta, d_C);
 }
 
-void my_add_vec_to_mat_colwise(SharedStorage&A, const SharedStorage& B,
-        double alpha) {
+void my_add_vec_to_mat_colwise(SharedStorage& A, const SharedStorage& B,
+                               double alpha) {
     int rows = A->get_rows();
     int cols = A->get_cols();
     double* d_A = A->gpu_pointer();
     const double* d_B = B->gpu_pointer_const();
     add_vec_to_mat_colwise(rows, cols, d_A, d_B, alpha);
-    //cudaDeviceSyncronize();
+    // cudaDeviceSyncronize();
 }
 
-void my_add_vec_to_mat_colwise(const SharedStorage&in, const SharedStorage& B,
-        SharedStorage& out, double alpha) {
+void my_add_vec_to_mat_colwise(const SharedStorage& in, const SharedStorage& B,
+                               SharedStorage& out, double alpha) {
     int rows = in->get_rows();
     int cols = in->get_cols();
     const double* d_A = in->gpu_pointer_const();
     const double* d_B = B->gpu_pointer_const();
     double* d_C = out->gpu_pointer();
     add_vec_to_mat_colwise(rows, cols, d_A, d_B, d_C, alpha);
-    //cudaDeviceSyncronize();
+    // cudaDeviceSyncronize();
 }
 
 void my_Exponential(SharedStorage& in) {
@@ -76,11 +76,28 @@ void my_Exponential(SharedStorage& in) {
     exponential(rows, cols, d_A);
 }
 
-void my_Divide_colwise(SharedStorage&in, const SharedStorage& vec) {
+void my_Divide_colwise(SharedStorage& in, const SharedStorage& vec) {
     int rows = in->get_rows();
     int cols = in->get_cols();
     double* d_A = in->gpu_pointer();
     const double* d_B = vec->gpu_pointer_const();
     divide_colwise(rows, cols, d_A, d_B);
+}
 
+void my_relu(SharedStorage& in, const SharedStorage& vec) {
+    int rows = in->get_rows();
+    int cols = in->get_cols();
+    double* d_a = in->gpu_pointer();
+    const double* d_b = vec->gpu_pointer_const();
+    relu(rows, cols, d_a, d_b);
+}
+
+void my_relu_backwards(const SharedStorage& values,
+                       const SharedStorage& grad_in, SharedStorage& grad_out) {
+    int rows = values->get_rows();
+    int cols = values->get_cols();
+    const double* d_A = values->gpu_pointer_const();
+    const double* d_B = grad_in->gpu_pointer_const();
+    double* d_C = grad_in->gpu_pointer();
+    relu_backwards(rows, cols, d_A, d_B, d_C);
 }

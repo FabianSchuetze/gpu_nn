@@ -16,4 +16,7 @@ void my_add_vec_to_mat_colwise(const SharedStorage&, const SharedStorage&,
                                SharedStorage&, double);
 void my_Exponential(SharedStorage&);
 void my_Divide_colwise(SharedStorage&, const SharedStorage&);
+void my_relu(SharedStorage&, const SharedStorage&);
+void my_relu_backwards(const SharedStorage&, const SharedStorage&,
+       SharedStorage&);
 #endif

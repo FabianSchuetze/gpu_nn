@@ -7,8 +7,6 @@
 #include "../../include/cuda_math.h"
 #include "../../include/layer/layer.h"
 #include "../../include/math.h"
-//#include <filesystem>
-// namespace fs = std::filesystem
 
 using Eigen::all;
 using Eigen::MatrixXd;
@@ -44,7 +42,7 @@ void Softmax::forward_gpu(const SharedStorage& in, SharedStorage& out) {
     my_Dgemv(_handle, CUBLAS_OP_T, out, ones, tmp, 1, 0.0f);
     my_Divide_colwise(out, tmp);
 }
-void Softmax::backward_gpu(int, const std::vector<std::shared_ptr<Storage>>&,
+void Softmax::backward_gpu(int&, const std::shared_ptr<Storage>&,
                            std::vector<std::shared_ptr<Storage>>&) { }
-void Softmax::backward_cpu(int, const std::vector<std::shared_ptr<Storage>>&,
+void Softmax::backward_cpu(int&, const std::shared_ptr<Storage>&,
                            std::vector<std::shared_ptr<Storage>>&) { }

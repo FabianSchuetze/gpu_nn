@@ -55,6 +55,28 @@ __global__ void cuda_divide_colwise(int rows, int cols, double* in,
     }
 }
 
+__global__ void cuda_relu(int rows, int cols, double* out, const double* in) {
+    unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < rows * cols) {
+        if (in[idx] > 0)
+            out[idx] = in[idx];
+        else
+            out[idx] = 0;
+    }
+}
+
+__global__ void cuda_relu_backwards(int rows, int cols, const double* values,
+       const double* grad_in, double* grad_out) {
+    unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx < rows * cols) {
+        if (values[idx] > 0) {
+            grad_out[idx] = grad_in[idx];
+        } else {
+           grad_out[idx] = 0;
+        }
+    }
+}
+
 void add_vec_to_mat_colwise(int rows, int cols, double* matrix,
                             const double* vector, double alpha) {
     dim3 block(256);
@@ -83,4 +105,17 @@ void divide_colwise(int rows, int cols, double* in, const double* vec) {
     dim3 block(256);
     dim3 grid((rows * cols + block.x - 1) / block.x);
     cuda_divide_colwise<<<grid, block>>>(rows, cols, in, vec);
+}
+
+void relu(int rows, int cols, double* out, const double* in) {
+    dim3 block(256);
+    dim3 grid((rows * cols + block.x - 1) / block.x);
+    cuda_relu<<<grid, block>>>(rows, cols, out, in);
+}
+
+void relu_backwards(int rows, int cols, const double* values, 
+        const double* grad_in, double* grad_out) {
+    dim3 block(256);
+    dim3 grid((rows * cols + block.x - 1) / block.x);
+    cuda_relu_backwards<<<grid, block>>>(rows, cols, values, grad_in, grad_out);
 }

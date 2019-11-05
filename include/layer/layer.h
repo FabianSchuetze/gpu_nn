@@ -12,9 +12,9 @@ class Layer {
                              std::shared_ptr<Storage>&) = 0;
     virtual void forward_cpu(const std::shared_ptr<Storage>&,
                              std::shared_ptr<Storage>&) = 0;
-    virtual void backward_gpu(int, const std::vector<std::shared_ptr<Storage>>&,
+    virtual void backward_gpu(int&, const std::shared_ptr<Storage>&,
                               std::vector<std::shared_ptr<Storage>>&) = 0;
-    virtual void backward_cpu(int, const std::vector<std::shared_ptr<Storage>>&,
+    virtual void backward_cpu(int&, const std::shared_ptr<Storage>&,
                               std::vector<std::shared_ptr<Storage>>&) = 0;
     virtual std::vector<std::shared_ptr<Storage>> return_parameters() = 0;
     virtual std::vector<std::shared_ptr<Storage>> return_gradients() = 0;

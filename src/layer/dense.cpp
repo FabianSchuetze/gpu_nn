@@ -3,13 +3,13 @@
 #include <eigen-git-mirror/Eigen/Dense>
 #include <iostream>
 #include <memory>
+#include <stdexcept>
 #include "../../include/common.h"
 #include "../../include/cuda_math.h"
 #include "../../include/layer/layer.h"
 #include "../../include/math.h"
-//#include <filesystem>
-// namespace fs = std::filesystem
 
+using Eigen::all;
 using Eigen::MatrixXd;
 using std::vector;
 
@@ -36,7 +36,13 @@ Dense::Dense(int rows, int cols, cublasHandle_t& handle)
         initialize_grad(rows, cols);
 }
 
-void Dense::forward_cpu(const SharedStorage& in, SharedStorage& out) {}
+void Dense::forward_cpu(const SharedStorage& in, SharedStorage& out) {
+    const Eigen::MatrixXd& in_ref = in->return_data_const();
+    out->return_data() = parameters[0]->return_data_const() * in_ref;
+    for (int i = 0; i < out->get_cols(); i++)
+        out->return_data()(all, i) += parameters[1]->return_data_const();
+}
+
 void Dense::forward_gpu(const SharedStorage& in, SharedStorage& out) {
     cublasOperation_t transA = CUBLAS_OP_N;
     cublasOperation_t transB = CUBLAS_OP_N;
@@ -44,18 +50,31 @@ void Dense::forward_gpu(const SharedStorage& in, SharedStorage& out) {
     my_add_vec_to_mat_colwise(out, parameters[1], 1.0f);
 }
 
-void Dense::backward_gpu(int, const vector<SharedStorage>& values,
+void Dense::backward_gpu(int& idx, const SharedStorage& values,
                          vector<SharedStorage>& gradient) {
-    my_Dgemv(_handle, CUBLAS_OP_N, gradient[1], parameters[2], gradients[1], 1,
-             1);
-    my_Dgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_T, gradient[1], values[0],
+    my_Dgemv(_handle, CUBLAS_OP_N, gradient[idx--], parameters[2], gradients[1],
+             1, 1);
+    my_Dgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_T, gradient[idx], values,
              gradients[0], 1, 1);
-    my_Dgemm(_handle, CUBLAS_OP_T, CUBLAS_OP_N, parameters[0], gradient[1],
+    my_Dgemm(_handle, CUBLAS_OP_T, CUBLAS_OP_N, parameters[0], gradient[idx],
              gradient[0], 1, 1);
 }
 
-void Dense::backward_cpu(int, const vector<SharedStorage>& values,
-                         vector<SharedStorage>& gradient) {}
+void Dense::backward_cpu(int& idx, const SharedStorage& values,
+                         vector<SharedStorage>& gradient) {
+    Eigen::MatrixXd& bias_ref = parameters[1]->return_data();
+    Eigen::MatrixXd& weight_ref = parameters[0]->return_data();
+    const Eigen::MatrixXd& grad_in = gradient[idx--]->return_data_const();
+    Eigen::MatrixXd& grad_out = gradient[idx]->return_data();
+    bias_ref += grad_in.rowwise().sum();
+    weight_ref += grad_in * values->return_data_const().transpose();
+    MatrixXd tmp = parameters[0]->return_data_const().transpose() * grad_in;
+    if ((tmp.rows() != grad_out.rows()) or (tmp.cols() != grad_out.cols())) {
+        throw std::runtime_error("Doesn work");
+    } else {
+        grad_out = tmp;
+    }
+}
 
 void Dense::initialize_grad(int rows, int cols) {
     MatrixXd tmp = MatrixXd(rows, cols).setZero();
