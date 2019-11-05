@@ -11,23 +11,35 @@
 // namespace fs = std::filesystem
 
 using Eigen::MatrixXd;
-using std::vector;
 using std::make_shared;
+using std::vector;
 
 typedef std::shared_ptr<Storage> SharedStorage;
 
-Softmax::Softmax(int rows, int cols, cublasHandle_t& handle)
-    : Layer(), _handle(handle) {}
+Softmax::Softmax(cublasHandle_t& handle)
+    : Layer(), parameters(), gradients(), _handle(handle) {}
 
-void Softmax::forward_cpu(const SharedStorage& in, SharedStorage& out) {}
+//Softmax::~Softmax() {};
+
+void Softmax::forward_cpu(const SharedStorage& in, SharedStorage& out) {
+    return;
+}
 void Softmax::forward_gpu(const SharedStorage& in, SharedStorage& out) {
     int rows = in->get_rows();
     int cols = in->get_cols();
     SharedStorage ones = make_shared<Storage>(Eigen::MatrixXd::Ones(rows, 1));
     SharedStorage tmp = make_shared<Storage>(Eigen::MatrixXd::Zero(cols, 1));
     my_Dgemv(_handle, CUBLAS_OP_T, in, ones, tmp, 1, 1);
-    my_add_vec_to_mat_colwise(in, tmp, out, -1.0f); //Cannot do inplace
+    my_add_vec_to_mat_colwise(in, tmp, out, -1.0f);  // Cannot do inplace
     my_Exponential(out);
     my_Dgemv(_handle, CUBLAS_OP_T, out, ones, tmp, 1, 0.0f);
-    my_Divide_colwise(out, tmp); // can be done inplace
+    my_Divide_colwise(out, tmp);  // can be done inplace
+}
+void Softmax::backward_gpu(int, const std::vector<std::shared_ptr<Storage>>&,
+                           std::vector<std::shared_ptr<Storage>>&) {
+    return;
+}
+void Softmax::backward_cpu(int, const std::vector<std::shared_ptr<Storage>>&,
+                           std::vector<std::shared_ptr<Storage>>&) {
+    return;
 }

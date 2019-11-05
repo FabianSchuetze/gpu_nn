@@ -6,6 +6,7 @@
 class Layer {
    public:
     Layer() = default;
+    ~Layer() = default;
     // Layer(int, int);
     virtual void forward_gpu(const std::shared_ptr<Storage>&,
                              std::shared_ptr<Storage>&) = 0;
