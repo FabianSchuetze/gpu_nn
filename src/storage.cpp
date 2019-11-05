@@ -50,6 +50,7 @@ const double* Storage::cpu_pointer_const() {
     const double* cp = const_cast<const double*>(_cpu_pointer);
     return cp;
 }
+
 const double* Storage::gpu_pointer_const() {
     sync_to_gpu();
     const double* cp = const_cast<const double*>(_gpu_pointer);

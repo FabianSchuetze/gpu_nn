@@ -33,10 +33,12 @@ int main() {
     Eigen::MatrixXd C1 = Eigen::MatrixXd::Zero(outgoing_rows, incoming_obs);
     Eigen::MatrixXd C2 = Eigen::MatrixXd::Zero(outgoing_rows2, incoming_obs);
     Eigen::MatrixXd C3 = Eigen::MatrixXd::Zero(outgoing_rows2, incoming_obs);
+    Eigen::MatrixXd C4 = Eigen::MatrixXd::Zero(outgoing_rows2, incoming_obs);
     std::shared_ptr<Storage> storageA = std::make_shared<Storage>(A);
     std::shared_ptr<Storage> storageC1 = std::make_shared<Storage>(C1);
     std::shared_ptr<Storage> storageC2 = std::make_shared<Storage>(C2);
     std::shared_ptr<Storage> storageC3 = std::make_shared<Storage>(C3);
+    std::shared_ptr<Storage> storageC4 = std::make_shared<Storage>(C4);
     //std::cout << std::fixed;
     //std::cout << std::setprecision(10);
     //std::cout << storageC->return_data_const() << std::endl;
@@ -53,9 +55,11 @@ int main() {
     inp1->forward_gpu(storageA, storageC1);
     inp2->forward_gpu(storageC1, storageC2);
     inp3->forward_gpu(storageC2, storageC3);
+    inp3->forward_cpu(storageC2, storageC4);
     double end = cpuSecond()- beg;
     std::cout << end << std::endl;
     std::cout << storageC3->return_data_const() << std::endl;
+    std::cout << "CPU CALC\n" << storageC4->return_data_const() << std::endl;
     double beg2 = cpuSecond();
     Eigen::MatrixXd tmp = d1.return_parameters()[0]->return_data_const() * A;
     Eigen::MatrixXd res1 = tmp.colwise() + Eigen::VectorXd(

@@ -36,7 +36,7 @@ __global__ void add_vec_to_mat_colwise_cu(int rows, int cols, const double* in,
     // get the current element index for the thread
     unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < rows * cols) {
-        out[idx] = in[idx] + alpha * vector[idx % rows];
+        out[idx] = in[idx] + alpha * vector[idx / rows];
     }
 }
 
