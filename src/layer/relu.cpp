@@ -6,6 +6,7 @@
 //#include "../../include/cuda_math.h"
 #include "../../include/layer/layer.h"
 #include "../../include/math.h"
+#include <iostream>
 
 using std::vector;
 Relu::Relu(cublasHandle_t& handle)
@@ -21,8 +22,9 @@ void Relu::forward_gpu(const SharedStorage& in, SharedStorage& out) {
 
 void Relu::backward_gpu(int& idx, const SharedStorage& values,
                         vector<SharedStorage>& gradient) {
-    my_relu_backwards(values, gradient[idx], gradient[idx-1]);
-    idx--;
+    SharedStorage& grad_in = gradient[idx--];
+    SharedStorage& grad_out = gradient[idx];
+    my_relu_backwards(values, grad_in, grad_out);
 }
 
 void Relu::backward_cpu(int& idx, const SharedStorage& values,
@@ -40,6 +42,6 @@ void Relu::backward_cpu(int& idx, const SharedStorage& values,
             (tmp.cols() != gradient[idx]->get_cols())) {
         throw std::runtime_error("Doesn work");
     } else {
-        grad_out = tmp;
+        grad_out = out;
     }
 }

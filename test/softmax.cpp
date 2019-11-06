@@ -1,12 +1,8 @@
 #include <eigen-git-mirror/Eigen/Core>
 #define CATCH_CONFIG_MAIN
-#include <eigen-git-mirror/Eigen/Core>
 #include "../third_party/catch/catch.hpp"
 #include "../include/common.h"
-#include "../include/layer/dense.h"
 #include "../include/layer/softmax.h"
-#include "../include/layer/layer.h"
-#include "../include/math.h"
 #include "../include/storage.h"
 #include <sys/time.h>
 
@@ -29,8 +25,8 @@ TEST_CASE("DataFrame gpu", "[gpu]") {
     std::shared_ptr<Storage> storage_out = std::make_shared<Storage>(out);
     inp1->forward_gpu(storage_in, storage_out);
     Eigen::VectorXd sum = storage_out->return_data_const().colwise().sum();
-    REQUIRE(sum(0) == 1);
-    REQUIRE(sum.sum() == 5);
+    REQUIRE(sum(0) == Approx(1.0));
+    REQUIRE(sum.sum() == Approx(5));
 }
 
 TEST_CASE("DataFrame cpu", "[cpu]") {
@@ -47,8 +43,8 @@ TEST_CASE("DataFrame cpu", "[cpu]") {
     std::shared_ptr<Storage> storage_out = std::make_shared<Storage>(out);
     inp1->forward_cpu(storage_in, storage_out);
     Eigen::VectorXd sum = storage_out->return_data_const().colwise().sum();
-    REQUIRE(sum(0) == 1.0);
-    REQUIRE(sum.sum() == 5.0);
+    REQUIRE(sum(0) == Approx(1.0));
+    REQUIRE(sum.sum() == Approx(5.0));
 }
 
 TEST_CASE("DataFrame equivalence", "[equivalence]") {

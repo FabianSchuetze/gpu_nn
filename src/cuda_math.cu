@@ -61,10 +61,7 @@ __global__ void cuda_divide_colwise(int rows, int cols, double* in,
 __global__ void cuda_relu(int rows, int cols, double* out, const double* in) {
     unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < rows * cols) {
-        if (in[idx] > 0)
-            out[idx] = in[idx];
-        else
-            out[idx] = 0;
+        out[idx] = (in[idx] > 0) ? in[idx] : 0.;
     }
 }
 
@@ -72,11 +69,7 @@ __global__ void cuda_relu_backwards(int rows, int cols, const double* values,
                                     const double* grad_in, double* grad_out) {
     unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < rows * cols) {
-        if (values[idx] > 0) {
-            grad_out[idx] = grad_in[idx];
-        } else {
-            grad_out[idx] = 0;
-        }
+        grad_out[idx] = (values[idx] > 0) ? grad_in[idx] : 0.;
     }
 }
 
@@ -121,4 +114,5 @@ void relu_backwards(int rows, int cols, const double* values,
     dim3 block(256);
     dim3 grid((rows * cols + block.x - 1) / block.x);
     cuda_relu_backwards<<<grid, block>>>(rows, cols, values, grad_in, grad_out);
+    cudaDeviceSynchronize();
 }

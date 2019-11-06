@@ -98,6 +98,6 @@ void my_relu_backwards(const SharedStorage& values,
     int cols = values->get_cols();
     const double* d_A = values->gpu_pointer_const();
     const double* d_B = grad_in->gpu_pointer_const();
-    double* d_C = grad_in->gpu_pointer();
+    double* d_C = grad_out->gpu_pointer();
     relu_backwards(rows, cols, d_A, d_B, d_C);
 }

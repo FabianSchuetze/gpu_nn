@@ -13,6 +13,7 @@ set(${LIBRARY_TARGET_NAME}_SRC
     src/math.cpp
     src/storage.cpp
     src/layer/softmax.cpp
+    src/layer/relu.cpp
 )
 if (UNIX)
   add_library(${LIBRARY_TARGET_NAME} SHARED ${${LIBRARY_TARGET_NAME}_SRC})
@@ -20,15 +21,19 @@ endif(UNIX)
 
 # moved the CXX flags to after the cuda_add_library call
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -L /usr/lib/cuda/lib64 -lcudart  -lcublas -O3 -Wall -std=c++17")
-add_executable(main test/softmax.cpp) # only used one c++ class for this test
-add_executable(main2 test/forward.cpp) # only used one c++ class for this test
-add_executable(dense test/dense.cpp) # only used one c++ class for this test
+add_executable(test_softmax test/softmax.cpp)
+add_executable(test_dense test/dense.cpp)
+add_executable(test_relu test/relu.cpp)
 
-target_link_libraries(main GPU_NN ${CUDA_LIBRARIES})
-target_link_libraries(main2 GPU_NN ${CUDA_LIBRARIES})
-target_link_libraries(dense GPU_NN ${CUDA_LIBRARIES})
-target_link_libraries(main GPU_NN cuda_obj) # changed ${cuda_obj} to cuda_obj
-target_link_libraries(main2 GPU_NN cuda_obj) # changed ${cuda_obj} to cuda_obj
-target_link_libraries(dense GPU_NN cuda_obj) # changed ${cuda_obj} to cuda_obj
+target_link_libraries(test_softmax GPU_NN ${CUDA_LIBRARIES})
+target_link_libraries(test_dense GPU_NN ${CUDA_LIBRARIES})
+target_link_libraries(test_relu GPU_NN ${CUDA_LIBRARIES})
+target_link_libraries(test_softmax GPU_NN cuda_obj)
+target_link_libraries(test_dense GPU_NN cuda_obj)
+target_link_libraries(test_relu GPU_NN cuda_obj)
 
-install(TARGETS main DESTINATION ../bin)
+enable_testing()
+add_test(test_softmax test_softmax)
+add_test(test_dense test_dense)
+add_test(test_relu test_relu)
+# install(TARGETS main DESTINATION ../bin)
