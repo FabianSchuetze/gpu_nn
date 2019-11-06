@@ -22,10 +22,13 @@ endif(UNIX)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -L /usr/lib/cuda/lib64 -lcudart  -lcublas -O3 -Wall -std=c++17")
 add_executable(main test/softmax.cpp) # only used one c++ class for this test
 add_executable(main2 test/forward.cpp) # only used one c++ class for this test
+add_executable(dense test/dense.cpp) # only used one c++ class for this test
 
 target_link_libraries(main GPU_NN ${CUDA_LIBRARIES})
 target_link_libraries(main2 GPU_NN ${CUDA_LIBRARIES})
+target_link_libraries(dense GPU_NN ${CUDA_LIBRARIES})
 target_link_libraries(main GPU_NN cuda_obj) # changed ${cuda_obj} to cuda_obj
 target_link_libraries(main2 GPU_NN cuda_obj) # changed ${cuda_obj} to cuda_obj
+target_link_libraries(dense GPU_NN cuda_obj) # changed ${cuda_obj} to cuda_obj
 
 install(TARGETS main DESTINATION ../bin)
