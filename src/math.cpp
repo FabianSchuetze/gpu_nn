@@ -103,3 +103,17 @@ void my_relu_backwards(const SharedStorage& values,
     dtype* d_C = grad_out->gpu_pointer();
     relu_backwards(rows, cols, d_A, d_B, d_C);
 }
+
+void my_cross_entropy_loss(dtype& loss, const SharedStorage& prediction,
+                             const SharedStorage& actual) {
+    int cols = prediction->get_cols();
+    int rows = prediction->get_rows();
+    SharedStorage all_losses = std::make_shared<Storage>(Matrix::Zero(cols, 1));
+    const dtype* d_A = prediction->gpu_pointer_const();
+    const dtype* d_B = actual->gpu_pointer_const();
+    dtype* d_C = all_losses->gpu_pointer();
+    all_cross_entropy_losses(rows, cols, d_A, d_B, d_C);
+    Vector tmp = all_losses->return_data_const();
+    loss = tmp.sum();
+}
+

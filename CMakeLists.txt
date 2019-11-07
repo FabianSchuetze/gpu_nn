@@ -14,6 +14,7 @@ set(${LIBRARY_TARGET_NAME}_SRC
     src/storage.cpp
     src/layer/softmax.cpp
     src/layer/relu.cpp
+    src/loss/cross_entropy.cpp
 )
 if (UNIX)
   add_library(${LIBRARY_TARGET_NAME} SHARED ${${LIBRARY_TARGET_NAME}_SRC})

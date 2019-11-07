@@ -143,6 +143,34 @@ __global__ void cuda_relu_backwards(int rows, int cols, const float* values,
     }
 }
 
+__global__ void cuda_all_cross_entropy_losses(int rows, int cols,
+                                              const double* prediction,
+                                              const double* actual,
+                                              double* losses) {
+    unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
+    unsigned int linear = row + col * rows;
+    if ((row < rows) && (col < cols)) {
+        if (actual[linear] == 1) {
+            losses[linear / rows] = -1 * log(prediction[linear]);
+        }
+    }
+}
+
+__global__ void cuda_all_cross_entropy_losses(int rows, int cols,
+                                              const float* prediction,
+                                              const float* actual,
+                                              float* losses) {
+    unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
+    unsigned int linear = row + col * rows;
+    if ((row < rows) && (col < cols)) {
+        if (actual[linear] == 1) {
+            losses[linear / rows] = -1 * log(prediction[linear]);
+        }
+    }
+}
+
 void add_vec_to_mat_colwise(int rows, int cols, double* matrix,
                             const double* vector, double alpha) {
     dim3 block(256);
@@ -227,4 +255,20 @@ void relu_backwards(int rows, int cols, const float* values,
     dim3 grid((rows * cols + block.x - 1) / block.x);
     cuda_relu_backwards<<<grid, block>>>(rows, cols, values, grad_in, grad_out);
     cudaDeviceSynchronize();
+}
+
+void all_cross_entropy_losses(int rows, int cols, const double* prediction,
+                              const double* actual, double* losses) {
+    dim3 block(16, 16);
+    dim3 grid(ceil(cols / 16), ceil(rows / 16));
+    cuda_all_cross_entropy_losses<<<grid, block>>>(rows, cols, prediction,
+                                                   actual, losses);
+}
+
+void all_cross_entropy_losses(int rows, int cols, const float* prediction,
+                              const float* actual, float* losses) {
+    dim3 block(16, 16);
+    dim3 grid(ceil(cols / 16), ceil(rows / 16));
+    cuda_all_cross_entropy_losses<<<grid, block>>>(rows, cols, prediction,
+                                                   actual, losses);
 }

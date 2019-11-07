@@ -27,4 +27,6 @@ void relu(int, int, double*, const double*);
 void relu(int, int, float*, const float*);
 void relu_backwards(int, int, const double*, const double*, double*);
 void relu_backwards(int, int, const float*, const float*, float*);
+void all_cross_entropy_losses(int, int, const double*, const double*, double*);
+void all_cross_entropy_losses(int, int, const float*, const float*, float*);
 #endif
