@@ -10,9 +10,10 @@
 //#include "../../include/cuda_math.h"
 #include "../../include/layer/layer.h"
 #include "../../include/math.h"
+#include "../../include/common.h"
 
 using Eigen::all;
-using Eigen::MatrixXd;
+//using Eigen::MatrixXd;
 using std::vector;
 
 typedef std::shared_ptr<Storage> SharedStorage;
@@ -39,7 +40,7 @@ Dense::Dense(int rows, int cols, cublasHandle_t& handle)
 }
 
 void Dense::forward_cpu(const SharedStorage& in, SharedStorage& out) {
-    const Eigen::MatrixXd& in_ref = in->return_data_const();
+    const Matrix& in_ref = in->return_data_const();
     out->return_data() = parameters[0]->return_data_const() * in_ref;
     for (int i = 0; i < out->get_cols(); i++)
         out->return_data()(all, i) += parameters[1]->return_data_const();
@@ -48,7 +49,9 @@ void Dense::forward_cpu(const SharedStorage& in, SharedStorage& out) {
 void Dense::forward_gpu(const SharedStorage& in, SharedStorage& out) {
     cublasOperation_t transA = CUBLAS_OP_N;
     cublasOperation_t transB = CUBLAS_OP_N;
-    my_Dgemm(_handle, transA, transB, parameters[0], in, out, 1, 1);
+    dtype alpha = 1;
+    dtype beta = 1;
+    my_Dgemm(_handle, transA, transB, parameters[0], in, out, alpha, beta);
     my_add_vec_to_mat_colwise(out, parameters[1], 1.0f);
 }
 
@@ -65,13 +68,13 @@ void Dense::backward_gpu(int& idx, const SharedStorage& values,
 
 void Dense::backward_cpu(int& idx, const SharedStorage& values,
                          vector<SharedStorage>& gradient) {
-    Eigen::MatrixXd& bias_ref = gradients[1]->return_data();
-    Eigen::MatrixXd& weight_ref = gradients[0]->return_data();
-    const Eigen::MatrixXd& grad_in = gradient[idx--]->return_data_const();
-    Eigen::MatrixXd& grad_out = gradient[idx]->return_data();
+    Matrix& bias_ref = gradients[1]->return_data();
+    Matrix& weight_ref = gradients[0]->return_data();
+    const Matrix& grad_in = gradient[idx--]->return_data_const();
+    Matrix& grad_out = gradient[idx]->return_data();
     bias_ref += grad_in.rowwise().sum();
     weight_ref += grad_in * values->return_data_const().transpose();
-    MatrixXd tmp = parameters[0]->return_data_const().transpose() * grad_in;
+    Matrix tmp = parameters[0]->return_data_const().transpose() * grad_in;
     if ((tmp.rows() != grad_out.rows()) or (tmp.cols() != grad_out.cols())) {
         throw std::runtime_error("Doesn work");
     } else {
@@ -80,21 +83,21 @@ void Dense::backward_cpu(int& idx, const SharedStorage& values,
 }
 
 void Dense::initialize_grad(int rows, int cols) {
-    MatrixXd tmp = MatrixXd(rows, cols).setZero();
-    MatrixXd bias_tmp = MatrixXd(rows, 1).setZero();
-    MatrixXd ones = MatrixXd::Ones(rows, 1);
+    Matrix tmp = Matrix(rows, cols).setZero();
+    Matrix bias_tmp = Matrix(rows, 1).setZero();
+    Matrix ones = Matrix::Ones(rows, 1);
     gradients.push_back(std::make_shared<Storage>(tmp));
     gradients.push_back(std::make_shared<Storage>(bias_tmp));
     parameters.push_back(std::make_shared<Storage>(ones));
 }
 void Dense::initialize_weight(int rows, int cols) {
-    MatrixXd mat = MatrixXd::Random(rows, cols);
-    double glorot_scale = std::sqrt(6.) / std::sqrt(rows + cols);
+    Matrix mat = Matrix::Random(rows, cols);
+    dtype glorot_scale = std::sqrt(6.) / std::sqrt(rows + cols);
     mat *= glorot_scale;
     parameters.push_back(std::make_shared<Storage>(mat));
 }
 
 void Dense::initialize_bias(int rows, int cols) {
-    MatrixXd mat = MatrixXd(rows, 1).setZero();
+    Matrix mat = Matrix(rows, 1).setZero();
     parameters.push_back(std::make_shared<Storage>(mat));
 }

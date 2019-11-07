@@ -2,25 +2,26 @@
 #define storage_h
 #include <eigen-git-mirror/Eigen/Dense>
 #include <memory>
+#include "common.h"
 class Storage {
    public:
     Storage();
-    Storage(const Eigen::MatrixXd&);
+    Storage(const Matrix&);
     // Storage(const Eigen::MatrixXd&&) // I need to provide that!
     ~Storage();
-    const double* cpu_pointer_const();
-    const double* gpu_pointer_const();
-    double* cpu_pointer();
-    double* gpu_pointer();
+    const dtype* cpu_pointer_const();
+    const dtype* gpu_pointer_const();
+    dtype* cpu_pointer();
+    dtype* gpu_pointer();
     int get_rows() { return _data.rows(); }
     int get_cols() { return _data.cols(); }
-    Eigen::MatrixXd& return_data();
-    const Eigen::MatrixXd return_data_const();
+    Matrix& return_data();
+    const Matrix return_data_const();
 
    private:
-    Eigen::MatrixXd _data;
-    double* _cpu_pointer;
-    double* _gpu_pointer;
+    Matrix _data;
+    dtype* _cpu_pointer;
+    dtype* _gpu_pointer;
     std::string recent_head;
     void initialize_gpu_memory();
     void sync_to_cpu();

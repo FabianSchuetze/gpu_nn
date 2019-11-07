@@ -7,7 +7,7 @@
 #include "../../include/math.h"
 
 using Eigen::all;
-using Eigen::MatrixXd;
+//using Eigen::MatrixXd;
 using std::make_shared;
 using std::vector;
 
@@ -19,12 +19,12 @@ Softmax::Softmax(cublasHandle_t& handle)
 void Softmax::forward_cpu(const SharedStorage& in, SharedStorage& out) {
     std::cout << "inside forward cpu\n";
     int cols = in->get_cols();
-    const MatrixXd& in_ref = in->return_data_const();
-    MatrixXd& out_ref = out->return_data();
+    const Matrix& in_ref = in->return_data_const();
+    Matrix& out_ref = out->return_data();
     for (int i = 0; i < cols; i++)
         out_ref(all, i) = in_ref(all, i).array() - in_ref(all, i).sum();
     out_ref = out_ref.array().exp();
-    Eigen::VectorXd summation = out_ref.colwise().sum();
+    Vector summation = out_ref.colwise().sum();
     for (int i = 0; i < cols; i++)
         out_ref(all, i) = out_ref(all, i).array() / summation(i);
 }
@@ -32,8 +32,8 @@ void Softmax::forward_cpu(const SharedStorage& in, SharedStorage& out) {
 void Softmax::forward_gpu(const SharedStorage& in, SharedStorage& out) {
     int rows = in->get_rows();
     int cols = in->get_cols();
-    SharedStorage ones = make_shared<Storage>(Eigen::MatrixXd::Ones(rows, 1));
-    SharedStorage tmp = make_shared<Storage>(Eigen::MatrixXd::Zero(cols, 1));
+    SharedStorage ones = make_shared<Storage>(Matrix::Ones(rows, 1));
+    SharedStorage tmp = make_shared<Storage>(Matrix::Zero(cols, 1));
     my_Dgemv(_handle, CUBLAS_OP_T, in, ones, tmp, 1, 1);
     my_add_vec_to_mat_colwise(in, tmp, out, -1.0f);
     my_Exponential(out);

@@ -25,12 +25,12 @@ TEST_CASE("relu forward gpu", "[gpu]") {
     Layer* inp1;
     Relu s1(handle);
     inp1 = &s1;
-    Eigen::MatrixXd in = Eigen::MatrixXd::Random(6, 5);
-    Eigen::MatrixXd out = Eigen::MatrixXd::Zero(6, 5);
+    Matrix in = Matrix::Random(6, 5);
+    Matrix out = Matrix::Zero(6, 5);
     std::shared_ptr<Storage> storage_in = std::make_shared<Storage>(in);
     std::shared_ptr<Storage> storage_out = std::make_shared<Storage>(out);
     inp1->forward_gpu(storage_in, storage_out);
-    Eigen::VectorXd sum = storage_out->return_data_const().colwise().sum();
+    Vector sum = storage_out->return_data_const().colwise().sum();
     REQUIRE(storage_out->return_data_const().maxCoeff() ==
             Approx(storage_in->return_data_const().maxCoeff()));
     REQUIRE(storage_out->return_data_const().sum() >
@@ -45,10 +45,10 @@ TEST_CASE("relu backward equivlaence", "[backward equivalence]") {
     Layer* inp1;
     Relu s1(handle);
     inp1 = &s1;
-    Eigen::MatrixXd gradient_in = Eigen::MatrixXd::Random(1024, 32);
-    Eigen::MatrixXd gradient_out_cpu = Eigen::MatrixXd::Zero(1024, 32);
-    Eigen::MatrixXd gradient_out_gpu = Eigen::MatrixXd::Zero(1024, 32);
-    Eigen::MatrixXd values = Eigen::MatrixXd::Random(1024, 32);
+    Matrix gradient_in = Matrix::Random(1024, 32);
+    Matrix gradient_out_cpu = Matrix::Zero(1024, 32);
+    Matrix gradient_out_gpu = Matrix::Zero(1024, 32);
+    Matrix values = Matrix::Random(1024, 32);
     SharedStorage shared_grad_in = make_shared<Storage>(gradient_in);
     SharedStorage shared_grad_out_cpu = make_shared<Storage>(gradient_out_cpu);
     SharedStorage shared_grad_out_gpu = make_shared<Storage>(gradient_out_gpu);
@@ -63,9 +63,9 @@ TEST_CASE("relu backward equivlaence", "[backward equivalence]") {
     double gpuStart = cpuSecond();
     inp1->backward_gpu(layer, shared_values, grad_vec_gpu);
     double gpuEnd = cpuSecond() - gpuStart;
-    Eigen::MatrixXd  diff = shared_grad_out_cpu->return_data_const() -
+    Matrix  diff = shared_grad_out_cpu->return_data_const() -
         shared_grad_out_gpu->return_data_const();
-    double max = diff.cwiseAbs().maxCoeff();
+    dtype max = diff.cwiseAbs().maxCoeff();
     std::cout << max << std::endl;
     std::cout << "The CPU took " << cpuEnd << " and hte GPU took " << gpuEnd
               << std::endl;
@@ -81,12 +81,12 @@ TEST_CASE("relu forward cpu", "[cpu]") {
     Layer* inp1;
     Relu s1(handle);
     inp1 = &s1;
-    Eigen::MatrixXd in = Eigen::MatrixXd::Random(6, 5);
-    Eigen::MatrixXd out = Eigen::MatrixXd::Zero(6, 5);
+    Matrix in = Matrix::Random(6, 5);
+    Matrix out = Matrix::Zero(6, 5);
     std::shared_ptr<Storage> storage_in = std::make_shared<Storage>(in);
     std::shared_ptr<Storage> storage_out = std::make_shared<Storage>(out);
     inp1->forward_cpu(storage_in, storage_out);
-    Eigen::VectorXd sum = storage_out->return_data_const().colwise().sum();
+    Vector sum = storage_out->return_data_const().colwise().sum();
     REQUIRE(storage_out->return_data_const().maxCoeff() ==
             Approx(storage_in->return_data_const().maxCoeff()));
     REQUIRE(storage_out->return_data_const().sum() >
@@ -101,9 +101,9 @@ TEST_CASE("relu forward equivalence", "[forward equivalence]") {
     Layer* inp1;
     Relu s1(handle);
     inp1 = &s1;
-    Eigen::MatrixXd in = Eigen::MatrixXd::Random(1024, 32);
-    Eigen::MatrixXd out_cpu = Eigen::MatrixXd::Zero(1024, 32);
-    Eigen::MatrixXd out_gpu = Eigen::MatrixXd::Zero(1024, 32);
+    Matrix in = Matrix::Random(1024, 32);
+    Matrix out_cpu = Matrix::Zero(1024, 32);
+    Matrix out_gpu = Matrix::Zero(1024, 32);
     shared_ptr<Storage> storage_in = make_shared<Storage>(in);
     shared_ptr<Storage> storage_out_cpu = make_shared<Storage>(out_cpu);
     shared_ptr<Storage> storage_out_gpu = make_shared<Storage>(out_gpu);
@@ -113,9 +113,9 @@ TEST_CASE("relu forward equivalence", "[forward equivalence]") {
     double gpuStart = cpuSecond();
     inp1->forward_gpu(storage_in, storage_out_gpu);
     double gpuEnd = cpuSecond() - gpuStart;
-    Eigen::MatrixXd diff = storage_out_cpu->return_data_const() -
+    Matrix diff = storage_out_cpu->return_data_const() -
                            storage_out_gpu->return_data_const();
-    double max = diff.cwiseAbs().maxCoeff();
+    dtype max = diff.cwiseAbs().maxCoeff();
     std::cout << max << std::endl;
     std::cout << "The CPU took " << cpuEnd << " and hte GPU took " << gpuEnd
               << std::endl;

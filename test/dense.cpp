@@ -27,13 +27,13 @@ TEST_CASE("Dense forward_gpu", "[gpu]") {
     Layer* inp1;
     Dense s1(6, 5, handle);
     inp1 = &s1;
-    Eigen::MatrixXd in = Eigen::MatrixXd::Random(5, 3);
-    Eigen::MatrixXd out = Eigen::MatrixXd::Zero(6, 3);
-    double begin = out(0, 0);
+    Matrix in = Matrix::Random(5, 3);
+    Matrix out = Matrix::Zero(6, 3);
+    dtype begin = out(0, 0);
     std::shared_ptr<Storage> storage_in = std::make_shared<Storage>(in);
     std::shared_ptr<Storage> storage_out = std::make_shared<Storage>(out);
     inp1->forward_gpu(storage_in, storage_out);
-    double end = storage_out->return_data_const()(0, 0);
+    dtype end = storage_out->return_data_const()(0, 0);
     REQUIRE(begin != end);
 }
 
@@ -45,9 +45,9 @@ TEST_CASE("Dense backward_gpu", "[gpu]") {
     Layer* inp1;
     Dense s1(6, 5, handle);
     inp1 = &s1;
-    Eigen::MatrixXd gradient_in = Eigen::MatrixXd::Random(6, 3);
-    Eigen::MatrixXd gradient_out = Eigen::MatrixXd::Zero(5, 3);
-    Eigen::MatrixXd values = Eigen::MatrixXd::Random(5, 3);
+    Matrix gradient_in = Matrix::Random(6, 3);
+    Matrix gradient_out = Matrix::Zero(5, 3);
+    Matrix values = Matrix::Random(5, 3);
     SharedStorage shared_gradient_in = make_shared<Storage>(gradient_in);
     SharedStorage shared_gradient_out = make_shared<Storage>(gradient_out);
     SharedStorage shared_values = make_shared<Storage>(values);
@@ -66,13 +66,13 @@ TEST_CASE("Dense forward_cpu", "[cpu]") {
     Layer* inp1;
     Dense s1(6, 5, handle);
     inp1 = &s1;
-    Eigen::MatrixXd in = Eigen::MatrixXd::Random(5, 3);
-    Eigen::MatrixXd out = Eigen::MatrixXd::Zero(6, 3);
-    double begin = out(0, 0);
+    Matrix in = Matrix::Random(5, 3);
+    Matrix out = Matrix::Zero(6, 3);
+    dtype begin = out(0, 0);
     std::shared_ptr<Storage> storage_in = std::make_shared<Storage>(in);
     std::shared_ptr<Storage> storage_out = std::make_shared<Storage>(out);
     inp1->forward_cpu(storage_in, storage_out);
-    double end = storage_out->return_data_const()(0, 0);
+    dtype end = storage_out->return_data_const()(0, 0);
     REQUIRE(begin != end);
 }
 
@@ -84,9 +84,9 @@ TEST_CASE("Dense backard_cpu", "[cpu]") {
     Layer* inp1;
     Dense s1(6, 5, handle);
     inp1 = &s1;
-    Eigen::MatrixXd gradient_in = Eigen::MatrixXd::Random(6, 3);
-    Eigen::MatrixXd gradient_out = Eigen::MatrixXd::Zero(5, 3);
-    Eigen::MatrixXd values = Eigen::MatrixXd::Random(5, 3);
+    Matrix gradient_in = Matrix::Random(6, 3);
+    Matrix gradient_out = Matrix::Zero(5, 3);
+    Matrix values = Matrix::Random(5, 3);
     SharedStorage shared_gradient_in = make_shared<Storage>(gradient_in);
     SharedStorage shared_gradient_out = make_shared<Storage>(gradient_out);
     SharedStorage shared_values = make_shared<Storage>(values);
@@ -105,10 +105,10 @@ TEST_CASE("Dense backard equivalence", "[backward equivalence]") {
     Layer* inp1;
     Dense s1(1024, 1000, handle);
     inp1 = &s1;
-    Eigen::MatrixXd gradient_in = Eigen::MatrixXd::Random(1024, 32);
-    Eigen::MatrixXd gradient_out_cpu = Eigen::MatrixXd::Zero(1000, 32);
-    Eigen::MatrixXd gradient_out_gpu = Eigen::MatrixXd::Zero(1000, 32);
-    Eigen::MatrixXd values = Eigen::MatrixXd::Random(1000, 32);
+    Matrix gradient_in = Matrix::Random(1024, 32);
+    Matrix gradient_out_cpu = Matrix::Zero(1000, 32);
+    Matrix gradient_out_gpu = Matrix::Zero(1000, 32);
+    Matrix values = Matrix::Random(1000, 32);
     SharedStorage shared_gradient_in = make_shared<Storage>(gradient_in);
     SharedStorage shared_gradient_out_cpu =
         make_shared<Storage>(gradient_out_cpu);
@@ -127,13 +127,14 @@ TEST_CASE("Dense backard equivalence", "[backward equivalence]") {
     double gpuStart = cpuSecond();
     inp1->backward_gpu(layer, shared_values, grad_vec_gpu);
     double gpuEnd = cpuSecond() - gpuStart;
-    Eigen::MatrixXd diff = shared_gradient_out_cpu->return_data_const() -
+    Matrix diff = shared_gradient_out_cpu->return_data_const() -
                            shared_gradient_out_gpu->return_data_const();
-    double out = diff.array().abs().maxCoeff();
+    dtype out = diff.array().abs().maxCoeff();
+    dtype allowed = 1e-5;
     std::cout << "The CPU took " << cpuEnd << " and hte GPU took " << gpuEnd
               << std::endl;
     std::cout << "maximum difference: " << out << std::endl;
-    REQUIRE(out < 1e-7);
+    REQUIRE(out < allowed);
     REQUIRE(gpuEnd < cpuEnd);
 }
 
@@ -145,9 +146,9 @@ TEST_CASE("Dense forward equivalence", "[forward equivalence]") {
     Layer* inp1;
     Dense s1(1024, 1000, handle);
     inp1 = &s1;
-    Eigen::MatrixXd in = Eigen::MatrixXd::Random(1000, 32);
-    Eigen::MatrixXd out_cpu = Eigen::MatrixXd::Zero(1024, 32);
-    Eigen::MatrixXd out_gpu = Eigen::MatrixXd::Zero(1024, 32);
+    Matrix in = Matrix::Random(1000, 32);
+    Matrix out_cpu = Matrix::Zero(1024, 32);
+    Matrix out_gpu = Matrix::Zero(1024, 32);
     std::shared_ptr<Storage> storage_in = std::make_shared<Storage>(in);
     std::shared_ptr<Storage> storage_out_cpu =
         std::make_shared<Storage>(out_cpu);
@@ -159,11 +160,12 @@ TEST_CASE("Dense forward equivalence", "[forward equivalence]") {
     double gpuStart = cpuSecond();
     inp1->forward_gpu(storage_in, storage_out_gpu);
     double gpuEnd = cpuSecond() - gpuStart;
-    Eigen::MatrixXd diff = storage_out_cpu->return_data_const() -
+    Matrix diff = storage_out_cpu->return_data_const() -
                            storage_out_gpu->return_data_const();
-    double out = diff.array().abs().maxCoeff();
+    dtype out = diff.array().abs().maxCoeff();
+    dtype allowed = 1e-5;
     std::cout << "The CPU took " << cpuEnd << " and hte GPU took " << gpuEnd
               << std::endl;
     std::cout << "maximum difference: " << out << std::endl;
-    REQUIRE(out < 1e-7);
+    REQUIRE(out < allowed);
 }

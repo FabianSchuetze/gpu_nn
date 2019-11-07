@@ -19,12 +19,12 @@ TEST_CASE("DataFrame gpu", "[gpu]") {
     Layer* inp1;
     Softmax s1(handle);
     inp1 = &s1;
-    Eigen::MatrixXd in = Eigen::MatrixXd::Random(6, 5);
-    Eigen::MatrixXd out = Eigen::MatrixXd::Zero(6, 5);
+    Matrix in = Matrix::Random(6, 5);
+    Matrix out = Matrix::Zero(6, 5);
     std::shared_ptr<Storage> storage_in = std::make_shared<Storage>(in);
     std::shared_ptr<Storage> storage_out = std::make_shared<Storage>(out);
     inp1->forward_gpu(storage_in, storage_out);
-    Eigen::VectorXd sum = storage_out->return_data_const().colwise().sum();
+    Vector sum = storage_out->return_data_const().colwise().sum();
     REQUIRE(sum(0) == Approx(1.0));
     REQUIRE(sum.sum() == Approx(5));
 }
@@ -37,12 +37,12 @@ TEST_CASE("DataFrame cpu", "[cpu]") {
     Layer* inp1;
     Softmax s1(handle);
     inp1 = &s1;
-    Eigen::MatrixXd in = Eigen::MatrixXd::Random(6, 5);
-    Eigen::MatrixXd out = Eigen::MatrixXd::Zero(6, 5);
+    Matrix in = Matrix::Random(6, 5);
+    Matrix out = Matrix::Zero(6, 5);
     std::shared_ptr<Storage> storage_in = std::make_shared<Storage>(in);
     std::shared_ptr<Storage> storage_out = std::make_shared<Storage>(out);
     inp1->forward_cpu(storage_in, storage_out);
-    Eigen::VectorXd sum = storage_out->return_data_const().colwise().sum();
+    Vector sum = storage_out->return_data_const().colwise().sum();
     REQUIRE(sum(0) == Approx(1.0));
     REQUIRE(sum.sum() == Approx(5.0));
 }
@@ -55,8 +55,8 @@ TEST_CASE("DataFrame equivalence", "[equivalence]") {
     Layer* inp1;
     Softmax s1(handle);
     inp1 = &s1;
-    Eigen::MatrixXd in = Eigen::MatrixXd::Random(1024, 100);
-    Eigen::MatrixXd out = Eigen::MatrixXd::Zero(1024, 100);
+    Matrix in = Matrix::Random(1024, 100);
+    Matrix out = Matrix::Zero(1024, 100);
     std::shared_ptr<Storage> storage_in = std::make_shared<Storage>(in);
     std::shared_ptr<Storage> storage_gpu = std::make_shared<Storage>(out);
     std::shared_ptr<Storage> storage_cpu = std::make_shared<Storage>(out);
@@ -68,9 +68,9 @@ TEST_CASE("DataFrame equivalence", "[equivalence]") {
     double gpuEnd = cpuSecond() - gpuStart;
     std::cout << "The CPU took " << cpuEnd << " and hte GPU took " <<
         gpuEnd << std::endl;
-    Eigen::MatrixXd diff = storage_cpu->return_data_const() -
+    Matrix diff = storage_cpu->return_data_const() -
         storage_gpu->return_data_const();
-    double maxDiff = diff.array().abs().maxCoeff();
+    dtype maxDiff = diff.array().abs().maxCoeff();
     REQUIRE(cpuEnd > gpuEnd);
     REQUIRE(maxDiff < 1e-6);
 }

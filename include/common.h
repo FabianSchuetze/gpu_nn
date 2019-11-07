@@ -1,8 +1,13 @@
 #ifndef common_h
 #define common_h
 #include <eigen-git-mirror/Eigen/Dense>
+#include <eigen-git-mirror/Eigen/src/Core/util/Constants.h>
 #include <fstream>
 #include <iomanip>
+
+typedef double dtype;
+typedef Eigen::Matrix<dtype, Eigen::Dynamic, Eigen::Dynamic> Matrix;
+typedef Eigen::Vector<dtype, Eigen::Dynamic> Vector;
 
 // CLEAR THE NAMESPACE MESSS
 //namespace CUDA_CHECKS{
