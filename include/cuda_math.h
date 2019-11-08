@@ -31,4 +31,6 @@ void all_cross_entropy_losses(int, int, const double*, const double*, double*);
 void all_cross_entropy_losses(int, int, const float*, const float*, float*);
 void sum_cross_entropy_losses(int, float*, const float*);
 void sum_cross_entropy_losses(int, double*, const double*);
+void cross_entropy_gradient(int, int, const double*, const double*, double*);
+void cross_entropy_gradient(int, int, const float*, const float*, float*);
 #endif

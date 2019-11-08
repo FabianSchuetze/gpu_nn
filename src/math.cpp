@@ -115,3 +115,13 @@ void my_cross_entropy_loss(dtype& loss, const SharedStorage& prediction,
     all_cross_entropy_losses(rows, cols, d_A, d_B, d_C);
     loss = all_losses->return_data_const().sum();
 }
+
+void my_cross_entropy_gradient(SharedStorage& gradient, const SharedStorage&
+        prediction, const SharedStorage target) {
+    int cols = prediction->get_cols();
+    int rows = prediction->get_rows();
+    const dtype* d_A = prediction->gpu_pointer_const();
+    const dtype* d_B = target->gpu_pointer_const();
+    dtype* d_C = gradient->gpu_pointer();
+    cross_entropy_gradient(rows, cols, d_A, d_B, d_C);
+}

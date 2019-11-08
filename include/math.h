@@ -20,6 +20,7 @@ void my_Divide_colwise(SharedStorage&, const SharedStorage&);
 void my_relu(SharedStorage&, const SharedStorage&);
 void my_relu_backwards(const SharedStorage&, const SharedStorage&,
                        SharedStorage&);
-void my_cross_entropy_loss(dtype&, const SharedStorage&,
-                             const SharedStorage&);
+void my_cross_entropy_loss(dtype&, const SharedStorage&, const SharedStorage&);
+void my_cross_entropy_gradient(SharedStorage&, const SharedStorage&,
+                               const SharedStorage);
 #endif

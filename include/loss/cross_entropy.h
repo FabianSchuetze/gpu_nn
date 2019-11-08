@@ -14,6 +14,7 @@ class CrossEntropy : public Loss {
     dtype loss_gpu(const SharedStorage&, const SharedStorage&) override;
     void grad_loss_cpu(SharedStorage&, const SharedStorage&,
                        const SharedStorage&, const SharedStorage&) override;
+    // THR GPU IS RELATIVELY SLOW HERE!!!
     void grad_loss_gpu(SharedStorage&, const SharedStorage&,
                        const SharedStorage&, const SharedStorage&) override;
 

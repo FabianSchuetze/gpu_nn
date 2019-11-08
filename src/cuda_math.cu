@@ -171,6 +171,30 @@ __global__ void cuda_all_cross_entropy_losses(int rows, int cols,
     }
 }
 
+__global__ void cuda_cross_entropy_gradient(int rows, int cols,
+                                            const float* prediction,
+                                            const float* actual,
+                                            float* gradient) {
+    unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
+    unsigned int linear = row + col * rows;
+    if ((row < rows) && (col < cols)) {
+        gradient[linear] = prediction[linear] - actual[linear];
+    }
+}
+
+__global__ void cuda_cross_entropy_gradient(int rows, int cols,
+                                            const double* prediction,
+                                            const double* actual,
+                                            double* gradient) {
+    unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
+    unsigned int linear = row + col * rows;
+    if ((row < rows) && (col < cols)) {
+        gradient[linear] = prediction[linear] - actual[linear];
+    }
+}
+
 // I NEED TO THINK HOW I DO SUCH A SUM BETTER - Reduction!!!
 __global__ void cuda_sum_cross_entropy_losses(int obs, float* loss,
                                               const float* all_losses) {
@@ -302,7 +326,6 @@ void all_cross_entropy_losses(int rows, int cols, const float* prediction,
     dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     cuda_all_cross_entropy_losses<<<grid, block>>>(rows, cols, prediction,
                                                    actual, losses);
-
     MY_CHECK(cudaPeekAtLastError());
     cudaDeviceSynchronize();
 }
@@ -321,4 +344,20 @@ void sum_cross_entropy_losses(int obs, double* loss, const double* all_losses) {
     cuda_sum_cross_entropy_losses<<<grid, block>>>(obs, loss, all_losses);
     MY_CHECK(cudaPeekAtLastError());
     cudaDeviceSynchronize();
+}
+void cross_entropy_gradient(int rows, int cols, const double* prediction,
+                            const double* target, double* gradient) {
+    dim3 block(16, 16);
+    dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
+    cuda_cross_entropy_gradient<<<grid, block>>>(rows, cols, prediction,
+                                                     target, gradient);
+    MY_CHECK(cudaPeekAtLastError());
+}
+void cross_entropy_gradient(int rows, int cols, const float* prediction,
+                            const float* target, float* gradient) {
+    dim3 block(16, 16);
+    dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
+    cuda_cross_entropy_gradient<<<grid, block>>>(rows, cols, prediction,
+                                                     target, gradient);
+    MY_CHECK(cudaPeekAtLastError());
 }

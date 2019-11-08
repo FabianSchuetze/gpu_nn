@@ -1,7 +1,7 @@
 #include "../../include/loss/cross_entropy.h"
+#include <iostream>
 #include "../../include/common.h"
 #include "../../include/math.h"
-#include <iostream>
 
 dtype CrossEntropy::loss_cpu(const SharedStorage& prediction,
                              const SharedStorage& actual) {
@@ -20,7 +20,6 @@ dtype CrossEntropy::loss_cpu(const SharedStorage& prediction,
 
 dtype CrossEntropy::loss_gpu(const SharedStorage& prediction,
                              const SharedStorage& actual) {
-    //int obs = prediction->get_cols();
     dtype loss(0);
     my_cross_entropy_loss(loss, prediction, actual);
     return loss;
@@ -40,7 +39,17 @@ dtype CrossEntropy::loss(const Vector& pred, const Vector& actual) {
     }
     return loss;
 }
-void CrossEntropy::grad_loss_cpu(SharedStorage&, const SharedStorage&,
-                       const SharedStorage&, const SharedStorage&) {};
-void CrossEntropy::grad_loss_gpu(SharedStorage&, const SharedStorage&,
-                       const SharedStorage&, const SharedStorage&) {};
+void CrossEntropy::grad_loss_cpu(SharedStorage& gradient,
+                                 const SharedStorage& prediction,
+                                 const SharedStorage& target,
+                                 const SharedStorage&) {
+    gradient->return_data() =
+        prediction->return_data_const() - target->return_data_const();
+}
+
+void CrossEntropy::grad_loss_gpu(SharedStorage& gradient,
+                                 const SharedStorage& prediction,
+                                 const SharedStorage& target,
+                                 const SharedStorage&) {
+    my_cross_entropy_gradient(gradient, prediction, target);
+}
