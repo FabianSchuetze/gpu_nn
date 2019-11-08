@@ -113,7 +113,5 @@ void my_cross_entropy_loss(dtype& loss, const SharedStorage& prediction,
     const dtype* d_B = actual->gpu_pointer_const();
     dtype* d_C = all_losses->gpu_pointer();
     all_cross_entropy_losses(rows, cols, d_A, d_B, d_C);
-    Vector tmp = all_losses->return_data_const();
-    loss = tmp.sum();
+    loss = all_losses->return_data_const().sum();
 }
-

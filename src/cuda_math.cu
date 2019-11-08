@@ -171,12 +171,30 @@ __global__ void cuda_all_cross_entropy_losses(int rows, int cols,
     }
 }
 
+// I NEED TO THINK HOW I DO SUCH A SUM BETTER - Reduction!!!
+__global__ void cuda_sum_cross_entropy_losses(int obs, float* loss,
+                                              const float* all_losses) {
+    unsigned int linear = blockIdx.x * blockDim.x + threadIdx.x;
+    if (linear == 0) {
+        for (int i = 0; i < obs; ++i) loss[0] += all_losses[i];
+    }
+}
+
+__global__ void cuda_sum_cross_entropy_losses(int obs, double* loss,
+                                              const double* all_losses) {
+    unsigned int linear = blockIdx.x * blockDim.x + threadIdx.x;
+    if (linear == 0) {
+        for (int i = 0; i < obs; ++i) loss[0] += all_losses[i];
+    }
+}
+
 void add_vec_to_mat_colwise(int rows, int cols, double* matrix,
                             const double* vector, double alpha) {
     dim3 block(256);
     dim3 grid((rows * cols + block.x - 1) / block.x);
     add_vec_to_mat_colwise_cu<<<grid, block>>>(rows, cols, matrix, vector,
                                                alpha);
+    MY_CHECK(cudaPeekAtLastError());
     // cudaDeviceSynronize();
 }
 
@@ -186,6 +204,7 @@ void add_vec_to_mat_colwise(int rows, int cols, float* matrix,
     dim3 grid((rows * cols + block.x - 1) / block.x);
     add_vec_to_mat_colwise_cu<<<grid, block>>>(rows, cols, matrix, vector,
                                                alpha);
+    MY_CHECK(cudaPeekAtLastError());
     // cudaDeviceSynronize();
 }
 
@@ -195,6 +214,7 @@ void add_vec_to_mat_colwise(int rows, int cols, const double* in,
     dim3 grid((rows * cols + block.x - 1) / block.x);
     add_vec_to_mat_colwise_cu<<<grid, block>>>(rows, cols, in, vector, out,
                                                alpha);
+    MY_CHECK(cudaPeekAtLastError());
     // cudaDeviceSynronize();
 }
 
@@ -204,6 +224,7 @@ void add_vec_to_mat_colwise(int rows, int cols, const float* in,
     dim3 grid((rows * cols + block.x - 1) / block.x);
     add_vec_to_mat_colwise_cu<<<grid, block>>>(rows, cols, in, vector, out,
                                                alpha);
+    MY_CHECK(cudaPeekAtLastError());
     // cudaDeviceSynronize();
 }
 
@@ -211,35 +232,41 @@ void exponential(int rows, int cols, double* in) {
     dim3 block(256);
     dim3 grid((rows * cols + block.x - 1) / block.x);
     cuda_exponential<<<grid, block>>>(rows, cols, in);
+    MY_CHECK(cudaPeekAtLastError());
 }
 
 void exponential(int rows, int cols, float* in) {
     dim3 block(256);
     dim3 grid((rows * cols + block.x - 1) / block.x);
     cuda_exponential<<<grid, block>>>(rows, cols, in);
+    MY_CHECK(cudaPeekAtLastError());
 }
 
 void divide_colwise(int rows, int cols, double* in, const double* vec) {
     dim3 block(256);
     dim3 grid((rows * cols + block.x - 1) / block.x);
     cuda_divide_colwise<<<grid, block>>>(rows, cols, in, vec);
+    MY_CHECK(cudaPeekAtLastError());
 }
 
 void divide_colwise(int rows, int cols, float* in, const float* vec) {
     dim3 block(256);
     dim3 grid((rows * cols + block.x - 1) / block.x);
     cuda_divide_colwise<<<grid, block>>>(rows, cols, in, vec);
+    MY_CHECK(cudaPeekAtLastError());
 }
 
 void relu(int rows, int cols, double* out, const double* in) {
     dim3 block(256);
     dim3 grid((rows * cols + block.x - 1) / block.x);
     cuda_relu<<<grid, block>>>(rows, cols, out, in);
+    MY_CHECK(cudaPeekAtLastError());
 }
 void relu(int rows, int cols, float* out, const float* in) {
     dim3 block(256);
     dim3 grid((rows * cols + block.x - 1) / block.x);
     cuda_relu<<<grid, block>>>(rows, cols, out, in);
+    MY_CHECK(cudaPeekAtLastError());
 }
 
 void relu_backwards(int rows, int cols, const double* values,
@@ -247,6 +274,7 @@ void relu_backwards(int rows, int cols, const double* values,
     dim3 block(256);
     dim3 grid((rows * cols + block.x - 1) / block.x);
     cuda_relu_backwards<<<grid, block>>>(rows, cols, values, grad_in, grad_out);
+    MY_CHECK(cudaPeekAtLastError());
     cudaDeviceSynchronize();
 }
 void relu_backwards(int rows, int cols, const float* values,
@@ -254,21 +282,43 @@ void relu_backwards(int rows, int cols, const float* values,
     dim3 block(256);
     dim3 grid((rows * cols + block.x - 1) / block.x);
     cuda_relu_backwards<<<grid, block>>>(rows, cols, values, grad_in, grad_out);
+    MY_CHECK(cudaPeekAtLastError());
     cudaDeviceSynchronize();
 }
 
 void all_cross_entropy_losses(int rows, int cols, const double* prediction,
                               const double* actual, double* losses) {
     dim3 block(16, 16);
-    dim3 grid(ceil(cols / 16), ceil(rows / 16));
+    dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     cuda_all_cross_entropy_losses<<<grid, block>>>(rows, cols, prediction,
                                                    actual, losses);
+    MY_CHECK(cudaPeekAtLastError());
+    cudaDeviceSynchronize();
 }
 
 void all_cross_entropy_losses(int rows, int cols, const float* prediction,
                               const float* actual, float* losses) {
     dim3 block(16, 16);
-    dim3 grid(ceil(cols / 16), ceil(rows / 16));
+    dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     cuda_all_cross_entropy_losses<<<grid, block>>>(rows, cols, prediction,
                                                    actual, losses);
+
+    MY_CHECK(cudaPeekAtLastError());
+    cudaDeviceSynchronize();
+}
+
+void sum_cross_entropy_losses(int obs, float* loss, const float* all_losses) {
+    dim3 block(256);
+    dim3 grid((obs + block.x - 1) / block.x);
+    cuda_sum_cross_entropy_losses<<<grid, block>>>(obs, loss, all_losses);
+    MY_CHECK(cudaPeekAtLastError());
+    cudaDeviceSynchronize();
+}
+
+void sum_cross_entropy_losses(int obs, double* loss, const double* all_losses) {
+    dim3 block(256);
+    dim3 grid((obs + block.x - 1) / block.x);
+    cuda_sum_cross_entropy_losses<<<grid, block>>>(obs, loss, all_losses);
+    MY_CHECK(cudaPeekAtLastError());
+    cudaDeviceSynchronize();
 }

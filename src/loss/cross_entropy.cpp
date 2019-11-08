@@ -1,13 +1,20 @@
 #include "../../include/loss/cross_entropy.h"
 #include "../../include/common.h"
 #include "../../include/math.h"
+#include <iostream>
 
 dtype CrossEntropy::loss_cpu(const SharedStorage& prediction,
                              const SharedStorage& actual) {
     const Matrix& pred = prediction->return_data_const();
     const Matrix& act = actual->return_data_const();
-    dtype tot = 0;
-    for (int i = 0; i < pred.cols(); i++) tot += loss(pred.col(i), act.col(i));
+    if ((pred.rows() != act.rows()) or (pred.cols() != act.cols())) {
+        std::string m("prediction must have the same shape a target, in:\n");
+        throw std::runtime_error(m + __PRETTY_FUNCTION__);
+    }
+    dtype tot(0.);
+    for (int i = 0; i < pred.cols(); i++) {
+        tot += loss(Vector(pred.col(i)), Vector(act.col(i)));
+    }
     return tot;
 }
 

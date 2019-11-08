@@ -5,7 +5,7 @@
 #include <fstream>
 #include <iomanip>
 
-typedef double dtype;
+typedef float dtype;
 typedef Eigen::Matrix<dtype, Eigen::Dynamic, Eigen::Dynamic> Matrix;
 typedef Eigen::Vector<dtype, Eigen::Dynamic> Vector;
 

@@ -9,6 +9,7 @@ class CrossEntropy : public Loss {
    public:
     CrossEntropy() = default;
     ~CrossEntropy() = default;
+    // THE LOSSES ARE ONLY AVAILABLE ON THE HOST -> IS THAT INTENDET?
     dtype loss_cpu(const SharedStorage&, const SharedStorage&) override;
     dtype loss_gpu(const SharedStorage&, const SharedStorage&) override;
     void grad_loss_cpu(SharedStorage&, const SharedStorage&,
