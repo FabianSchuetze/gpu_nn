@@ -21,15 +21,18 @@ TEST_CASE("NeuralNetwork forward gpu", "[forward gpu]") {
     Layer* l1;
     Layer* l2;
     Layer* l3;
-    Input i1(10);
-    Dense d1(6, 10, handle);
+    int input_dimension = 5;
+    int obs = 3;
+    Input i1(input_dimension);
+    Dense d1(6, input_dimension, handle);
     Softmax  s1(handle);
     l1 = &i1;
     l2 = &d1;
     l3 = &s1;
     std::vector<Layer*> vec = {l1, l2, l3};
     NeuralNetwork n1(vec, "Categorical_Crossentropy");
-    Matrix in = Matrix::Random(10, 5);
+    Matrix in = Matrix::Random(obs, input_dimension);
+    std::cout << "the input matrix is\n" << in << std::endl;
     Matrix out = n1.predict(in);
     std::cout << out << std::endl;
 }

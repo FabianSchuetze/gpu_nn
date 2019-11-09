@@ -1,6 +1,7 @@
 #include "../include/network.h"
 #include <memory>
 #include "../include/loss/cross_entropy.h"
+#include <iostream>
 using std::vector;
 NeuralNetwork::NeuralNetwork(vector<Layer*> _layers, const std::string& _loss)
     : layers(_layers) {
@@ -27,7 +28,7 @@ vector<SharedStorage> NeuralNetwork::allocate_shared_storage(int obs) {
     int out_dim(0);
     for (const Layer* layer : layers) {
         if (layer->name() == "Dense") {
-            out_dim = layers[0]->output_dimension();
+            out_dim = layer->output_dimension();
         } else if (layer->name() == "Activation")
             ;
         else if (layer->name() == "BatchNorm") {
@@ -35,12 +36,12 @@ vector<SharedStorage> NeuralNetwork::allocate_shared_storage(int obs) {
         } else if (layer->name() == "Dropout") {
             ;
         } else if (layer->name() == "Input") {
-            out_dim = layers[0]->output_dimension();
+            out_dim = layer->output_dimension();
         } else {
             std::string m("Cannot figure out name, in:\n");
             throw std::invalid_argument(m + __PRETTY_FUNCTION__);
         }
-        vals.push_back(std::make_shared<Storage>(Matrix(out_dim, obs)));
+        vals.push_back(std::make_shared<Storage>(Matrix::Zero(out_dim, obs)));
     }
     return vals;
 }
@@ -52,10 +53,11 @@ void NeuralNetwork::fill_hiddens(vector<SharedStorage>& values,
 
 void NeuralNetwork::forward(vector<SharedStorage>& values) {
     int i = 0;
-    for (Layer* layer : layers) {
+    for (int layer_idx = 1; layer_idx < layers.size(); ++layer_idx) {
+        std::cout << layers[layer_idx]->name() << std::endl;
         SharedStorage input = values[i];
         SharedStorage output = values[i+1];
-        layer->forward_gpu(input, output);
+        layers[layer_idx]->forward_gpu(input, output);
         i++;
     }
 }

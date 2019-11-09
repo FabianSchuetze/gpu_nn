@@ -12,6 +12,7 @@ using std::make_shared;
 using std::shared_ptr;
 using std::vector;
 
+typedef std::shared_ptr<Storage> SharedStorage;
 double cpuSecond() {
     struct timeval tp;
     gettimeofday(&tp, NULL);

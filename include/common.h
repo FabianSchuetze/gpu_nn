@@ -1,13 +1,27 @@
 #ifndef common_h
 #define common_h
 #include <eigen-git-mirror/Eigen/Dense>
-#include <eigen-git-mirror/Eigen/src/Core/util/Constants.h>
 #include <fstream>
 #include <iomanip>
 
 typedef float dtype;
 typedef Eigen::Matrix<dtype, Eigen::Dynamic, Eigen::Dynamic> Matrix;
 typedef Eigen::Vector<dtype, Eigen::Dynamic> Vector;
+
+//void print_Matrix_to_stdout(const Eigen::MatrixXd& val, std::string loc) {
+    //int rows(val.rows()), cols(val.cols());
+    //std::ofstream myfile(loc);
+    //myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
+    //myfile << std::fixed;
+    //myfile << std::setprecision(2);
+    //for (int row = 0; row < rows; ++row) {
+        //myfile << val(row, 0);
+        //for (int col = 1; col < cols; ++col) {
+            //myfile << ", " << val(row, col);
+        //}
+        //myfile << std::endl;
+    //}
+//}
 
 // CLEAR THE NAMESPACE MESSS
 //namespace CUDA_CHECKS{

@@ -16,26 +16,26 @@ using std::vector;
 
 typedef std::shared_ptr<Storage> SharedStorage;
 
-void print_Matrix_to_stdout(const Eigen::MatrixXd& val, std::string loc) {
-    int rows(val.rows()), cols(val.cols());
-    std::ofstream myfile(loc);
-    myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
-    myfile << std::fixed;
-    myfile << std::setprecision(2);
-    for (int row = 0; row < rows; ++row) {
-        myfile << val(row, 0);
-        for (int col = 1; col < cols; ++col) {
-            myfile << ", " << val(row, col);
-        }
-        myfile << std::endl;
-    }
-}
+//void print_Matrix_to_stdout(const Eigen::MatrixXd& val, std::string loc) {
+    //int rows(val.rows()), cols(val.cols());
+    //std::ofstream myfile(loc);
+    //myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
+    //myfile << std::fixed;
+    //myfile << std::setprecision(2);
+    //for (int row = 0; row < rows; ++row) {
+        //myfile << val(row, 0);
+        //for (int col = 1; col < cols; ++col) {
+            //myfile << ", " << val(row, col);
+        //}
+        //myfile << std::endl;
+    //}
+//}
 
 Dense::Dense(int rows, int cols, cublasHandle_t& handle)
     : Layer(),
       _handle(handle),
-      _input_dimension(rows),
-      _output_dimension(cols) {
+      _input_dimension(cols),
+      _output_dimension(rows) {
     initialize_weight(rows, cols);
     initialize_bias(rows, cols);
     initialize_grad(rows, cols);

@@ -1,3 +1,4 @@
+#pragma once
 #ifndef cuda_math_h
 #define cuda_math_h
 #include "cublas_v2.h"

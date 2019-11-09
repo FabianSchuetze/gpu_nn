@@ -3,7 +3,7 @@
 #include <cuda_runtime.h>
 #include <memory>
 #include <vector>
-#include "../math.h"
+//#include "../math.h"
 #include "../storage.h"
 #include "cublas_v2.h"
 #include "layer.h"

@@ -25,6 +25,12 @@ void Storage::initialize_gpu_memory() {
         cudaMemcpy(_gpu_pointer, _cpu_pointer, nBytes, cudaMemcpyHostToDevice));
 }
 
+void Storage::copy_cpu_data(const Matrix& new_data) {
+    _data = new_data;
+    _cpu_pointer = _data.data();
+    recent_head = "CPU";
+}
+
 void Storage::sync_to_cpu() {
     if (recent_head == "GPU") {
         std::cout << "copying to CPU\n";
@@ -55,7 +61,6 @@ const dtype* Storage::gpu_pointer_const() {
     sync_to_gpu();
     const dtype* cp = const_cast<const dtype*>(_gpu_pointer);
     return cp;
-    // return (const dtype*)_cpu_pointer;
 }
 
 dtype* Storage::cpu_pointer() {
