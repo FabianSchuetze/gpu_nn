@@ -41,7 +41,7 @@ void Softmax::forward_gpu(const SharedStorage& in, SharedStorage& out) {
     my_Divide_colwise(out, tmp);
 }
 
-void Softmax::backward_gpu(int&, const SharedStorage&, const SharedStorage&,
+void Softmax::backward_gpu(const SharedStorage&, const SharedStorage&,
                            SharedStorage&) {}
-void Softmax::backward_cpu(int&, const SharedStorage&, const SharedStorage&,
+void Softmax::backward_cpu(const SharedStorage&, const SharedStorage&,
                            SharedStorage&) {}

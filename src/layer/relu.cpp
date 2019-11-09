@@ -19,13 +19,13 @@ void Relu::forward_gpu(const SharedStorage& in, SharedStorage& out) {
     my_relu(out, in);
 }
 
-void Relu::backward_gpu(int& idx, const SharedStorage& values,
+void Relu::backward_gpu(const SharedStorage& values,
                         const SharedStorage& gradient_in,
                         SharedStorage& gradient_out) {
     my_relu_backwards(values, gradient_in, gradient_out);
 }
 
-void Relu::backward_cpu(int& idx, const SharedStorage& values,
+void Relu::backward_cpu(const SharedStorage& values,
                         const SharedStorage& gradient_in,
                         SharedStorage& gradient_out) {
     const Matrix& value_ref = values->return_data_const();

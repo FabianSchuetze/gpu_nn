@@ -5,8 +5,8 @@
 #include "loss/loss.h"
 class NeuralNetwork {
    public:
-    NeuralNetwork(std::vector<Layer*>, const std::string&);
-    NeuralNetwork(std::vector<Layer*>, const std::string&, const std::string&);
+    NeuralNetwork(std::vector<Layer*>, Loss*);
+    NeuralNetwork(std::vector<Layer*>, Loss*, const std::string&);
     NeuralNetwork(const NeuralNetwork&) = delete;
     NeuralNetwork(NeuralNetwork&&) = delete;
     NeuralNetwork& operator=(const NeuralNetwork&) = delete;
@@ -22,8 +22,8 @@ class NeuralNetwork {
     void backwards(std::vector<SharedStorage>& gradients,
                    const std::vector<SharedStorage>& values);
     std::vector<SharedStorage> allocate_shared_storage(int);
-    // DANGEROUS DO THAT FOR TEST CASE!!
-    std::shared_ptr<Loss> loss;
+    std::vector<SharedStorage> allocate_forward(int);
+    std::vector<SharedStorage> allocate_backward(int);
     void forward(std::vector<SharedStorage>&);
     void fill_hiddens(std::vector<SharedStorage>&, const Matrix&);
 
@@ -34,6 +34,7 @@ class NeuralNetwork {
     NeuralNetwork::forward_func fun_forward;
     NeuralNetwork::backward_func fun_backward;
     std::vector<Layer*> layers;
+    std::shared_ptr<Loss> loss;
     void create_loss(const std::string& s);
     void forward_gpu(std::vector<SharedStorage>&);
     void forward_cpu(std::vector<SharedStorage>&);
@@ -41,5 +42,6 @@ class NeuralNetwork {
                       const std::vector<SharedStorage>&);
     void backward_gpu(std::vector<SharedStorage>&,
                       const std::vector<SharedStorage>&);
+    void allocate_storage(int, int&, std::vector<SharedStorage>&, const Layer*);
 };
 #endif

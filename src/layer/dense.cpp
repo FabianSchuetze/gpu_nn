@@ -16,19 +16,19 @@ using std::vector;
 
 typedef std::shared_ptr<Storage> SharedStorage;
 
-//void print_Matrix_to_stdout(const Eigen::MatrixXd& val, std::string loc) {
-    //int rows(val.rows()), cols(val.cols());
-    //std::ofstream myfile(loc);
-    //myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
-    //myfile << std::fixed;
-    //myfile << std::setprecision(2);
-    //for (int row = 0; row < rows; ++row) {
-        //myfile << val(row, 0);
-        //for (int col = 1; col < cols; ++col) {
-            //myfile << ", " << val(row, col);
-        //}
-        //myfile << std::endl;
-    //}
+// void print_Matrix_to_stdout(const Eigen::MatrixXd& val, std::string loc) {
+// int rows(val.rows()), cols(val.cols());
+// std::ofstream myfile(loc);
+// myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
+// myfile << std::fixed;
+// myfile << std::setprecision(2);
+// for (int row = 0; row < rows; ++row) {
+// myfile << val(row, 0);
+// for (int col = 1; col < cols; ++col) {
+// myfile << ", " << val(row, col);
+//}
+// myfile << std::endl;
+//}
 //}
 
 Dense::Dense(int rows, int cols, cublasHandle_t& handle)
@@ -58,30 +58,33 @@ void Dense::forward_gpu(const SharedStorage& in, SharedStorage& out) {
     my_add_vec_to_mat_colwise(out, parameters[1], 1.0f);
 }
 
-void Dense::backward_gpu(int& idx, const SharedStorage& values,
-        const SharedStorage& gradient_in, SharedStorage& gradient_out) {
-    my_Dgemv(_handle, CUBLAS_OP_N, gradient_in, parameters[2], gradients[1],
-             1, 1);
+void Dense::backward_gpu(const SharedStorage& values,
+                         const SharedStorage& gradient_in,
+                         SharedStorage& gradient_out) {
+    my_Dgemv(_handle, CUBLAS_OP_N, gradient_in, parameters[2], gradients[1], 1,
+             1);
     my_Dgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_T, gradient_in, values,
              gradients[0], 1, 1);
     my_Dgemm(_handle, CUBLAS_OP_T, CUBLAS_OP_N, parameters[0], gradient_in,
              gradient_out, 1, 1);
-    idx--;
 }
 
-void Dense::backward_cpu(int& idx, const SharedStorage& values,
-        const SharedStorage& gradient_in, SharedStorage& gradient_out) {
+void Dense::backward_cpu(const SharedStorage& values,
+                         const SharedStorage& gradient_in,
+                         SharedStorage& gradient_out) {
     Matrix& bias_ref = gradients[1]->return_data();
     Matrix& weight_ref = gradients[0]->return_data();
-    const Matrix& grad_in = gradient_in->return_data_const();
-    Matrix& grad_out = gradient_out->return_data();
-    bias_ref += grad_in.rowwise().sum();
-    weight_ref += grad_in * values->return_data_const().transpose();
-    Matrix tmp = parameters[0]->return_data_const().transpose() * grad_in;
-    if ((tmp.rows() != grad_out.rows()) or (tmp.cols() != grad_out.cols())) {
-        throw std::runtime_error("Doesn work");
+    bias_ref += gradient_in->return_data_const().rowwise().sum();
+    weight_ref += gradient_in->return_data_const() *
+                  values->return_data_const().transpose();
+    Matrix tmp = parameters[0]->return_data_const().transpose() *
+                 gradient_in->return_data_const();
+    if ((tmp.rows() != gradient_out->get_rows()) or
+        (tmp.cols() != gradient_out->get_cols())) {
+        std::string m ("The gradient sizes don't fit, in:\n");
+        throw std::runtime_error(m + __PRETTY_FUNCTION__);
     } else {
-        grad_out = tmp;
+        gradient_out->copy_cpu_data(tmp);
     }
 }
 
@@ -93,6 +96,7 @@ void Dense::initialize_grad(int rows, int cols) {
     gradients.push_back(std::make_shared<Storage>(bias_tmp));
     parameters.push_back(std::make_shared<Storage>(ones));
 }
+
 void Dense::initialize_weight(int rows, int cols) {
     Matrix mat = Matrix::Random(rows, cols);
     dtype glorot_scale = std::sqrt(6.) / std::sqrt(rows + cols);

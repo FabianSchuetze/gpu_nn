@@ -14,22 +14,14 @@ class Input : public Layer {
                      std::shared_ptr<Storage>&) override;
     void forward_cpu(const std::shared_ptr<Storage>&,
                      std::shared_ptr<Storage>&) override;
-    void backward_gpu(int&, const SharedStorage&, const SharedStorage&,
+    void backward_gpu(const SharedStorage&, const SharedStorage&,
                       SharedStorage&) override;
-    void backward_cpu(int&, const SharedStorage&, const SharedStorage&,
+    void backward_cpu(const SharedStorage&, const SharedStorage&,
                       SharedStorage&) override;
-    std::vector<std::shared_ptr<Storage>> return_parameters() override {
-        return parameters;
-    };
-    std::vector<std::shared_ptr<Storage>> return_gradients() override {
-        return gradients;
-    };
-    std::vector<std::shared_ptr<Storage>> return_parameters() const override {
-        return parameters;
-    };
-    std::vector<std::shared_ptr<Storage>> return_gradients() const override {
-        return gradients;
-    };
+    VecSharedStorage return_parameters() override { return parameters; };
+    VecSharedStorage return_gradients() override { return gradients; };
+    VecSharedStorage return_parameters() const override { return parameters; };
+    VecSharedStorage return_gradients() const override { return gradients; };
 
    private:
     int _output_dimension;

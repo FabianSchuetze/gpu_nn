@@ -41,29 +41,44 @@ void NeuralNetwork::create_loss(const std::string& s) {
     }
 }
 
-vector<SharedStorage> NeuralNetwork::allocate_shared_storage(int obs) {
+void NeuralNetwork::allocate_storage(int obs, int& out_dim,
+                                     std::vector<SharedStorage>& inp,
+                                     const Layer* layer) {
+    if (layer->name() == "Dense") {
+        if (layer->input_dimension() != out_dim) {
+            std::string m("Dimensions do not fit, in:\n");
+            throw std::invalid_argument(m + __PRETTY_FUNCTION__);
+        }
+        out_dim = layer->output_dimension();
+    } else if (layer->name() == "Activation")
+        ;
+    else if (layer->name() == "BatchNorm") {
+        ;
+    } else if (layer->name() == "Dropout") {
+        ;
+    } else if (layer->name() == "Input") {
+        out_dim = layer->output_dimension();
+    } else {
+        std::string m("Cannot figure out name, in:\n");
+        throw std::invalid_argument(m + __PRETTY_FUNCTION__);
+    }
+    inp.push_back(std::make_shared<Storage>(Matrix::Zero(out_dim, obs)));
+}
+
+vector<SharedStorage> NeuralNetwork::allocate_forward(int obs) {
     vector<SharedStorage> vals;
     int out_dim(0);
     for (const Layer* layer : layers) {
-        if (layer->name() == "Dense") {
-            if (layer->input_dimension() != out_dim)  {
-                std::string m("Dimensions do not fit, in:\n");
-                throw std::invalid_argument(m + __PRETTY_FUNCTION__);
-            }
-            out_dim = layer->output_dimension();
-        } else if (layer->name() == "Activation")
-            ;
-        else if (layer->name() == "BatchNorm") {
-            ;
-        } else if (layer->name() == "Dropout") {
-            ;
-        } else if (layer->name() == "Input") {
-            out_dim = layer->output_dimension();
-        } else {
-            std::string m("Cannot figure out name, in:\n");
-            throw std::invalid_argument(m + __PRETTY_FUNCTION__);
-        }
-        vals.push_back(std::make_shared<Storage>(Matrix::Zero(out_dim, obs)));
+        allocate_storage(obs, out_dim, vals, layer);
+    }
+    return vals;
+}
+
+vector<SharedStorage> NeuralNetwork::allocate_backward(int obs) {
+    vector<SharedStorage> vals;
+    int out_dim(0);
+    for (size_t i = 0; i < layers.size() - 1; i++) {
+        allocate_storage(obs, out_dim, vals, layers[i]);
     }
     return vals;
 }
@@ -81,8 +96,8 @@ void NeuralNetwork::forward_gpu(vector<SharedStorage>& values) {
     int i = 0;
     for (size_t layer_idx = 1; layer_idx < layers.size(); ++layer_idx) {
         layers[layer_idx]->forward_gpu(values[i], values[i + 1]);
-        std::cout << "prediction at " << layers[layer_idx]->name() << ":\n" <<
-            values[i+1]->return_data_const() << std::endl;
+        std::cout << "prediction at " << layers[layer_idx]->name() << ":\n"
+                  << values[i + 1]->return_data_const() << std::endl;
         i++;
     }
 }
@@ -97,7 +112,7 @@ void NeuralNetwork::forward_cpu(vector<SharedStorage>& values) {
 
 Matrix NeuralNetwork::predict(const Matrix& input) {
     SharedStorage inp = std::make_shared<Storage>(input);
-    vector<SharedStorage> vals = allocate_shared_storage(input.rows());
+    vector<SharedStorage> vals = allocate_forward(input.rows());
     fill_hiddens(vals, input);
     forward(vals);
     return vals[vals.size() - 1]->return_data().transpose();

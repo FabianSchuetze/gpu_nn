@@ -7,6 +7,7 @@
 class Layer {
    protected:
     typedef std::shared_ptr<Storage> SharedStorage;
+    typedef std::vector<std::shared_ptr<Storage>> VecSharedStorage;
 
    public:
     Layer() : _name("Template"){};
@@ -19,14 +20,14 @@ class Layer {
     virtual std::string name() const { return _name; };
     virtual void forward_gpu(const SharedStorage&, SharedStorage&) = 0;
     virtual void forward_cpu(const SharedStorage&, SharedStorage&) = 0;
-    virtual void backward_gpu(int&, const SharedStorage&, const SharedStorage&,
+    virtual void backward_gpu(const SharedStorage&, const SharedStorage&,
                               SharedStorage&) = 0;
-    virtual void backward_cpu(int&, const SharedStorage&, const SharedStorage&,
+    virtual void backward_cpu(const SharedStorage&, const SharedStorage&,
                               SharedStorage&) = 0;
-    virtual std::vector<SharedStorage> return_parameters() = 0;
-    virtual std::vector<SharedStorage> return_gradients() = 0;
-    virtual std::vector<SharedStorage> return_parameters() const = 0;
-    virtual std::vector<SharedStorage> return_gradients() const = 0;
+    virtual VecSharedStorage return_parameters() = 0;
+    virtual VecSharedStorage return_gradients() = 0;
+    virtual VecSharedStorage return_parameters() const = 0;
+    virtual VecSharedStorage return_gradients() const = 0;
 
    protected:
     std::vector<SharedStorage> parameters;

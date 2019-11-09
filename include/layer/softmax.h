@@ -5,6 +5,7 @@
 #include "layer.h"
 class Softmax : public Layer {
     typedef std::shared_ptr<Storage> SharedStorage;
+    typedef std::vector<std::shared_ptr<Storage>> VecSharedStorage;
 
    public:
     Softmax(cublasHandle_t&);
@@ -15,22 +16,14 @@ class Softmax : public Layer {
     int output_dimension() const override { return 0; };
     void forward_gpu(const SharedStorage&, SharedStorage&) override;
     void forward_cpu(const SharedStorage&, SharedStorage&) override;
-    void backward_gpu(int&, const SharedStorage&,
-                      const SharedStorage&, SharedStorage&) override;
-    void backward_cpu(int&, const SharedStorage&,
-                     const SharedStorage&, SharedStorage&) override;
-    std::vector<SharedStorage> return_parameters() override {
-        return parameters;
-    };
-    std::vector<SharedStorage> return_gradients() override {
-        return gradients;
-    };
-    std::vector<SharedStorage> return_parameters() const override {
-        return parameters;
-    };
-    std::vector<SharedStorage> return_gradients() const override {
-        return gradients;
-    };
+    void backward_gpu(const SharedStorage&, const SharedStorage&,
+                      SharedStorage&) override;
+    void backward_cpu(const SharedStorage&, const SharedStorage&,
+                      SharedStorage&) override;
+    VecSharedStorage return_parameters() override { return parameters; };
+    VecSharedStorage return_gradients() override { return gradients; };
+    VecSharedStorage return_parameters() const override { return parameters; };
+    VecSharedStorage return_gradients() const override { return gradients; };
 
    private:
     cublasHandle_t _handle;
