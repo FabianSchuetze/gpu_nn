@@ -1,8 +1,8 @@
 #include "../include/math.h"
 #include <iostream>
 #include <memory>
-#include "../include/cuda_math.h"
 #include "../include/common.h"
+#include "../include/cuda_math.h"
 void my_Dgemm(cublasHandle_t handle, cublasOperation_t transA,
               cublasOperation_t transB, const SharedStorage& A,
               const SharedStorage& B, SharedStorage& C, dtype alpha,
@@ -37,7 +37,6 @@ void my_Dgemm(cublasHandle_t handle, cublasOperation_t transA,
     my_cuda_Dgemm(handle, transA, transB, M, N, K, &alpha, d_A, LDA, d_B, LDB,
                   &beta, d_C, LDC);
 }
-
 
 void my_Dgemv(cublasHandle_t handle, cublasOperation_t transA,
               const SharedStorage& A, const SharedStorage& B, SharedStorage& C,
@@ -105,7 +104,7 @@ void my_relu_backwards(const SharedStorage& values,
 }
 
 void my_cross_entropy_loss(dtype& loss, const SharedStorage& prediction,
-                             const SharedStorage& actual) {
+                           const SharedStorage& actual) {
     int cols = prediction->get_cols();
     int rows = prediction->get_rows();
     SharedStorage all_losses = std::make_shared<Storage>(Matrix::Zero(cols, 1));
@@ -116,12 +115,23 @@ void my_cross_entropy_loss(dtype& loss, const SharedStorage& prediction,
     loss = all_losses->return_data_const().sum();
 }
 
-void my_cross_entropy_gradient(SharedStorage& gradient, const SharedStorage&
-        prediction, const SharedStorage target) {
+void my_cross_entropy_gradient(SharedStorage& gradient,
+                               const SharedStorage& prediction,
+                               const SharedStorage target) {
     int cols = prediction->get_cols();
     int rows = prediction->get_rows();
     const dtype* d_A = prediction->gpu_pointer_const();
     const dtype* d_B = target->gpu_pointer_const();
     dtype* d_C = gradient->gpu_pointer();
     cross_entropy_gradient(rows, cols, d_A, d_B, d_C);
+}
+
+// IN PRICINPILE THATS A DUPLICATE FROM ABOVE!!!! FIND COMMON MATH FUNCTION!!!
+void my_Matrix_addition_inplace(const SharedStorage& gradient,
+                        SharedStorage& parameters, dtype alpha) {
+    int cols = parameters->get_cols();
+    int rows = gradient->get_rows();
+    const dtype* d_A = gradient->gpu_pointer_const();
+    dtype* d_B = parameters->gpu_pointer();
+    matrix_addition_inplace(rows, cols, d_A, d_B, &alpha);
 }

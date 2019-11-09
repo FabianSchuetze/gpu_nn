@@ -23,4 +23,5 @@ void my_relu_backwards(const SharedStorage&, const SharedStorage&,
 void my_cross_entropy_loss(dtype&, const SharedStorage&, const SharedStorage&);
 void my_cross_entropy_gradient(SharedStorage&, const SharedStorage&,
                                const SharedStorage);
+void my_Matrix_addition_inplace(const SharedStorage&, SharedStorage&, dtype);
 #endif

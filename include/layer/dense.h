@@ -26,6 +26,7 @@ class Dense : public Layer {
     void initialize_bias(int, int);
     void initialize_grad(int, int);
     std::vector<SharedStorage> parameters;
+    std::vector<SharedStorage> assistance_parameters;
     std::vector<SharedStorage> gradients;
     cublasHandle_t _handle;
     int _input_dimension;

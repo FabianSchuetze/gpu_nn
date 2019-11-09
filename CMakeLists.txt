@@ -18,6 +18,8 @@ set(${LIBRARY_TARGET_NAME}_SRC
     src/layer/input.cpp
     src/network.cpp
     src/train.cpp
+    src/gradient_descent/gradient_descent.cpp
+    src/gradient_descent/sgd.cpp
 )
 if (UNIX)
   add_library(${LIBRARY_TARGET_NAME} SHARED ${${LIBRARY_TARGET_NAME}_SRC})

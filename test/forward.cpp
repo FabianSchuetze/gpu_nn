@@ -36,7 +36,6 @@ TEST_CASE("NeuralNetwork forward gpu", "[forward gpu]") {
     Matrix out = n1.predict(in);
     Vector sums = out.rowwise().sum();
     REQUIRE(sums(0) == Approx(1.));
-    //std::cout << sums << std::endl;
 }
 
 TEST_CASE("NeuralNetwork2 forward cpu", "[forward2 cpu]") {
@@ -62,7 +61,6 @@ TEST_CASE("NeuralNetwork2 forward cpu", "[forward2 cpu]") {
     Matrix out = n1.predict(in);
     Vector sums = out.rowwise().sum();
     REQUIRE(sums(0) == Approx(1.));
-    //std::cout << sums << std::endl;
 }
 
 TEST_CASE("NeuralNetwork equivalence", "[equivalence]") {
@@ -92,15 +90,10 @@ TEST_CASE("NeuralNetwork equivalence", "[equivalence]") {
     double gpuStart = cpuSecond();
     Matrix out_gpu = n_gpu.predict(in);
     double gpuEnd = cpuSecond() - gpuStart;
-    //std::cout << "CPU result\n" << out_cpu << std::endl;
-    //std::cout << "GPU result\n" << out_gpu << std::endl;
     std::cout << "The CPU took " << cpuEnd << " and hte GPU took " <<
         gpuEnd << std::endl;
     Matrix diff = out_cpu - out_gpu;
     dtype maxDiff = diff.array().abs().maxCoeff();
     REQUIRE(cpuEnd > gpuEnd);
     REQUIRE(maxDiff < 1e-6);
-    //Vector sums = out.rowwise().sum();
-    //REQUIRE(sums(0) == Approx(1.));
-    //std::cout << sums << std::endl;
 }

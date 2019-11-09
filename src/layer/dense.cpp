@@ -61,8 +61,8 @@ void Dense::forward_gpu(const SharedStorage& in, SharedStorage& out) {
 void Dense::backward_gpu(const SharedStorage& values,
                          const SharedStorage& gradient_in,
                          SharedStorage& gradient_out) {
-    my_Dgemv(_handle, CUBLAS_OP_N, gradient_in, parameters[2], gradients[1], 1,
-             1);
+    my_Dgemv(_handle, CUBLAS_OP_N, gradient_in, assistance_parameters[0],
+             gradients[1], 1, 1);
     my_Dgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_T, gradient_in, values,
              gradients[0], 1, 1);
     my_Dgemm(_handle, CUBLAS_OP_T, CUBLAS_OP_N, parameters[0], gradient_in,
@@ -81,7 +81,7 @@ void Dense::backward_cpu(const SharedStorage& values,
                  gradient_in->return_data_const();
     if ((tmp.rows() != gradient_out->get_rows()) or
         (tmp.cols() != gradient_out->get_cols())) {
-        std::string m ("The gradient sizes don't fit, in:\n");
+        std::string m("The gradient sizes don't fit, in:\n");
         throw std::runtime_error(m + __PRETTY_FUNCTION__);
     } else {
         gradient_out->copy_cpu_data(tmp);
@@ -94,7 +94,7 @@ void Dense::initialize_grad(int rows, int cols) {
     Matrix ones = Matrix::Ones(rows, 1);
     gradients.push_back(std::make_shared<Storage>(tmp));
     gradients.push_back(std::make_shared<Storage>(bias_tmp));
-    parameters.push_back(std::make_shared<Storage>(ones));
+    assistance_parameters.push_back(std::make_shared<Storage>(ones));
 }
 
 void Dense::initialize_weight(int rows, int cols) {
