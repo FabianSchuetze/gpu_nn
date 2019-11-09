@@ -1,11 +1,12 @@
+#pragma once
 #ifndef input_h
 #define input_h
-#include <cuda_runtime.h>
-#include <memory>
-#include <vector>
-#include "../math.h"
-#include "../storage.h"
-#include "cublas_v2.h"
+//#include <cuda_runtime.h>
+//#include <memory>
+//#include <vector>
+//#include "../math.h"
+//#include "../storage.h"
+//#include "cublas_v2.h"
 #include "layer.h"
 class Input : public Layer {
    public:

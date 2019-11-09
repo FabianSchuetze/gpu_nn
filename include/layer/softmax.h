@@ -1,10 +1,10 @@
+#pragma once
 #ifndef softmax_h
 #define softmax_h
-#include <cuda_runtime.h>
-#include <memory>
-#include <vector>
-//#include "../math.h"
-#include "../storage.h"
+//#include <cuda_runtime.h>
+//#include <memory>
+//#include <vector>
+//#include "../storage.h"
 #include "cublas_v2.h"
 #include "layer.h"
 class Softmax : public Layer {
@@ -17,14 +17,12 @@ class Softmax : public Layer {
     int output_dimension() override { return 0; };
     int input_dimension() const override { return 0; };
     int output_dimension() const override { return 0; };
-    void forward_gpu(const std::shared_ptr<Storage>&,
-                     std::shared_ptr<Storage>&) override;
-    void forward_cpu(const std::shared_ptr<Storage>&,
-                     std::shared_ptr<Storage>&) override;
-    void backward_gpu(int&, const std::shared_ptr<Storage>&,
-                      std::vector<std::shared_ptr<Storage>>&) override;
-    void backward_cpu(int&, const std::shared_ptr<Storage>&,
-                      std::vector<std::shared_ptr<Storage>>&) override;
+    void forward_gpu(const SharedStorage&, SharedStorage&) override;
+    void forward_cpu(const SharedStorage&, SharedStorage&) override;
+    void backward_gpu(int&, const SharedStorage&,
+                      std::vector<SharedStorage>&) override;
+    void backward_cpu(int&, const SharedStorage&,
+                      std::vector<SharedStorage>&) override;
     std::vector<SharedStorage> return_parameters() override {
         return parameters;
     };

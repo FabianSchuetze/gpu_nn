@@ -1,10 +1,6 @@
 #ifndef relu_h
 #define relu_h
-#include <cuda_runtime.h>
-#include <memory>
-#include <vector>
-//#include "../math.h"
-#include "../storage.h"
+//#include <cuda_runtime.h>
 #include "cublas_v2.h"
 #include "layer.h"
 class Relu : public Layer {

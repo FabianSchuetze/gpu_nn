@@ -1,10 +1,11 @@
+#pragma once
 #ifndef dense_h
 #define dense_h
-#include <cuda_runtime.h>
-#include <memory>
-#include <vector>
-#include "../math.h"
-#include "../storage.h"
+//#include <cuda_runtime.h>
+//#include <memory>
+//#include <vector>
+//#include "../math.h"
+//#include "../storage.h"
 #include "cublas_v2.h"
 #include "layer.h"
 class Dense : public Layer {
