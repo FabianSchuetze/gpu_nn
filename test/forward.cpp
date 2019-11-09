@@ -74,7 +74,7 @@ TEST_CASE("NeuralNetwork equivalence", "[equivalence]") {
     Layer* l2;
     Layer* l3;
     int input_dimension = 1024;
-    int obs = 322;
+    int obs = 32;
     Input i1(input_dimension);
     Dense d1(100, input_dimension, handle);
     Softmax  s1(handle);

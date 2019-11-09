@@ -164,25 +164,32 @@ TEST_CASE("NeuralNetwork backward equivalence", "[backward equivalence]") {
     Matrix in = Matrix::Random(obs, input_dimension);
     //the forward part
     SharedStorage inp = std::make_shared<Storage>(in);
-    vector<SharedStorage> vals = n_cpu.allocate_forward(in.rows());
+    vector<SharedStorage> vals_cpu = n_cpu.allocate_forward(in.rows());
+    vector<SharedStorage> vals_gpu = n_gpu.allocate_forward(in.rows());
     vector<SharedStorage> gradients_cpu = n_cpu.allocate_backward(in.rows());
     vector<SharedStorage> gradients_gpu = n_cpu.allocate_backward(in.rows());
-    n_cpu.fill_hiddens(vals, in);
+    n_cpu.fill_hiddens(vals_cpu, in);
+    n_gpu.fill_hiddens(vals_gpu, in);
     // CPU CODE
-    n_cpu.forward(vals);
+    double cpuStart = cpuSecond();
+    n_cpu.forward(vals_cpu);
     SharedStorage& grad_in_cpu = gradients_cpu[gradients_cpu.size() -1];
-    loss->grad_loss_cpu(grad_in_cpu, vals[vals.size() -1], SharedTarget, SharedTarget);
-    n_cpu.backwards(gradients_cpu, vals);
+    loss->grad_loss_cpu(grad_in_cpu, vals_cpu[vals_cpu.size() -1], SharedTarget, SharedTarget);
+    n_cpu.backwards(gradients_cpu, vals_cpu);
+    double cpuEnd = cpuSecond() - cpuStart;
     // GPU CODE
-    n_gpu.forward(vals);
+    double gpuStart = cpuSecond();
+    n_gpu.forward(vals_gpu);
     SharedStorage& grad_in = gradients_gpu[gradients_gpu.size() -1];
-    loss->grad_loss_gpu(grad_in, vals[vals.size() -1], SharedTarget, SharedTarget);
-    n_cpu.backwards(gradients_gpu, vals);
+    loss->grad_loss_gpu(grad_in, vals_gpu[vals_gpu.size() -1], SharedTarget, SharedTarget);
+    n_gpu.backwards(gradients_gpu, vals_gpu);
+    double gpuEnd = cpuSecond() - gpuStart;
     // Compare difference
-    Matrix diff = gradients_gpu[0]->return_data_const() -
-        gradients_cpu[0]->return_data_const();
+    Matrix diff = gradients_cpu[0]->return_data_const() -
+        gradients_gpu[0]->return_data_const();
+    std::cout << "The CPU took " << cpuEnd << " and hte GPU took " <<
+        gpuEnd << std::endl;
     dtype maxDiff = diff.array().abs().maxCoeff();
-    std::cout << "the max diff is:" << maxDiff << std::endl;
-
-    //std::cout << l2->return_gradients()[0]->return_data_const() << std::endl;
+    REQUIRE(cpuEnd > gpuEnd);
+    REQUIRE(maxDiff < 1e-6);
 }
