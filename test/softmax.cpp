@@ -11,7 +11,7 @@ double cpuSecond() {
     gettimeofday(&tp, NULL);
     return ((double)tp.tv_sec + (double)tp.tv_usec * 1e-6);
 }
-TEST_CASE("DataFrame gpu", "[gpu]") {
+TEST_CASE("NeuralNetwork gpu", "[gpu]") {
     srand((unsigned int) time(0));
     cublasHandle_t handle;
     cublasStatus_t stat = cublasCreate(&handle);
@@ -29,7 +29,7 @@ TEST_CASE("DataFrame gpu", "[gpu]") {
     REQUIRE(sum.sum() == Approx(5));
 }
 
-TEST_CASE("DataFrame cpu", "[cpu]") {
+TEST_CASE("NeuralNetwork cpu", "[cpu]") {
     srand((unsigned int) time(0));
     cublasHandle_t handle;
     cublasStatus_t stat = cublasCreate(&handle);
@@ -47,7 +47,7 @@ TEST_CASE("DataFrame cpu", "[cpu]") {
     REQUIRE(sum.sum() == Approx(5.0));
 }
 
-TEST_CASE("DataFrame equivalence", "[equivalence]") {
+TEST_CASE("NeuralNetwork equivalence", "[equivalence]") {
     srand((unsigned int) time(0));
     cublasHandle_t handle;
     cublasStatus_t stat = cublasCreate(&handle);

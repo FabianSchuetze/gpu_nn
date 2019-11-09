@@ -3,9 +3,22 @@
 #include "../include/loss/cross_entropy.h"
 #include <iostream>
 using std::vector;
+//typedef void(Layer::*forward_func)(const SharedStorage&, SharedStorage&);
 NeuralNetwork::NeuralNetwork(vector<Layer*> _layers, const std::string& _loss)
     : layers(_layers) {
     create_loss(_loss);
+    fun_forward = &NeuralNetwork::forward_gpu;
+};
+
+NeuralNetwork::NeuralNetwork(vector<Layer*> _layers, const std::string& _loss,
+        const std::string& device)
+    : layers(_layers) {
+    create_loss(_loss);
+    if (device == "GPU")
+        fun_forward = &NeuralNetwork::forward_gpu;
+    else
+        fun_forward = &NeuralNetwork::forward_cpu;
+    //forward_func a = &Layer::forward_gpu;
 };
 
 void NeuralNetwork::create_loss(const std::string& s) {
@@ -52,12 +65,21 @@ void NeuralNetwork::fill_hiddens(vector<SharedStorage>& values,
 }
 
 void NeuralNetwork::forward(vector<SharedStorage>& values) {
+    (this->*fun_forward)(values);
+}
+
+void NeuralNetwork::forward_gpu(vector<SharedStorage>& values) {
     int i = 0;
-    for (int layer_idx = 1; layer_idx < layers.size(); ++layer_idx) {
-        std::cout << layers[layer_idx]->name() << std::endl;
-        SharedStorage input = values[i];
-        SharedStorage output = values[i+1];
-        layers[layer_idx]->forward_gpu(input, output);
+    for (size_t layer_idx = 1; layer_idx < layers.size(); ++layer_idx) {
+        layers[layer_idx]->forward_gpu(values[i], values[i+1]);
+        i++;
+    }
+}
+
+void NeuralNetwork::forward_cpu(vector<SharedStorage>& values) {
+    int i = 0;
+    for (size_t layer_idx = 1; layer_idx < layers.size(); ++layer_idx) {
+        layers[layer_idx]->forward_cpu(values[i], values[i+1]);
         i++;
     }
 }

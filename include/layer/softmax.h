@@ -1,10 +1,6 @@
 #pragma once
 #ifndef softmax_h
 #define softmax_h
-//#include <cuda_runtime.h>
-//#include <memory>
-//#include <vector>
-//#include "../storage.h"
 #include "cublas_v2.h"
 #include "layer.h"
 class Softmax : public Layer {

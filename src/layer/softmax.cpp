@@ -18,7 +18,6 @@ Softmax::Softmax(cublasHandle_t& handle) : Layer(), _handle(handle) {
 }
 
 void Softmax::forward_cpu(const SharedStorage& in, SharedStorage& out) {
-    std::cout << "inside forward cpu\n";
     int cols = in->get_cols();
     const Matrix& in_ref = in->return_data_const();
     Matrix& out_ref = out->return_data();
