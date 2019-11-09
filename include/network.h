@@ -5,8 +5,9 @@
 #include "loss/loss.h"
 class NeuralNetwork {
    public:
-    NeuralNetwork(std::vector<Layer*>, Loss*);
-    NeuralNetwork(std::vector<Layer*>, Loss*, const std::string&);
+    NeuralNetwork(std::vector<Layer*>, std::shared_ptr<Loss>);
+    NeuralNetwork(std::vector<Layer*>, std::shared_ptr<Loss>,
+                  const std::string&);
     NeuralNetwork(const NeuralNetwork&) = delete;
     NeuralNetwork(NeuralNetwork&&) = delete;
     NeuralNetwork& operator=(const NeuralNetwork&) = delete;
@@ -21,7 +22,6 @@ class NeuralNetwork {
     SharedStorage predict(std::vector<SharedStorage>&);
     void backwards(std::vector<SharedStorage>& gradients,
                    const std::vector<SharedStorage>& values);
-    std::vector<SharedStorage> allocate_shared_storage(int);
     std::vector<SharedStorage> allocate_forward(int);
     std::vector<SharedStorage> allocate_backward(int);
     void forward(std::vector<SharedStorage>&);

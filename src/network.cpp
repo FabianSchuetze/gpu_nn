@@ -5,17 +5,17 @@
 #include "../include/loss/cross_entropy.h"
 using std::vector;
 
-NeuralNetwork::NeuralNetwork(vector<Layer*> _layers, const std::string& _loss)
-    : layers(_layers) {
-    create_loss(_loss);
+NeuralNetwork::NeuralNetwork(vector<Layer*> _layers, std::shared_ptr<Loss> _loss)
+    : layers(_layers), loss(_loss) {
+    //create_loss(_loss);
     fun_forward = &NeuralNetwork::forward_gpu;
     fun_backward = &NeuralNetwork::backward_gpu;
 };
 
-NeuralNetwork::NeuralNetwork(vector<Layer*> _layers, const std::string& _loss,
+NeuralNetwork::NeuralNetwork(vector<Layer*> _layers, std::shared_ptr<Loss> _loss,
                              const std::string& device)
-    : layers(_layers) {
-    create_loss(_loss);
+    : layers(_layers), loss(_loss) {
+    //create_loss(_loss);
     if (device == "GPU") {
         fun_forward = &NeuralNetwork::forward_gpu;
         fun_backward = &NeuralNetwork::backward_gpu;
@@ -26,20 +26,20 @@ NeuralNetwork::NeuralNetwork(vector<Layer*> _layers, const std::string& _loss,
     // forward_func a = &Layer::forward_gpu;
 };
 
-void NeuralNetwork::create_loss(const std::string& s) {
-    if (s == "Bernoulli")
-        ;
-    // loss = std::make_shared<Bernoulli>();
-    else if (s == "MSE")
-        ;
-    // loss = std::make_shared<MSE>();
-    else if (s == "Categorical_Crossentropy")
-        loss = std::make_shared<CrossEntropy>();
-    else {
-        // string m("Only Bernoulli, MSE and Categorical_Crossentropy, in:\n");
-        // throw std::invalid_argument(m + __PRETTY_FUNCTION__);
-    }
-}
+//void NeuralNetwork::create_loss(const std::string& s) {
+    //if (s == "Bernoulli")
+        //;
+    //// loss = std::make_shared<Bernoulli>();
+    //else if (s == "MSE")
+        //;
+    //// loss = std::make_shared<MSE>();
+    //else if (s == "Categorical_Crossentropy")
+        //loss = std::make_shared<CrossEntropy>();
+    //else {
+        //// string m("Only Bernoulli, MSE and Categorical_Crossentropy, in:\n");
+        //// throw std::invalid_argument(m + __PRETTY_FUNCTION__);
+    //}
+//}
 
 void NeuralNetwork::allocate_storage(int obs, int& out_dim,
                                      std::vector<SharedStorage>& inp,
@@ -96,8 +96,8 @@ void NeuralNetwork::forward_gpu(vector<SharedStorage>& values) {
     int i = 0;
     for (size_t layer_idx = 1; layer_idx < layers.size(); ++layer_idx) {
         layers[layer_idx]->forward_gpu(values[i], values[i + 1]);
-        std::cout << "prediction at " << layers[layer_idx]->name() << ":\n"
-                  << values[i + 1]->return_data_const() << std::endl;
+        //std::cout << "prediction at " << layers[layer_idx]->name() << ":\n"
+                  //<< values[i + 1]->return_data_const() << std::endl;
         i++;
     }
 }

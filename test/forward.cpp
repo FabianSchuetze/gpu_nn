@@ -30,7 +30,8 @@ TEST_CASE("NeuralNetwork forward gpu", "[forward gpu]") {
     l2 = &d1;
     l3 = &s1;
     std::vector<Layer*> vec = {l1, l2, l3};
-    NeuralNetwork n1(vec, "Categorical_Crossentropy", "GPU");
+    std::shared_ptr<Loss> loss = std::make_shared<CrossEntropy>(CrossEntropy());
+    NeuralNetwork n1(vec, loss, "GPU");
     Matrix in = Matrix::Random(obs, input_dimension);
     Matrix out = n1.predict(in);
     Vector sums = out.rowwise().sum();
@@ -55,7 +56,8 @@ TEST_CASE("NeuralNetwork2 forward cpu", "[forward2 cpu]") {
     l2 = &d1;
     l3 = &s1;
     std::vector<Layer*> vec = {l1, l2, l3};
-    NeuralNetwork n1(vec, "Categorical_Crossentropy", "CPU");
+    std::shared_ptr<Loss> loss = std::make_shared<CrossEntropy>(CrossEntropy());
+    NeuralNetwork n1(vec, loss, "CPU");
     Matrix in = Matrix::Random(obs, input_dimension);
     Matrix out = n1.predict(in);
     Vector sums = out.rowwise().sum();
@@ -80,8 +82,9 @@ TEST_CASE("NeuralNetwork equivalence", "[equivalence]") {
     l2 = &d1;
     l3 = &s1;
     std::vector<Layer*> vec = {l1, l2, l3};
-    NeuralNetwork n_cpu(vec, "Categorical_Crossentropy", "CPU");
-    NeuralNetwork n_gpu(vec, "Categorical_Crossentropy", "GPU");
+    std::shared_ptr<Loss> loss = std::make_shared<CrossEntropy>(CrossEntropy());
+    NeuralNetwork n_cpu(vec, loss, "CPU");
+    NeuralNetwork n_gpu(vec, loss, "GPU");
     Matrix in = Matrix::Random(obs, input_dimension);
     double cpuStart = cpuSecond();
     Matrix out_cpu = n_cpu.predict(in);
