@@ -59,22 +59,22 @@ void Dense::forward_gpu(const SharedStorage& in, SharedStorage& out) {
 }
 
 void Dense::backward_gpu(int& idx, const SharedStorage& values,
-                         vector<SharedStorage>& gradient) {
-    my_Dgemv(_handle, CUBLAS_OP_N, gradient[idx], parameters[2], gradients[1],
+        const SharedStorage& gradient_in, SharedStorage& gradient_out) {
+    my_Dgemv(_handle, CUBLAS_OP_N, gradient_in, parameters[2], gradients[1],
              1, 1);
-    my_Dgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_T, gradient[idx], values,
+    my_Dgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_T, gradient_in, values,
              gradients[0], 1, 1);
-    my_Dgemm(_handle, CUBLAS_OP_T, CUBLAS_OP_N, parameters[0], gradient[idx],
-             gradient[idx - 1], 1, 1);
+    my_Dgemm(_handle, CUBLAS_OP_T, CUBLAS_OP_N, parameters[0], gradient_in,
+             gradient_out, 1, 1);
     idx--;
 }
 
 void Dense::backward_cpu(int& idx, const SharedStorage& values,
-                         vector<SharedStorage>& gradient) {
+        const SharedStorage& gradient_in, SharedStorage& gradient_out) {
     Matrix& bias_ref = gradients[1]->return_data();
     Matrix& weight_ref = gradients[0]->return_data();
-    const Matrix& grad_in = gradient[idx--]->return_data_const();
-    Matrix& grad_out = gradient[idx]->return_data();
+    const Matrix& grad_in = gradient_in->return_data_const();
+    Matrix& grad_out = gradient_out->return_data();
     bias_ref += grad_in.rowwise().sum();
     weight_ref += grad_in * values->return_data_const().transpose();
     Matrix tmp = parameters[0]->return_data_const().transpose() * grad_in;

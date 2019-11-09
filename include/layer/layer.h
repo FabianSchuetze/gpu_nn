@@ -5,7 +5,7 @@
 #include <vector>
 #include "../storage.h"
 class Layer {
-    protected:
+   protected:
     typedef std::shared_ptr<Storage> SharedStorage;
 
    public:
@@ -19,10 +19,10 @@ class Layer {
     virtual std::string name() const { return _name; };
     virtual void forward_gpu(const SharedStorage&, SharedStorage&) = 0;
     virtual void forward_cpu(const SharedStorage&, SharedStorage&) = 0;
-    virtual void backward_gpu(int&, const SharedStorage&,
-                              std::vector<SharedStorage>&) = 0;
-    virtual void backward_cpu(int&, const SharedStorage&,
-                              std::vector<SharedStorage>&) = 0;
+    virtual void backward_gpu(int&, const SharedStorage&, const SharedStorage&,
+                              SharedStorage&) = 0;
+    virtual void backward_cpu(int&, const SharedStorage&, const SharedStorage&,
+                              SharedStorage&) = 0;
     virtual std::vector<SharedStorage> return_parameters() = 0;
     virtual std::vector<SharedStorage> return_gradients() = 0;
     virtual std::vector<SharedStorage> return_parameters() const = 0;

@@ -40,7 +40,8 @@ void Softmax::forward_gpu(const SharedStorage& in, SharedStorage& out) {
     my_Dgemv(_handle, CUBLAS_OP_T, out, ones, tmp, 1, 0.0f);
     my_Divide_colwise(out, tmp);
 }
-void Softmax::backward_gpu(int&, const std::shared_ptr<Storage>&,
-                           std::vector<std::shared_ptr<Storage>>&) {}
-void Softmax::backward_cpu(int&, const std::shared_ptr<Storage>&,
-                           std::vector<std::shared_ptr<Storage>>&) {}
+
+void Softmax::backward_gpu(int&, const SharedStorage&, const SharedStorage&,
+                           SharedStorage&) {}
+void Softmax::backward_cpu(int&, const SharedStorage&, const SharedStorage&,
+                           SharedStorage&) {}

@@ -54,15 +54,15 @@ TEST_CASE("relu backward equivlaence", "[backward equivalence]") {
     SharedStorage shared_grad_out_cpu = make_shared<Storage>(gradient_out_cpu);
     SharedStorage shared_grad_out_gpu = make_shared<Storage>(gradient_out_gpu);
     SharedStorage shared_values = make_shared<Storage>(values);
-    vector<SharedStorage> grad_vec_cpu = {shared_grad_out_cpu, shared_grad_in};
-    vector<SharedStorage> grad_vec_gpu = {shared_grad_out_gpu, shared_grad_in};
     int layer = 1;
     double cpuStart = cpuSecond();
-    inp1->backward_cpu(layer, shared_values, grad_vec_cpu);
+    inp1->backward_cpu(layer, shared_values, shared_grad_in,
+            shared_grad_out_cpu);
     double cpuEnd = cpuSecond() - cpuStart;
     layer = 1;
     double gpuStart = cpuSecond();
-    inp1->backward_gpu(layer, shared_values, grad_vec_gpu);
+    inp1->backward_gpu(layer, shared_values, shared_grad_in,
+            shared_grad_out_gpu);
     double gpuEnd = cpuSecond() - gpuStart;
     Matrix  diff = shared_grad_out_cpu->return_data_const() -
         shared_grad_out_gpu->return_data_const();

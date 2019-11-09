@@ -13,9 +13,9 @@ class Dense : public Layer {
     void forward_gpu(const SharedStorage&, SharedStorage&) override;
     void forward_cpu(const SharedStorage&, SharedStorage&) override;
     void backward_gpu(int&, const SharedStorage&,
-                      std::vector<SharedStorage>&) override;
+                      const SharedStorage&, SharedStorage&) override;
     void backward_cpu(int&, const SharedStorage&,
-                      std::vector<SharedStorage>&) override;
+                     const SharedStorage&, SharedStorage&) override;
     std::vector<SharedStorage> return_parameters() override {
         return parameters;
     };

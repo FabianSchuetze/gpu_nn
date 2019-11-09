@@ -51,9 +51,9 @@ TEST_CASE("Dense backward_gpu", "[gpu]") {
     SharedStorage shared_gradient_in = make_shared<Storage>(gradient_in);
     SharedStorage shared_gradient_out = make_shared<Storage>(gradient_out);
     SharedStorage shared_values = make_shared<Storage>(values);
-    vector<SharedStorage> grad_vec = {shared_gradient_out, shared_gradient_in};
     int layer = 1;
-    inp1->backward_gpu(layer, shared_values, grad_vec);
+    inp1->backward_gpu(layer, shared_values, shared_gradient_in,
+                       shared_gradient_out);
     REQUIRE(inp1->return_gradients()[1]->return_data_const() ==
             gradient_in.rowwise().sum());
 }
@@ -76,7 +76,7 @@ TEST_CASE("Dense forward_cpu", "[cpu]") {
     REQUIRE(begin != end);
 }
 
-TEST_CASE("Dense backard_cpu", "[cpu]") {
+TEST_CASE("Dense backward_cpu", "[cpu]") {
     srand((unsigned int)time(0));
     cublasHandle_t handle;
     cublasStatus_t stat = cublasCreate(&handle);
@@ -90,9 +90,9 @@ TEST_CASE("Dense backard_cpu", "[cpu]") {
     SharedStorage shared_gradient_in = make_shared<Storage>(gradient_in);
     SharedStorage shared_gradient_out = make_shared<Storage>(gradient_out);
     SharedStorage shared_values = make_shared<Storage>(values);
-    vector<SharedStorage> grad_vec = {shared_gradient_out, shared_gradient_in};
     int layer = 1;
-    inp1->backward_cpu(layer, shared_values, grad_vec);
+    inp1->backward_cpu(layer, shared_values, shared_gradient_in,
+                       shared_gradient_out);
     REQUIRE(inp1->return_gradients()[1]->return_data_const() ==
             gradient_in.rowwise().sum());
 }
@@ -115,20 +115,18 @@ TEST_CASE("Dense backard equivalence", "[backward equivalence]") {
     SharedStorage shared_gradient_out_gpu =
         make_shared<Storage>(gradient_out_gpu);
     SharedStorage shared_values = make_shared<Storage>(values);
-    vector<SharedStorage> grad_vec_cpu = {shared_gradient_out_cpu,
-                                          shared_gradient_in};
-    vector<SharedStorage> grad_vec_gpu = {shared_gradient_out_gpu,
-                                          shared_gradient_in};
     int layer = 1;
     double cpuStart = cpuSecond();
-    inp1->backward_cpu(layer, shared_values, grad_vec_cpu);
+    inp1->backward_cpu(layer, shared_values, shared_gradient_in,
+                       shared_gradient_out_cpu);
     double cpuEnd = cpuSecond() - cpuStart;
     layer = 1;
     double gpuStart = cpuSecond();
-    inp1->backward_gpu(layer, shared_values, grad_vec_gpu);
+    inp1->backward_gpu(layer, shared_values, shared_gradient_in,
+                       shared_gradient_out_gpu);
     double gpuEnd = cpuSecond() - gpuStart;
     Matrix diff = shared_gradient_out_cpu->return_data_const() -
-                           shared_gradient_out_gpu->return_data_const();
+                  shared_gradient_out_gpu->return_data_const();
     dtype out = diff.array().abs().maxCoeff();
     dtype allowed = 1e-5;
     std::cout << "The CPU took " << cpuEnd << " and hte GPU took " << gpuEnd
@@ -161,7 +159,7 @@ TEST_CASE("Dense forward equivalence", "[forward equivalence]") {
     inp1->forward_gpu(storage_in, storage_out_gpu);
     double gpuEnd = cpuSecond() - gpuStart;
     Matrix diff = storage_out_cpu->return_data_const() -
-                           storage_out_gpu->return_data_const();
+                  storage_out_gpu->return_data_const();
     dtype out = diff.array().abs().maxCoeff();
     dtype allowed = 1e-5;
     std::cout << "The CPU took " << cpuEnd << " and hte GPU took " << gpuEnd

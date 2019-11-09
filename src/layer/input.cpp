@@ -9,7 +9,7 @@ void Input::forward_gpu(const std::shared_ptr<Storage>&,
                         std::shared_ptr<Storage>&) {}
 void Input::forward_cpu(const std::shared_ptr<Storage>&,
                         std::shared_ptr<Storage>&) {}
-void Input::backward_gpu(int&, const std::shared_ptr<Storage>&,
-                         std::vector<std::shared_ptr<Storage>>&) {}
-void Input::backward_cpu(int&, const std::shared_ptr<Storage>&,
-                         std::vector<std::shared_ptr<Storage>>&) {}
+void Input::backward_gpu(int&, const SharedStorage&, const SharedStorage&,
+                         SharedStorage&) {};
+void Input::backward_cpu(int&, const SharedStorage&, const SharedStorage&,
+                         SharedStorage&) {};

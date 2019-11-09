@@ -14,10 +14,10 @@ class Input : public Layer {
                      std::shared_ptr<Storage>&) override;
     void forward_cpu(const std::shared_ptr<Storage>&,
                      std::shared_ptr<Storage>&) override;
-    void backward_gpu(int&, const std::shared_ptr<Storage>&,
-                      std::vector<std::shared_ptr<Storage>>&) override;
-    void backward_cpu(int&, const std::shared_ptr<Storage>&,
-                      std::vector<std::shared_ptr<Storage>>&) override;
+    void backward_gpu(int&, const SharedStorage&, const SharedStorage&,
+                      SharedStorage&) override;
+    void backward_cpu(int&, const SharedStorage&, const SharedStorage&,
+                      SharedStorage&) override;
     std::vector<std::shared_ptr<Storage>> return_parameters() override {
         return parameters;
     };
