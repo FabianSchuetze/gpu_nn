@@ -4,13 +4,14 @@
 #include <iostream>
 #include <memory>
 //#include "../../include/cuda_math.h"
+#include <iostream>
 #include "../../include/layer/layer.h"
 #include "../../include/math.h"
-#include <iostream>
 
 using std::vector;
-Relu::Relu(cublasHandle_t& handle)
-    : Layer(), parameters(), gradients(), _handle(handle) {}
+Relu::Relu(cublasHandle_t& handle) : Layer(), _handle(handle) {
+    _name = "Activation";
+}
 
 void Relu::forward_cpu(const SharedStorage& in, SharedStorage& out) {
     out->return_data() = in->return_data_const().cwiseMax(0.);
@@ -38,8 +39,8 @@ void Relu::backward_cpu(int& idx, const SharedStorage& values,
             tmp(j, i) = (value_ref(j, i) > 0) ? 1. : 0.;
     }
     Matrix out = grad_in.array() * tmp.array();
-    if ((tmp.rows() != gradient[idx]->get_rows()) or 
-            (tmp.cols() != gradient[idx]->get_cols())) {
+    if ((tmp.rows() != gradient[idx]->get_rows()) or
+        (tmp.cols() != gradient[idx]->get_cols())) {
         throw std::runtime_error("Doesn work");
     } else {
         grad_out = out;

@@ -7,14 +7,15 @@
 #include "../../include/math.h"
 
 using Eigen::all;
-//using Eigen::MatrixXd;
+// using Eigen::MatrixXd;
 using std::make_shared;
 using std::vector;
 
 typedef std::shared_ptr<Storage> SharedStorage;
 
-Softmax::Softmax(cublasHandle_t& handle)
-    : Layer(), parameters(), gradients(), _handle(handle) {}
+Softmax::Softmax(cublasHandle_t& handle) : Layer(), _handle(handle) {
+    _name = "Activation";
+}
 
 void Softmax::forward_cpu(const SharedStorage& in, SharedStorage& out) {
     std::cout << "inside forward cpu\n";
@@ -41,6 +42,6 @@ void Softmax::forward_gpu(const SharedStorage& in, SharedStorage& out) {
     my_Divide_colwise(out, tmp);
 }
 void Softmax::backward_gpu(int&, const std::shared_ptr<Storage>&,
-                           std::vector<std::shared_ptr<Storage>>&) { }
+                           std::vector<std::shared_ptr<Storage>>&) {}
 void Softmax::backward_cpu(int&, const std::shared_ptr<Storage>&,
-                           std::vector<std::shared_ptr<Storage>>&) { }
+                           std::vector<std::shared_ptr<Storage>>&) {}

@@ -1,5 +1,5 @@
-#ifndef relu_h
-#define relu_h
+#ifndef input_h
+#define input_h
 #include <cuda_runtime.h>
 #include <memory>
 #include <vector>
@@ -7,13 +7,14 @@
 #include "../storage.h"
 #include "cublas_v2.h"
 #include "layer.h"
-class Relu : public Layer {
+class Input : public Layer {
    public:
-    Relu(cublasHandle_t&);
+    Input(int);
+    virtual ~Input() = default;
+    int output_dimension() override { return _output_dimension; };
     int input_dimension() override { return 0; };
-    int output_dimension() override { return 0; };
+    int output_dimension() const override { return _output_dimension; };
     int input_dimension() const override { return 0; };
-    int output_dimension() const override { return 0; };
     void forward_gpu(const std::shared_ptr<Storage>&,
                      std::shared_ptr<Storage>&) override;
     void forward_cpu(const std::shared_ptr<Storage>&,
@@ -25,17 +26,17 @@ class Relu : public Layer {
     std::vector<std::shared_ptr<Storage>> return_parameters() override {
         return parameters;
     };
-    std::vector<std::shared_ptr<Storage>> return_parameters() const override {
-        return parameters;
-    };
     std::vector<std::shared_ptr<Storage>> return_gradients() override {
         return gradients;
+    };
+    std::vector<std::shared_ptr<Storage>> return_parameters() const override {
+        return parameters;
     };
     std::vector<std::shared_ptr<Storage>> return_gradients() const override {
         return gradients;
     };
 
    private:
-    cublasHandle_t _handle;
+    int _output_dimension;
 };
 #endif

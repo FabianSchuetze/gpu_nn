@@ -8,9 +8,15 @@
 #include "cublas_v2.h"
 #include "layer.h"
 class Softmax : public Layer {
+    typedef std::shared_ptr<Storage> SharedStorage;
+
    public:
     Softmax(cublasHandle_t&);
     virtual ~Softmax() = default;
+    int input_dimension() override { return 0; };
+    int output_dimension() override { return 0; };
+    int input_dimension() const override { return 0; };
+    int output_dimension() const override { return 0; };
     void forward_gpu(const std::shared_ptr<Storage>&,
                      std::shared_ptr<Storage>&) override;
     void forward_cpu(const std::shared_ptr<Storage>&,
@@ -19,19 +25,20 @@ class Softmax : public Layer {
                       std::vector<std::shared_ptr<Storage>>&) override;
     void backward_cpu(int&, const std::shared_ptr<Storage>&,
                       std::vector<std::shared_ptr<Storage>>&) override;
-    std::vector<std::shared_ptr<Storage>> return_parameters() override {
+    std::vector<SharedStorage> return_parameters() override {
         return parameters;
     };
-    std::vector<std::shared_ptr<Storage>> return_gradients() override {
+    std::vector<SharedStorage> return_gradients() override {
         return gradients;
-    }
+    };
+    std::vector<SharedStorage> return_parameters() const override {
+        return parameters;
+    };
+    std::vector<SharedStorage> return_gradients() const override {
+        return gradients;
+    };
 
    private:
-    // void initialize_weight(int, int);
-    // void initialize_bias(int, int);
-    // void initialize_grad(int, int);
-    std::vector<std::shared_ptr<Storage>> parameters;
-    std::vector<std::shared_ptr<Storage>> gradients;
     cublasHandle_t _handle;
 };
 #endif

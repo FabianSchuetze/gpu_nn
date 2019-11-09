@@ -15,6 +15,8 @@ set(${LIBRARY_TARGET_NAME}_SRC
     src/layer/softmax.cpp
     src/layer/relu.cpp
     src/loss/cross_entropy.cpp
+    src/layer/input.cpp
+    src/network.cpp
 )
 if (UNIX)
   add_library(${LIBRARY_TARGET_NAME} SHARED ${${LIBRARY_TARGET_NAME}_SRC})
@@ -26,19 +28,23 @@ add_executable(test_softmax test/softmax.cpp)
 add_executable(test_dense test/dense.cpp)
 add_executable(test_relu test/relu.cpp)
 add_executable(test_cross_entropy test/cross_entropy.cpp)
+add_executable(test_forward test/forward.cpp)
 
 target_link_libraries(test_softmax GPU_NN ${CUDA_LIBRARIES})
 target_link_libraries(test_dense GPU_NN ${CUDA_LIBRARIES})
 target_link_libraries(test_relu GPU_NN ${CUDA_LIBRARIES})
 target_link_libraries(test_cross_entropy GPU_NN ${CUDA_LIBRARIES})
+target_link_libraries(test_forward GPU_NN ${CUDA_LIBRARIES})
 target_link_libraries(test_softmax GPU_NN cuda_obj)
 target_link_libraries(test_dense GPU_NN cuda_obj)
 target_link_libraries(test_relu GPU_NN cuda_obj)
 target_link_libraries(test_cross_entropy GPU_NN cuda_obj)
+target_link_libraries(test_forward GPU_NN cuda_obj)
 
 enable_testing()
 add_test(test_softmax test_softmax)
 add_test(test_dense test_dense)
 add_test(test_relu test_relu)
 add_test(test_cross_entropy test_cross_entropy)
+add_test(test_forward test_forward)
 # install(TARGETS main DESTINATION ../bin)
