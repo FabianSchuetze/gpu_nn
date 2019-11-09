@@ -25,10 +25,16 @@ void Storage::initialize_gpu_memory() {
         cudaMemcpy(_gpu_pointer, _cpu_pointer, nBytes, cudaMemcpyHostToDevice));
 }
 
-void Storage::copy_cpu_data(const Matrix& new_data) {
+void Storage::update_cpu_data(const Matrix& new_data) {
     _data = new_data;
     _cpu_pointer = _data.data();
     recent_head = "CPU";
+}
+
+void Storage::update_gpu_data(dtype new_data) {
+    unsigned int nBytes = _data.rows() * _data.cols() * sizeof(dtype);
+    MY_CHECK(cudaMemset(_gpu_pointer, new_data, nBytes));
+    recent_head = "GPU";
 }
 
 void Storage::sync_to_cpu() {

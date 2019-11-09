@@ -44,3 +44,6 @@ void Relu::backward_cpu(const SharedStorage& values,
         grad_out = out;
     }
 }
+
+void Relu::clear_gradients_cpu() {};
+void Relu::clear_gradients_gpu() {};

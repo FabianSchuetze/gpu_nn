@@ -24,6 +24,8 @@ class Softmax : public Layer {
     VecSharedStorage return_gradients() override { return gradients; };
     VecSharedStorage return_parameters() const override { return parameters; };
     VecSharedStorage return_gradients() const override { return gradients; };
+    void clear_gradients_cpu() override;
+    void clear_gradients_gpu() override;
 
    private:
     cublasHandle_t _handle;

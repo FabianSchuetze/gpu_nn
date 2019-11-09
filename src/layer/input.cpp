@@ -13,3 +13,5 @@ void Input::backward_gpu(const SharedStorage&, const SharedStorage&,
                          SharedStorage&) {};
 void Input::backward_cpu(const SharedStorage&, const SharedStorage&,
                          SharedStorage&) {};
+void Input::clear_gradients_cpu() {};
+void Input::clear_gradients_gpu() {};

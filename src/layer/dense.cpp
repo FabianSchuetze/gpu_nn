@@ -84,7 +84,7 @@ void Dense::backward_cpu(const SharedStorage& values,
         std::string m("The gradient sizes don't fit, in:\n");
         throw std::runtime_error(m + __PRETTY_FUNCTION__);
     } else {
-        gradient_out->copy_cpu_data(tmp);
+        gradient_out->update_cpu_data(tmp);
     }
 }
 
@@ -107,4 +107,17 @@ void Dense::initialize_weight(int rows, int cols) {
 void Dense::initialize_bias(int rows, int cols) {
     Matrix mat = Matrix(rows, 1).setZero();
     parameters.push_back(std::make_shared<Storage>(mat));
+}
+
+void Dense::clear_gradients_cpu() {
+    for (SharedStorage& grad : gradients) {
+        Matrix tmp = Matrix::Zero(grad->get_rows(), grad->get_cols());
+        grad->update_cpu_data(tmp);
+    }
+}
+
+void Dense::clear_gradients_gpu() {
+    for (SharedStorage& grad : gradients) {
+        grad->update_gpu_data(0.);
+    }
 }

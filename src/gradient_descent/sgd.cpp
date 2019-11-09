@@ -11,7 +11,8 @@ void StochasticGradientDescent::weight_update_cpu(Layer* layer) {
         SharedStorage& grad = layer->return_parameters()[i];
         Matrix new_weight = para->return_data_const() -
                             learing_rate * grad->return_data_const();
-        para->copy_cpu_data(new_weight);
+        para->update_cpu_data(new_weight);
+        layer->clear_gradients_cpu();
     }
 }
 
@@ -21,5 +22,6 @@ void StochasticGradientDescent::weight_update_gpu(Layer* layer) {
         const SharedStorage& grad = layer->return_parameters()[i];
         dtype alpha = -1 * learing_rate;
         my_Matrix_addition_inplace(grad, para, alpha);
+        layer->clear_gradients_gpu();
     }
 }

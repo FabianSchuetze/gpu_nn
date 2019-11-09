@@ -11,7 +11,8 @@ class Storage {
     ~Storage();
     const dtype* cpu_pointer_const();
     const dtype* gpu_pointer_const();
-    void copy_cpu_data(const Matrix&);
+    void update_cpu_data(const Matrix&);
+    void update_gpu_data(const dtype);
     dtype* cpu_pointer();
     dtype* gpu_pointer();
     int get_rows() { return _data.rows(); }

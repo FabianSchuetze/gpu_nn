@@ -85,7 +85,7 @@ vector<SharedStorage> NeuralNetwork::allocate_backward(int obs) {
 
 void NeuralNetwork::fill_hiddens(vector<SharedStorage>& values,
                                  const Matrix& features) {
-    values[0]->copy_cpu_data(features.transpose());
+    values[0]->update_cpu_data(features.transpose());
 }
 
 void NeuralNetwork::forward(vector<SharedStorage>& values) {

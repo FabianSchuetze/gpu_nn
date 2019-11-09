@@ -45,3 +45,5 @@ void Softmax::backward_gpu(const SharedStorage&, const SharedStorage&,
                            SharedStorage&) {}
 void Softmax::backward_cpu(const SharedStorage&, const SharedStorage&,
                            SharedStorage&) {}
+void Softmax::clear_gradients_cpu() {};
+void Softmax::clear_gradients_gpu() {};
