@@ -3,7 +3,8 @@
 #include <iostream>
 #include "../include/common.h"
 
-Storage::Storage() : _data(), _cpu_pointer(NULL), _gpu_pointer(NULL){};
+Storage::Storage()
+    : _data(), _cpu_pointer(NULL), _gpu_pointer(NULL), recent_head("SYNC"){};
 
 Storage::Storage(const Matrix& data)
     : _data(data),
@@ -25,7 +26,7 @@ void Storage::initialize_gpu_memory() {
         cudaMemcpy(_gpu_pointer, _cpu_pointer, nBytes, cudaMemcpyHostToDevice));
 }
 
-void Storage::update_cpu_data(const Matrix& new_data) {
+void Storage::update_cpu_data(Matrix new_data) {
     _data = new_data;
     _cpu_pointer = _data.data();
     recent_head = "CPU";
@@ -38,11 +39,13 @@ void Storage::update_gpu_data(dtype new_data) {
 }
 
 void Storage::sync_to_cpu() {
+    //std::cout << "sync function\n";
+    //std::cout << recent_head << std::endl;
     if (recent_head == "GPU") {
         std::cout << "copying to CPU\n";
         unsigned int nBytes = _data.rows() * _data.cols() * sizeof(dtype);
         MY_CHECK(cudaMemcpy(_cpu_pointer, _gpu_pointer, nBytes,
-                         cudaMemcpyDeviceToHost));
+                            cudaMemcpyDeviceToHost));
         recent_head = "SYNC";
     }
 }
@@ -52,7 +55,7 @@ void Storage::sync_to_gpu() {
         std::cout << "syncing to GPU\n";
         unsigned int nBytes = _data.rows() * _data.cols() * sizeof(dtype);
         MY_CHECK(cudaMemcpy(_gpu_pointer, _data.data(), nBytes,
-                         cudaMemcpyHostToDevice));
+                            cudaMemcpyHostToDevice));
         recent_head = "SYNC";
     }
 }
@@ -81,7 +84,7 @@ dtype* Storage::gpu_pointer() {
     return _gpu_pointer;
 }
 
-const Matrix Storage::return_data_const() {
+const Matrix& Storage::return_data_const() {
     sync_to_cpu();
     return _data;
 }

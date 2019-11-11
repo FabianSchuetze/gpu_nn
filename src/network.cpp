@@ -10,6 +10,7 @@ NeuralNetwork::NeuralNetwork(vector<Layer*> _layers, std::shared_ptr<Loss> _loss
     //create_loss(_loss);
     fun_forward = &NeuralNetwork::forward_gpu;
     fun_backward = &NeuralNetwork::backward_gpu;
+    fun_update = &NeuralNetwork::update_weights_gpu;
 };
 
 NeuralNetwork::NeuralNetwork(vector<Layer*> _layers, std::shared_ptr<Loss> _loss,
@@ -19,9 +20,11 @@ NeuralNetwork::NeuralNetwork(vector<Layer*> _layers, std::shared_ptr<Loss> _loss
     if (device == "GPU") {
         fun_forward = &NeuralNetwork::forward_gpu;
         fun_backward = &NeuralNetwork::backward_gpu;
+        fun_update = &NeuralNetwork::update_weights_gpu;
     } else {
         fun_forward = &NeuralNetwork::forward_cpu;
         fun_backward = &NeuralNetwork::backward_cpu;
+        fun_update = &NeuralNetwork::update_weights_cpu;
     }
     // forward_func a = &Layer::forward_gpu;
 };

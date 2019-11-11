@@ -11,14 +11,14 @@ class Storage {
     ~Storage();
     const dtype* cpu_pointer_const();
     const dtype* gpu_pointer_const();
-    void update_cpu_data(const Matrix&);
+    void update_cpu_data(Matrix);
     void update_gpu_data(const dtype);
     dtype* cpu_pointer();
     dtype* gpu_pointer();
     int get_rows() { return _data.rows(); }
     int get_cols() { return _data.cols(); }
     Matrix& return_data();
-    const Matrix return_data_const();
+    const Matrix& return_data_const();
 
    private:
     Matrix _data;

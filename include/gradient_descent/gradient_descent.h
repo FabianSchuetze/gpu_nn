@@ -3,17 +3,21 @@
 #define gradient_descent_h
 #include <memory>
 #include <vector>
-#include "../storage.h"
-#include "../common.h"
 #include "../../include/layer/layer.h"
+#include "../common.h"
+#include "../storage.h"
 class GradientDescent {
-    protected:
+   protected:
     typedef std::shared_ptr<Storage> SharedStorage;
-    int learing_rate;
+    typedef std::vector<SharedStorage> VecSharedStorage;
+    dtype learing_rate;
+
    public:
-    GradientDescent(int);
+    GradientDescent(dtype);
     ~GradientDescent() = default;
-    virtual void weight_update_gpu(Layer*) = 0;
-    virtual void weight_update_cpu(Layer*) = 0;
+    virtual void weight_update_cpu(const VecSharedStorage&,
+                                   VecSharedStorage&) = 0;
+    virtual void weight_update_gpu(const VecSharedStorage&,
+                                   VecSharedStorage&) = 0;
 };
 #endif

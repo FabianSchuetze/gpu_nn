@@ -9,5 +9,7 @@
 #include "storage.h"
 #include "loss/cross_entropy.h"
 #include "loss/loss.h"
+#include "gradient_descent/gradient_descent.h"
+#include "gradient_descent/sgd.h"
 
 #endif

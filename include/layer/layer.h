@@ -30,6 +30,7 @@ class Layer {
     virtual VecSharedStorage return_gradients() const = 0;
     virtual void clear_gradients_cpu() = 0;
     virtual void clear_gradients_gpu()= 0;
+    virtual int n_paras() { return parameters.size();};
 
    protected:
     std::vector<SharedStorage> parameters;

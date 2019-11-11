@@ -6,9 +6,11 @@
 #include "gradient_descent.h"
 class StochasticGradientDescent : public GradientDescent {
    public:
-    StochasticGradientDescent(int);
-    ~StochasticGradientDescent() = default;
-    void weight_update_cpu(Layer* layer) override;
-    void weight_update_gpu(Layer* layer) override;
+    StochasticGradientDescent(dtype);
+    virtual ~StochasticGradientDescent();
+    void weight_update_cpu(const std::vector<SharedStorage>&
+        gradient, std::vector<SharedStorage>& parameters) override;
+    void weight_update_gpu(const std::vector<SharedStorage>&
+        gradient, std::vector<SharedStorage>& parameters) override;
 };
 #endif
