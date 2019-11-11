@@ -39,8 +39,6 @@ void Storage::update_gpu_data(dtype new_data) {
 }
 
 void Storage::sync_to_cpu() {
-    //std::cout << "sync function\n";
-    //std::cout << recent_head << std::endl;
     if (recent_head == "GPU") {
         std::cout << "copying to CPU\n";
         unsigned int nBytes = _data.rows() * _data.cols() * sizeof(dtype);

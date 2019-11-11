@@ -214,23 +214,25 @@ __global__ void cuda_sum_cross_entropy_losses(int obs, double* loss,
 
 __global__ void cuda_matrix_addition_inplace(int rows, int cols,
                                              const float* d_A, float* d_B,
-                                             const float* alpha) {
+                                             const float alpha) {
     unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
     unsigned int linear = row + col * rows;
     if ((row < rows) && (col < cols)) {
-        d_B[linear] += *alpha * d_A[linear];
+        //printf("row %d, col %d, linear %d, old_val %.3f, gradient %.3f\n",
+                //row, col, linear, d_B[linear], d_A[linear]);
+        d_B[linear] += alpha * d_A[linear];
     }
 }
 
 __global__ void cuda_matrix_addition_inplace(int rows, int cols,
                                              const double* d_A, double* d_B,
-                                             const double* alpha) {
+                                             const double alpha) {
     unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
     unsigned int linear = row + col * rows;
     if ((row < rows) && (col < cols)) {
-        d_B[linear] += *alpha * d_A[linear];
+        d_B[linear] += alpha * d_A[linear];
     }
 }
 
@@ -381,23 +383,26 @@ void cross_entropy_gradient(int rows, int cols, const float* prediction,
     dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     cuda_cross_entropy_gradient<<<grid, block>>>(rows, cols, prediction, target,
                                                  gradient);
+    //cudaDeviceSynchronize();
     MY_CHECK(cudaPeekAtLastError());
 }
 
 void matrix_addition_inplace(int rows, int cols, const float* gradient,
-                             float* parameters, const float* alpha) {
+                             float* parameters, const float alpha) {
     dim3 block(16, 16);
     dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     cuda_matrix_addition_inplace<<<grid, block>>>(rows, cols, gradient,
                                                   parameters, alpha);
+    //cudaDeviceSynchronize();
     MY_CHECK(cudaPeekAtLastError());
 }
 
 void matrix_addition_inplace(int rows, int cols, const double* gradient,
-                             double* parameters, const double* alpha) {
+                             double* parameters, const double alpha) {
     dim3 block(16, 16);
     dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     cuda_matrix_addition_inplace<<<grid, block>>>(rows, cols, gradient,
                                                   parameters, alpha);
+    cudaDeviceSynchronize();
     MY_CHECK(cudaPeekAtLastError());
 }

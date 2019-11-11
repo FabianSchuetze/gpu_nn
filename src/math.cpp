@@ -130,8 +130,8 @@ void my_cross_entropy_gradient(SharedStorage& gradient,
 void my_Matrix_addition_inplace(const SharedStorage& gradient,
                         SharedStorage& parameters, dtype alpha) {
     int cols = parameters->get_cols();
-    int rows = gradient->get_rows();
+    int rows = parameters->get_rows();
     const dtype* d_A = gradient->gpu_pointer_const();
     dtype* d_B = parameters->gpu_pointer();
-    matrix_addition_inplace(rows, cols, d_A, d_B, &alpha);
+    matrix_addition_inplace(rows, cols, d_A, d_B, alpha);
 }
