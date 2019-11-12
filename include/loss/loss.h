@@ -9,11 +9,11 @@ class Loss {
    public:
     Loss() = default;
     ~Loss() = default;
-    virtual dtype loss_cpu(const SharedStorage&, const SharedStorage&) = 0;
-    virtual dtype loss_gpu(const SharedStorage&, const SharedStorage&) = 0;
+    virtual dtype loss_cpu(const SharedStorage&, const SharedStorage&);
+    virtual dtype loss_gpu(const SharedStorage&, const SharedStorage&);
     virtual void grad_loss_cpu(SharedStorage&, const SharedStorage&,
-                               const SharedStorage&, const SharedStorage&) = 0;
+                               const SharedStorage&, const SharedStorage&);
     virtual void grad_loss_gpu(SharedStorage&, const SharedStorage&,
-                               const SharedStorage&, const SharedStorage&)= 0;
+                               const SharedStorage&, const SharedStorage&);
 };
 #endif

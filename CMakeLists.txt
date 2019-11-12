@@ -1,15 +1,17 @@
 cmake_minimum_required(VERSION 3.5)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # Produce compile_commands.json
 
-project(GPU_NN)
+project(GPU_NN LANGUAGES CUDA CXX)
 set(LIBRARY_TARGET_NAME ${PROJECT_NAME})
 
 set(CUDA_HOST_COMPILER nvcc) # shouldn't fail anymore
-find_package(CUDA REQUIRED)
-CUDA_ADD_LIBRARY(cuda_obj STATIC src/cuda_math.cu) # works for me now
+#find_package(CUDA 9.0 REQUIRED)
+enable_language(CUDA)
+ADD_LIBRARY(cuda_obj SHARED src/cuda_math.cu) # works for me now
 
 set(${LIBRARY_TARGET_NAME}_SRC
     src/layer/dense.cpp
+    src/loss/loss.cpp
     src/math.cpp
     src/storage.cpp
     src/layer/softmax.cpp
@@ -58,4 +60,9 @@ add_test(test_cross_entropy test_cross_entropy)
 add_test(test_forward test_forward)
 add_test(test_backward test_backward)
 add_test(test_sgd test_sgd)
-# install(TARGETS main DESTINATION ../bin)
+add_subdirectory(third_party/pybind11)
+pybind11_add_module(NeuralNetwork MODULE ${${LIBRARY_TARGET_NAME}_SRC}
+    python/bindings.cpp)
+
+target_link_libraries(NeuralNetwork PRIVATE GPU_NN ${CUDA_LIBRARIES})
+target_link_libraries(NeuralNetwork PRIVATE GPU_NN cuda_obj)
