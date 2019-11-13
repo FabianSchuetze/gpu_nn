@@ -1,10 +1,11 @@
 #ifndef network_h
 #define network_h
 #include <memory>
+#include <random>
 #include <vector>
+#include "gradient_descent/gradient_descent.h"
 #include "layer/layer.h"
 #include "loss/loss.h"
-#include "gradient_descent/gradient_descent.h"
 class NeuralNetwork {
    public:
     NeuralNetwork(std::vector<Layer*>, std::shared_ptr<Loss>);
@@ -29,9 +30,14 @@ class NeuralNetwork {
     void forward(std::vector<SharedStorage>&);
     void fill_hiddens(std::vector<SharedStorage>&, const Matrix&);
     void update_weights(std::shared_ptr<GradientDescent>);
+    void train(const Matrix&, const Matrix&, std::shared_ptr<GradientDescent>);
+    void get_new_sample(const Matrix&, const Matrix&, const std::vector<int>&,
+                        Matrix&, Matrix&);
+    void random_numbers(std::vector<int>&, std::mt19937&, const Matrix&);
 
    private:
-    typedef void (NeuralNetwork::*update_func)(std::shared_ptr<GradientDescent>);
+    typedef void (NeuralNetwork::*update_func)(
+        std::shared_ptr<GradientDescent>);
     typedef void (NeuralNetwork::*forward_func)(std::vector<SharedStorage>&);
     typedef void (NeuralNetwork::*backward_func)(
         std::vector<SharedStorage>&, const std::vector<SharedStorage>&);
