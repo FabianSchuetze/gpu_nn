@@ -8,7 +8,7 @@ class Relu : public Layer {
     //typedef std::shared_ptr<Storage> SharedStorage;
 
    public:
-    Relu(cublasHandle_t&);
+    Relu();
     int input_dimension() override { return 0; };
     int output_dimension() override { return 0; };
     int input_dimension() const override { return 0; };

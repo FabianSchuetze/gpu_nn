@@ -16,8 +16,8 @@ class GradientDescent {
     GradientDescent(dtype);
     ~GradientDescent() = default;
     virtual void weight_update_cpu(const VecSharedStorage&,
-                                   VecSharedStorage&) = 0;
+                                   VecSharedStorage&);
     virtual void weight_update_gpu(const VecSharedStorage&,
-                                   VecSharedStorage&) = 0;
+                                   VecSharedStorage&);
 };
 #endif

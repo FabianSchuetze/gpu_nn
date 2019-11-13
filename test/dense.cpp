@@ -21,11 +21,8 @@ double cpuSecond() {
 }
 TEST_CASE("Dense forward_gpu", "[gpu]") {
     srand((unsigned int)time(0));
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-    CHECK_CUBLAS(stat);
     Layer* inp1;
-    Dense s1(6, 5, handle);
+    Dense s1(6, 5);
     inp1 = &s1;
     Matrix in = Matrix::Random(5, 3);
     Matrix out = Matrix::Zero(6, 3);
@@ -39,11 +36,8 @@ TEST_CASE("Dense forward_gpu", "[gpu]") {
 
 TEST_CASE("Dense backward_gpu", "[gpu]") {
     srand((unsigned int)time(0));
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-    CHECK_CUBLAS(stat);
     Layer* inp1;
-    Dense s1(6, 5, handle);
+    Dense s1(6, 5);
     inp1 = &s1;
     Matrix gradient_in = Matrix::Random(6, 3);
     Matrix gradient_out = Matrix::Zero(5, 3);
@@ -58,11 +52,8 @@ TEST_CASE("Dense backward_gpu", "[gpu]") {
 
 TEST_CASE("Dense forward_cpu", "[cpu]") {
     srand((unsigned int)time(0));
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-    CHECK_CUBLAS(stat);
     Layer* inp1;
-    Dense s1(6, 5, handle);
+    Dense s1(6, 5);
     inp1 = &s1;
     Matrix in = Matrix::Random(5, 3);
     Matrix out = Matrix::Zero(6, 3);
@@ -76,11 +67,8 @@ TEST_CASE("Dense forward_cpu", "[cpu]") {
 
 TEST_CASE("Dense backward_cpu", "[cpu]") {
     srand((unsigned int)time(0));
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-    CHECK_CUBLAS(stat);
     Layer* inp1;
-    Dense s1(6, 5, handle);
+    Dense s1(6, 5);
     inp1 = &s1;
     Matrix gradient_in = Matrix::Random(6, 3);
     Matrix gradient_out = Matrix::Zero(5, 3);
@@ -95,11 +83,8 @@ TEST_CASE("Dense backward_cpu", "[cpu]") {
 
 TEST_CASE("Dense backard equivalence", "[backward equivalence]") {
     srand((unsigned int)time(0));
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-    CHECK_CUBLAS(stat);
     Layer* inp1;
-    Dense s1(1024, 1000, handle);
+    Dense s1(1024, 1000);
     inp1 = &s1;
     Matrix gradient_in = Matrix::Random(1024, 32);
     Matrix gradient_out_cpu = Matrix::Zero(1000, 32);
@@ -132,11 +117,8 @@ TEST_CASE("Dense backard equivalence", "[backward equivalence]") {
 
 TEST_CASE("Dense forward equivalence", "[forward equivalence]") {
     srand((unsigned int)time(0));
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-    CHECK_CUBLAS(stat);
     Layer* inp1;
-    Dense s1(1024, 1000, handle);
+    Dense s1(1024, 1000);
     inp1 = &s1;
     Matrix in = Matrix::Random(1000, 32);
     Matrix out_cpu = Matrix::Zero(1024, 32);

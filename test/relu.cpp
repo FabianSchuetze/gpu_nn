@@ -20,11 +20,8 @@ double cpuSecond() {
 }
 TEST_CASE("relu forward gpu", "[gpu]") {
     srand((unsigned int)time(0));
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-    CHECK_CUBLAS(stat);
     Layer* inp1;
-    Relu s1(handle);
+    Relu s1;
     inp1 = &s1;
     Matrix in = Matrix::Random(6, 5);
     Matrix out = Matrix::Zero(6, 5);
@@ -40,11 +37,8 @@ TEST_CASE("relu forward gpu", "[gpu]") {
 
 TEST_CASE("relu backward equivlaence", "[backward equivalence]") {
     srand((unsigned int)time(0));
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-    CHECK_CUBLAS(stat);
     Layer* inp1;
-    Relu s1(handle);
+    Relu s1;
     inp1 = &s1;
     Matrix gradient_in = Matrix::Random(1024, 32);
     Matrix gradient_out_cpu = Matrix::Zero(1024, 32);
@@ -74,11 +68,8 @@ TEST_CASE("relu backward equivlaence", "[backward equivalence]") {
 
 TEST_CASE("relu forward cpu", "[cpu]") {
     srand((unsigned int)time(0));
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-    CHECK_CUBLAS(stat);
     Layer* inp1;
-    Relu s1(handle);
+    Relu s1;
     inp1 = &s1;
     Matrix in = Matrix::Random(6, 5);
     Matrix out = Matrix::Zero(6, 5);
@@ -94,11 +85,8 @@ TEST_CASE("relu forward cpu", "[cpu]") {
 
 TEST_CASE("relu forward equivalence", "[forward equivalence]") {
     srand((unsigned int)time(0));
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-    CHECK_CUBLAS(stat);
     Layer* inp1;
-    Relu s1(handle);
+    Relu s1;
     inp1 = &s1;
     Matrix in = Matrix::Random(1024, 32);
     Matrix out_cpu = Matrix::Zero(1024, 32);

@@ -9,7 +9,7 @@
 class NeuralNetwork {
    public:
     NeuralNetwork(std::vector<Layer*>, std::shared_ptr<Loss>);
-    NeuralNetwork(std::vector<Layer*>, std::shared_ptr<Loss>,
+    NeuralNetwork(std::vector<Layer*>,  const std::string& loss,
                   const std::string&);
     NeuralNetwork(const NeuralNetwork&) = delete;
     NeuralNetwork(NeuralNetwork&&) = delete;
@@ -29,15 +29,15 @@ class NeuralNetwork {
     std::vector<SharedStorage> allocate_backward(int);
     void forward(std::vector<SharedStorage>&);
     void fill_hiddens(std::vector<SharedStorage>&, const Matrix&);
-    void update_weights(std::shared_ptr<GradientDescent>);
-    void train(const Matrix&, const Matrix&, std::shared_ptr<GradientDescent>);
+    void update_weights(GradientDescent*);
+    void train(const Matrix&, const Matrix&, GradientDescent*);
     void get_new_sample(const Matrix&, const Matrix&, const std::vector<int>&,
                         Matrix&, Matrix&);
     void random_numbers(std::vector<int>&, std::mt19937&, const Matrix&);
 
    private:
     typedef void (NeuralNetwork::*update_func)(
-        std::shared_ptr<GradientDescent>);
+        GradientDescent*);
     typedef void (NeuralNetwork::*forward_func)(std::vector<SharedStorage>&);
     typedef void (NeuralNetwork::*backward_func)(
         std::vector<SharedStorage>&, const std::vector<SharedStorage>&);
@@ -47,8 +47,8 @@ class NeuralNetwork {
     std::vector<Layer*> layers;
     std::shared_ptr<Loss> loss;
     void create_loss(const std::string& s);
-    void update_weights_cpu(std::shared_ptr<GradientDescent>);
-    void update_weights_gpu(std::shared_ptr<GradientDescent>);
+    void update_weights_cpu(GradientDescent*);
+    void update_weights_gpu(GradientDescent*);
     void forward_gpu(std::vector<SharedStorage>&);
     void forward_cpu(std::vector<SharedStorage>&);
     void backward_cpu(std::vector<SharedStorage>&,

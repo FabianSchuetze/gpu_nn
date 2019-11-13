@@ -8,7 +8,7 @@ class Softmax : public Layer {
     typedef std::vector<std::shared_ptr<Storage>> VecSharedStorage;
 
    public:
-    Softmax(cublasHandle_t&);
+    Softmax();
     virtual ~Softmax() = default;
     int input_dimension() override { return 0; };
     int output_dimension() override { return 0; };

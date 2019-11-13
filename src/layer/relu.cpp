@@ -7,7 +7,9 @@
 #include "../../include/math.h"
 
 using std::vector;
-Relu::Relu(cublasHandle_t& handle) : Layer(), _handle(handle) {
+Relu::Relu() : Layer() {
+    cublasStatus_t stat = cublasCreate(&_handle);
+    CHECK_CUBLAS(stat);
     _name = "Activation";
 }
 
@@ -45,5 +47,5 @@ void Relu::backward_cpu(const SharedStorage& values,
     }
 }
 
-void Relu::clear_gradients_cpu() {};
-void Relu::clear_gradients_gpu() {};
+void Relu::clear_gradients_cpu(){};
+void Relu::clear_gradients_gpu(){};

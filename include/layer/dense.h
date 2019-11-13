@@ -5,7 +5,7 @@
 #include "layer.h"
 class Dense : public Layer {
    public:
-    Dense(int, int, cublasHandle_t&);
+    Dense(int, int);
     int input_dimension() override { return _input_dimension; };
     int input_dimension() const override { return _input_dimension; };
     int output_dimension() override { return _output_dimension; };

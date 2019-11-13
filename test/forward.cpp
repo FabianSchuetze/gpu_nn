@@ -15,17 +15,14 @@ double cpuSecond() {
 
 TEST_CASE("NeuralNetwork forward gpu", "[forward gpu]") {
     srand((unsigned int) time(0));
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-    CHECK_CUBLAS(stat);
     Layer* l1;
     Layer* l2;
     Layer* l3;
     int input_dimension = 5;
     int obs = 3;
     Input i1(input_dimension);
-    Dense d1(6, input_dimension, handle);
-    Softmax  s1(handle);
+    Dense d1(6, input_dimension);
+    Softmax  s1;
     l1 = &i1;
     l2 = &d1;
     l3 = &s1;
@@ -40,17 +37,14 @@ TEST_CASE("NeuralNetwork forward gpu", "[forward gpu]") {
 
 TEST_CASE("NeuralNetwork2 forward cpu", "[forward2 cpu]") {
     srand((unsigned int) time(0));
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-    CHECK_CUBLAS(stat);
     Layer* l1;
     Layer* l2;
     Layer* l3;
     int input_dimension = 5;
     int obs = 3;
     Input i1(input_dimension);
-    Dense d1(6, input_dimension, handle);
-    Softmax  s1(handle);
+    Dense d1(6, input_dimension);
+    Softmax  s1;
     l1 = &i1;
     l2 = &d1;
     l3 = &s1;
@@ -65,17 +59,14 @@ TEST_CASE("NeuralNetwork2 forward cpu", "[forward2 cpu]") {
 
 TEST_CASE("NeuralNetwork equivalence", "[equivalence]") {
     srand((unsigned int) time(0));
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-    CHECK_CUBLAS(stat);
     Layer* l1;
     Layer* l2;
     Layer* l3;
     int input_dimension = 1024;
     int obs = 32;
     Input i1(input_dimension);
-    Dense d1(100, input_dimension, handle);
-    Softmax  s1(handle);
+    Dense d1(100, input_dimension);
+    Softmax  s1;
     l1 = &i1;
     l2 = &d1;
     l3 = &s1;

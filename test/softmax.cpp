@@ -13,11 +13,8 @@ double cpuSecond() {
 }
 TEST_CASE("NeuralNetwork gpu", "[gpu]") {
     srand((unsigned int) time(0));
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-    CHECK_CUBLAS(stat);
     Layer* inp1;
-    Softmax s1(handle);
+    Softmax s1;
     inp1 = &s1;
     Matrix in = Matrix::Random(6, 5);
     Matrix out = Matrix::Zero(6, 5);
@@ -31,11 +28,8 @@ TEST_CASE("NeuralNetwork gpu", "[gpu]") {
 
 TEST_CASE("NeuralNetwork cpu", "[cpu]") {
     srand((unsigned int) time(0));
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-    CHECK_CUBLAS(stat);
     Layer* inp1;
-    Softmax s1(handle);
+    Softmax s1;
     inp1 = &s1;
     Matrix in = Matrix::Random(6, 5);
     Matrix out = Matrix::Zero(6, 5);
@@ -49,11 +43,8 @@ TEST_CASE("NeuralNetwork cpu", "[cpu]") {
 
 TEST_CASE("NeuralNetwork equivalence", "[equivalence]") {
     srand((unsigned int) time(0));
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-    CHECK_CUBLAS(stat);
     Layer* inp1;
-    Softmax s1(handle);
+    Softmax s1;
     inp1 = &s1;
     Matrix in = Matrix::Random(1024, 100);
     Matrix out = Matrix::Zero(1024, 100);

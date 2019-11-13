@@ -2,3 +2,11 @@
 
 GradientDescent::GradientDescent(dtype _learning_rate)
     : learing_rate(_learning_rate){};
+void GradientDescent::weight_update_cpu(const VecSharedStorage&,
+                                        VecSharedStorage&) {
+    ;
+};
+void GradientDescent::weight_update_gpu(const VecSharedStorage&,
+                                        VecSharedStorage&) {
+    ;
+};

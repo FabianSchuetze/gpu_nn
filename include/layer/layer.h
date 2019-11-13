@@ -12,24 +12,24 @@ class Layer {
    public:
     Layer() : _name("Template"){};
     ~Layer() = default;
-    virtual int input_dimension() = 0;
-    virtual int input_dimension() const = 0;
-    virtual int output_dimension() = 0;
-    virtual int output_dimension() const = 0;
+    virtual int input_dimension();
+    virtual int input_dimension() const;
+    virtual int output_dimension();
+    virtual int output_dimension() const;
     virtual std::string name() { return _name; };
     virtual std::string name() const { return _name; };
-    virtual void forward_gpu(const SharedStorage&, SharedStorage&) = 0;
-    virtual void forward_cpu(const SharedStorage&, SharedStorage&) = 0;
+    virtual void forward_gpu(const SharedStorage&, SharedStorage&);
+    virtual void forward_cpu(const SharedStorage&, SharedStorage&);
     virtual void backward_gpu(const SharedStorage&, const SharedStorage&,
-                              SharedStorage&) = 0;
+                              SharedStorage&);
     virtual void backward_cpu(const SharedStorage&, const SharedStorage&,
-                              SharedStorage&) = 0;
-    virtual VecSharedStorage return_parameters() = 0;
-    virtual VecSharedStorage return_gradients() = 0;
-    virtual VecSharedStorage return_parameters() const = 0;
-    virtual VecSharedStorage return_gradients() const = 0;
-    virtual void clear_gradients_cpu() = 0;
-    virtual void clear_gradients_gpu()= 0;
+                              SharedStorage&);
+    virtual VecSharedStorage return_parameters();
+    virtual VecSharedStorage return_gradients();
+    virtual VecSharedStorage return_parameters() const;
+    virtual VecSharedStorage return_gradients() const;
+    virtual void clear_gradients_cpu();
+    virtual void clear_gradients_gpu();
     virtual int n_paras() { return parameters.size();};
 
    protected:

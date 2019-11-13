@@ -17,9 +17,6 @@ double cpuSecond() {
 
 TEST_CASE("NeuralNetwork backward gpu", "[backward gpu]") {
     srand((unsigned int) time(0));
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-    CHECK_CUBLAS(stat);
     Layer* l1;
     Layer* l2;
     Layer* l3;
@@ -28,9 +25,9 @@ TEST_CASE("NeuralNetwork backward gpu", "[backward gpu]") {
     int input_dimension = 5;
     int obs = 3;
     Input i1(input_dimension);
-    Dense d1(10, input_dimension, handle);
-    Relu relu1(handle);
-    Dense d2(2, 10, handle);
+    Dense d1(10, input_dimension);
+    Relu relu1;
+    Dense d2(2, 10);
     Matrix target = Matrix::Zero(obs, 2);
     std::default_random_engine generator;
     std::uniform_real_distribution<double> distribution(0.0,1.0);
@@ -46,7 +43,7 @@ TEST_CASE("NeuralNetwork backward gpu", "[backward gpu]") {
         }
     }
     SharedStorage SharedTarget = std::make_shared<Storage>(target.transpose());
-    Softmax  s1(handle);
+    Softmax  s1;
     l1 = &i1;
     l2 = &d1;
     l3 = &relu1;
@@ -69,9 +66,6 @@ TEST_CASE("NeuralNetwork backward gpu", "[backward gpu]") {
 
 TEST_CASE("NeuralNetwork backward cpu", "[backward cpu]") {
     srand((unsigned int) time(0));
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-    CHECK_CUBLAS(stat);
     Layer* l1;
     Layer* l2;
     Layer* l3;
@@ -80,9 +74,9 @@ TEST_CASE("NeuralNetwork backward cpu", "[backward cpu]") {
     int input_dimension = 5;
     int obs = 3;
     Input i1(input_dimension);
-    Dense d1(10, input_dimension, handle);
-    Relu relu1(handle);
-    Dense d2(2, 10, handle);
+    Dense d1(10, input_dimension);
+    Relu relu1;
+    Dense d2(2, 10);
     Matrix target = Matrix::Zero(obs, 2);
     std::default_random_engine generator;
     std::uniform_real_distribution<double> distribution(0.0,1.0);
@@ -98,7 +92,7 @@ TEST_CASE("NeuralNetwork backward cpu", "[backward cpu]") {
         }
     }
     SharedStorage SharedTarget = std::make_shared<Storage>(target.transpose());
-    Softmax  s1(handle);
+    Softmax  s1;
     l1 = &i1;
     l2 = &d1;
     l3 = &relu1;
@@ -122,9 +116,6 @@ TEST_CASE("NeuralNetwork backward cpu", "[backward cpu]") {
 
 TEST_CASE("NeuralNetwork backward equivalence", "[backward equivalence]") {
     srand((unsigned int) time(0));
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-    CHECK_CUBLAS(stat);
     Layer* l1;
     Layer* l2;
     Layer* l3;
@@ -133,9 +124,9 @@ TEST_CASE("NeuralNetwork backward equivalence", "[backward equivalence]") {
     int input_dimension = 1024;
     int obs = 32;
     Input i1(input_dimension);
-    Dense d1(900, input_dimension, handle);
-    Relu relu1(handle);
-    Dense d2(2, 900, handle);
+    Dense d1(900, input_dimension);
+    Relu relu1;
+    Dense d2(2, 900);
     Matrix target = Matrix::Zero(obs, 2);
     std::default_random_engine generator;
     std::uniform_real_distribution<double> distribution(0.0,1.0);
@@ -151,7 +142,7 @@ TEST_CASE("NeuralNetwork backward equivalence", "[backward equivalence]") {
         }
     }
     SharedStorage SharedTarget = std::make_shared<Storage>(target.transpose());
-    Softmax  s1(handle);
+    Softmax  s1;
     l1 = &i1;
     l2 = &d1;
     l3 = &relu1;
