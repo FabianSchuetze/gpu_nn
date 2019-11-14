@@ -9,7 +9,7 @@ class Softmax : public Layer {
 
    public:
     Softmax();
-    virtual ~Softmax() = default;
+    virtual ~Softmax() {CHECK_CUBLAS(cublasDestroy(_handle));};
     int input_dimension() override { return 0; };
     int output_dimension() override { return 0; };
     int input_dimension() const override { return 0; };
