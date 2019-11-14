@@ -4,9 +4,6 @@
 #include <stdexcept>
 #include "../include/common.h"
 
-Storage::Storage()
-    : _data(), _cpu_pointer(NULL), _gpu_pointer(NULL), recent_head("SYNC"){};
-
 Storage::Storage(const Matrix& data)
     : _data(data),
       _cpu_pointer(_data.data()),

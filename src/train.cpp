@@ -90,7 +90,8 @@ void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
     vector<SharedStorage> grads = allocate_backward(32);
     double total_loss(0.);
     Matrix x_train, y_train;
-    SharedStorage SharedTarget;
+    Matrix tmp = Matrix::Zero(features.cols(), 32);
+    SharedStorage SharedTarget = std::make_shared<Storage>(tmp);
     vector<int> samples(32);
     // MatrixVec parameters_bkp(parameters);
     auto begin = std::chrono::system_clock::now();

@@ -5,7 +5,7 @@
 #include "common.h"
 class Storage {
    public:
-    Storage();
+    //Storage();
     Storage(const Matrix&);
     // Storage(const Eigen::MatrixXd&&) // I need to provide that!
     ~Storage();
