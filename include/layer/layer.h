@@ -11,7 +11,7 @@ class Layer {
 
    public:
     Layer() : _name("Template"){};
-    ~Layer() = default;
+    virtual ~Layer() = default;
     virtual int input_dimension();
     virtual int input_dimension() const;
     virtual int output_dimension();

@@ -1,6 +1,7 @@
 #include "../include/storage.h"
 #include <cuda_runtime.h>
 #include <iostream>
+#include <stdexcept>
 #include "../include/common.h"
 
 Storage::Storage()
@@ -27,6 +28,11 @@ void Storage::initialize_gpu_memory() {
 }
 
 void Storage::update_cpu_data(Matrix new_data) {
+    std::cout << "inside the update data\n";
+    if (_cpu_pointer == NULL) {
+        std::string m("The new data size does not match the old, in:\n");
+        throw std::invalid_argument(m + __PRETTY_FUNCTION__);
+    }
     _data = new_data;
     _cpu_pointer = _data.data();
     recent_head = "CPU";

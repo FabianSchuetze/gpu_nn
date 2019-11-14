@@ -42,11 +42,11 @@ void NeuralNetwork::backward_gpu(vector<SharedStorage>& gradients,
     }
 }
 
-void NeuralNetwork::update_weights(GradientDescent* opt) {
+void NeuralNetwork::update_weights(std::shared_ptr<GradientDescent> opt) {
     (this->*fun_update)(opt);
 }
 
-void NeuralNetwork::update_weights_cpu(GradientDescent* opt) {
+void NeuralNetwork::update_weights_cpu(std::shared_ptr<GradientDescent> opt) {
     for (Layer* layer : layers) {
         if (layer->n_paras() > 0) {
             vector<SharedStorage> parameters = layer->return_parameters();
@@ -57,7 +57,7 @@ void NeuralNetwork::update_weights_cpu(GradientDescent* opt) {
     }
 }
 
-void NeuralNetwork::update_weights_gpu(GradientDescent* opt) {
+void NeuralNetwork::update_weights_gpu(std::shared_ptr<GradientDescent> opt) {
     for (Layer* layer : layers) {
         if (layer->n_paras() > 0) {
             vector<SharedStorage> parameters = layer->return_parameters();
@@ -82,7 +82,7 @@ void NeuralNetwork::get_new_sample(const Matrix& input, const Matrix& targets,
 }
 
 void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
-                          GradientDescent* sgd) {
+                          std::shared_ptr<GradientDescent> sgd) {
     int total_iter(0);
     std::mt19937 gen;
     gen.seed(0);

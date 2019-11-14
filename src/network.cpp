@@ -13,9 +13,9 @@ NeuralNetwork::NeuralNetwork(vector<Layer*> _layers, std::shared_ptr<Loss> _loss
     fun_update = &NeuralNetwork::update_weights_gpu;
 };
 
-NeuralNetwork::NeuralNetwork(vector<Layer*> _layers, const std::string& _loss,
+NeuralNetwork::NeuralNetwork(vector<Layer*> _layers, std::shared_ptr<Loss> _loss,
                              const std::string& device)
-    : layers(_layers), loss(std::make_shared<CrossEntropy>(CrossEntropy())) {
+    : layers(_layers), loss(_loss) {
     //create_loss(_loss);
     if (device == "GPU") {
         fun_forward = &NeuralNetwork::forward_gpu;

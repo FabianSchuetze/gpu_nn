@@ -6,6 +6,7 @@
 class Dense : public Layer {
    public:
     Dense(int, int);
+    virtual ~Dense() {CHECK_CUBLAS(cublasDestroy(_handle));};
     int input_dimension() override { return _input_dimension; };
     int input_dimension() const override { return _input_dimension; };
     int output_dimension() override { return _output_dimension; };
