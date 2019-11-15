@@ -10,6 +10,7 @@ void my_cuda_Dgemm(cublasHandle_t handle, cublasOperation_t transA,
     // K defiens the number of columns of the Matrhx A and rows of Matix B
     CHECK_CUBLAS(cublasDgemm(handle, transA, transB, M, N, K, alpha, d_A, LDA,
                              d_B, LDB, beta, d_C, LDC));
+    MY_CHECK(cudaDeviceSynchronize());
 }
 void my_cuda_Dgemm(cublasHandle_t handle, cublasOperation_t transA,
                    cublasOperation_t transB, int M, int N, int K, float* alpha,
@@ -20,6 +21,7 @@ void my_cuda_Dgemm(cublasHandle_t handle, cublasOperation_t transA,
     // K defiens the number of columns of the Matrhx A and rows of Matix B
     CHECK_CUBLAS(cublasSgemm(handle, transA, transB, M, N, K, alpha, d_A, LDA,
                              d_B, LDB, beta, d_C, LDC));
+    MY_CHECK(cudaDeviceSynchronize());
 }
 
 void my_cuda_Dgemv(cublasHandle_t handle, cublasOperation_t transA, int M,
@@ -29,7 +31,7 @@ void my_cuda_Dgemv(cublasHandle_t handle, cublasOperation_t transA, int M,
     // N Defines the number of columns of the Matrix B and C
     CHECK_CUBLAS(
         cublasDgemv(handle, transA, M, N, alpha, d_A, M, d_B, 1, beta, d_C, 1));
-    // cudaDeviceSynchronize();
+    MY_CHECK(cudaDeviceSynchronize());
 
     // WHAT ABOUT SYNRONIZING THE DEVICE?
 }
@@ -42,6 +44,7 @@ void my_cuda_Dgemv(cublasHandle_t handle, cublasOperation_t transA, int M,
     CHECK_CUBLAS(
         cublasSgemv(handle, transA, M, N, alpha, d_A, M, d_B, 1, beta, d_C, 1));
     // cudaDeviceSynchronize();
+    MY_CHECK(cudaDeviceSynchronize());
 
     // WHAT ABOUT SYNRONIZING THE DEVICE?
 }
@@ -219,8 +222,8 @@ __global__ void cuda_matrix_addition_inplace(int rows, int cols,
     unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
     unsigned int linear = row + col * rows;
     if ((row < rows) && (col < cols)) {
-        //printf("row %d, col %d, linear %d, old_val %.3f, gradient %.3f\n",
-                //row, col, linear, d_B[linear], d_A[linear]);
+        // printf("row %d, col %d, linear %d, old_val %.3f, gradient %.3f\n",
+        // row, col, linear, d_B[linear], d_A[linear]);
         d_B[linear] += alpha * d_A[linear];
     }
 }
@@ -243,7 +246,8 @@ void add_vec_to_mat_colwise(int rows, int cols, double* matrix,
     add_vec_to_mat_colwise_cu<<<grid, block>>>(rows, cols, matrix, vector,
                                                alpha);
     MY_CHECK(cudaPeekAtLastError());
-    // cudaDeviceSynronize();
+    MY_CHECK(cudaDeviceSynchronize());
+    //cudaDeviceSynronize();
 }
 
 void add_vec_to_mat_colwise(int rows, int cols, float* matrix,
@@ -253,7 +257,8 @@ void add_vec_to_mat_colwise(int rows, int cols, float* matrix,
     add_vec_to_mat_colwise_cu<<<grid, block>>>(rows, cols, matrix, vector,
                                                alpha);
     MY_CHECK(cudaPeekAtLastError());
-    // cudaDeviceSynronize();
+    MY_CHECK(cudaDeviceSynchronize());
+    //cudaDeviceSynronize();
 }
 
 void add_vec_to_mat_colwise(int rows, int cols, const double* in,
@@ -263,7 +268,8 @@ void add_vec_to_mat_colwise(int rows, int cols, const double* in,
     add_vec_to_mat_colwise_cu<<<grid, block>>>(rows, cols, in, vector, out,
                                                alpha);
     MY_CHECK(cudaPeekAtLastError());
-    // cudaDeviceSynronize();
+    MY_CHECK(cudaDeviceSynchronize());
+    //cudaDeviceSynronize();
 }
 
 void add_vec_to_mat_colwise(int rows, int cols, const float* in,
@@ -273,7 +279,8 @@ void add_vec_to_mat_colwise(int rows, int cols, const float* in,
     add_vec_to_mat_colwise_cu<<<grid, block>>>(rows, cols, in, vector, out,
                                                alpha);
     MY_CHECK(cudaPeekAtLastError());
-    // cudaDeviceSynronize();
+    MY_CHECK(cudaDeviceSynchronize());
+    //cudaDeviceSynronize();
 }
 
 void exponential(int rows, int cols, double* in) {
@@ -281,6 +288,7 @@ void exponential(int rows, int cols, double* in) {
     dim3 grid((rows * cols + block.x - 1) / block.x);
     cuda_exponential<<<grid, block>>>(rows, cols, in);
     MY_CHECK(cudaPeekAtLastError());
+    MY_CHECK(cudaDeviceSynchronize());
 }
 
 void exponential(int rows, int cols, float* in) {
@@ -288,6 +296,7 @@ void exponential(int rows, int cols, float* in) {
     dim3 grid((rows * cols + block.x - 1) / block.x);
     cuda_exponential<<<grid, block>>>(rows, cols, in);
     MY_CHECK(cudaPeekAtLastError());
+    MY_CHECK(cudaDeviceSynchronize());
 }
 
 void divide_colwise(int rows, int cols, double* in, const double* vec) {
@@ -295,6 +304,7 @@ void divide_colwise(int rows, int cols, double* in, const double* vec) {
     dim3 grid((rows * cols + block.x - 1) / block.x);
     cuda_divide_colwise<<<grid, block>>>(rows, cols, in, vec);
     MY_CHECK(cudaPeekAtLastError());
+    MY_CHECK(cudaDeviceSynchronize());
 }
 
 void divide_colwise(int rows, int cols, float* in, const float* vec) {
@@ -302,6 +312,7 @@ void divide_colwise(int rows, int cols, float* in, const float* vec) {
     dim3 grid((rows * cols + block.x - 1) / block.x);
     cuda_divide_colwise<<<grid, block>>>(rows, cols, in, vec);
     MY_CHECK(cudaPeekAtLastError());
+    MY_CHECK(cudaDeviceSynchronize());
 }
 
 void relu(int rows, int cols, double* out, const double* in) {
@@ -309,12 +320,14 @@ void relu(int rows, int cols, double* out, const double* in) {
     dim3 grid((rows * cols + block.x - 1) / block.x);
     cuda_relu<<<grid, block>>>(rows, cols, out, in);
     MY_CHECK(cudaPeekAtLastError());
+    MY_CHECK(cudaDeviceSynchronize());
 }
 void relu(int rows, int cols, float* out, const float* in) {
     dim3 block(256);
     dim3 grid((rows * cols + block.x - 1) / block.x);
     cuda_relu<<<grid, block>>>(rows, cols, out, in);
     MY_CHECK(cudaPeekAtLastError());
+    MY_CHECK(cudaDeviceSynchronize());
 }
 
 void relu_backwards(int rows, int cols, const double* values,
@@ -323,7 +336,7 @@ void relu_backwards(int rows, int cols, const double* values,
     dim3 grid((rows * cols + block.x - 1) / block.x);
     cuda_relu_backwards<<<grid, block>>>(rows, cols, values, grad_in, grad_out);
     MY_CHECK(cudaPeekAtLastError());
-    cudaDeviceSynchronize();
+    MY_CHECK(cudaDeviceSynchronize());
 }
 void relu_backwards(int rows, int cols, const float* values,
                     const float* grad_in, float* grad_out) {
@@ -331,7 +344,7 @@ void relu_backwards(int rows, int cols, const float* values,
     dim3 grid((rows * cols + block.x - 1) / block.x);
     cuda_relu_backwards<<<grid, block>>>(rows, cols, values, grad_in, grad_out);
     MY_CHECK(cudaPeekAtLastError());
-    cudaDeviceSynchronize();
+    MY_CHECK(cudaDeviceSynchronize());
 }
 
 void all_cross_entropy_losses(int rows, int cols, const double* prediction,
@@ -341,7 +354,7 @@ void all_cross_entropy_losses(int rows, int cols, const double* prediction,
     cuda_all_cross_entropy_losses<<<grid, block>>>(rows, cols, prediction,
                                                    actual, losses);
     MY_CHECK(cudaPeekAtLastError());
-    cudaDeviceSynchronize();
+    MY_CHECK(cudaDeviceSynchronize());
 }
 
 void all_cross_entropy_losses(int rows, int cols, const float* prediction,
@@ -351,7 +364,7 @@ void all_cross_entropy_losses(int rows, int cols, const float* prediction,
     cuda_all_cross_entropy_losses<<<grid, block>>>(rows, cols, prediction,
                                                    actual, losses);
     MY_CHECK(cudaPeekAtLastError());
-    cudaDeviceSynchronize();
+    MY_CHECK(cudaDeviceSynchronize());
 }
 
 void sum_cross_entropy_losses(int obs, float* loss, const float* all_losses) {
@@ -359,7 +372,7 @@ void sum_cross_entropy_losses(int obs, float* loss, const float* all_losses) {
     dim3 grid((obs + block.x - 1) / block.x);
     cuda_sum_cross_entropy_losses<<<grid, block>>>(obs, loss, all_losses);
     MY_CHECK(cudaPeekAtLastError());
-    cudaDeviceSynchronize();
+    MY_CHECK(cudaDeviceSynchronize());
 }
 
 void sum_cross_entropy_losses(int obs, double* loss, const double* all_losses) {
@@ -367,7 +380,7 @@ void sum_cross_entropy_losses(int obs, double* loss, const double* all_losses) {
     dim3 grid((obs + block.x - 1) / block.x);
     cuda_sum_cross_entropy_losses<<<grid, block>>>(obs, loss, all_losses);
     MY_CHECK(cudaPeekAtLastError());
-    cudaDeviceSynchronize();
+    MY_CHECK(cudaDeviceSynchronize());
 }
 void cross_entropy_gradient(int rows, int cols, const double* prediction,
                             const double* target, double* gradient) {
@@ -376,6 +389,7 @@ void cross_entropy_gradient(int rows, int cols, const double* prediction,
     cuda_cross_entropy_gradient<<<grid, block>>>(rows, cols, prediction, target,
                                                  gradient);
     MY_CHECK(cudaPeekAtLastError());
+    MY_CHECK(cudaDeviceSynchronize());
 }
 void cross_entropy_gradient(int rows, int cols, const float* prediction,
                             const float* target, float* gradient) {
@@ -383,8 +397,9 @@ void cross_entropy_gradient(int rows, int cols, const float* prediction,
     dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     cuda_cross_entropy_gradient<<<grid, block>>>(rows, cols, prediction, target,
                                                  gradient);
-    //cudaDeviceSynchronize();
+    // cudaDeviceSynchronize();
     MY_CHECK(cudaPeekAtLastError());
+    MY_CHECK(cudaDeviceSynchronize());
 }
 
 void matrix_addition_inplace(int rows, int cols, const float* gradient,
@@ -393,8 +408,9 @@ void matrix_addition_inplace(int rows, int cols, const float* gradient,
     dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     cuda_matrix_addition_inplace<<<grid, block>>>(rows, cols, gradient,
                                                   parameters, alpha);
-    //cudaDeviceSynchronize();
+    // cudaDeviceSynchronize();
     MY_CHECK(cudaPeekAtLastError());
+    MY_CHECK(cudaDeviceSynchronize());
 }
 
 void matrix_addition_inplace(int rows, int cols, const double* gradient,
@@ -403,6 +419,7 @@ void matrix_addition_inplace(int rows, int cols, const double* gradient,
     dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     cuda_matrix_addition_inplace<<<grid, block>>>(rows, cols, gradient,
                                                   parameters, alpha);
-    cudaDeviceSynchronize();
+    //cudaDeviceSynchronize();
     MY_CHECK(cudaPeekAtLastError());
+    MY_CHECK(cudaDeviceSynchronize());
 }

@@ -37,6 +37,6 @@ int main(int argc, char** argv) {
                  patience, batch_size);
     }
     else
-        n1.train(data.get_x_train(), data.get_y_train(), sgd, Epochs(10),
+        n1.train(data.get_x_train(), data.get_y_train(), sgd, Epochs(1),
                  Patience(10), BatchSize(32));
 }

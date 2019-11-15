@@ -36,6 +36,7 @@ void my_Dgemm(cublasHandle_t handle, cublasOperation_t transA,
     dtype* d_C = C->gpu_pointer();
     my_cuda_Dgemm(handle, transA, transB, M, N, K, &alpha, d_A, LDA, d_B, LDB,
                   &beta, d_C, LDC);
+    //cudaDeviceSyncronize();
 }
 
 void my_Dgemv(cublasHandle_t handle, cublasOperation_t transA,
@@ -47,6 +48,7 @@ void my_Dgemv(cublasHandle_t handle, cublasOperation_t transA,
     const dtype* d_B = B->gpu_pointer_const();
     dtype* d_C = C->gpu_pointer();
     my_cuda_Dgemv(handle, transA, M, N, &alpha, d_A, d_B, &beta, d_C);
+    //cudaDeviceSyncronize();
 }
 
 void my_add_vec_to_mat_colwise(SharedStorage& A, const SharedStorage& B,
@@ -56,7 +58,7 @@ void my_add_vec_to_mat_colwise(SharedStorage& A, const SharedStorage& B,
     dtype* d_A = A->gpu_pointer();
     const dtype* d_B = B->gpu_pointer_const();
     add_vec_to_mat_colwise(rows, cols, d_A, d_B, alpha);
-    // cudaDeviceSyncronize();
+    //cudaDeviceSyncronize();
 }
 
 void my_add_vec_to_mat_colwise(const SharedStorage& in, const SharedStorage& B,
@@ -67,7 +69,7 @@ void my_add_vec_to_mat_colwise(const SharedStorage& in, const SharedStorage& B,
     const dtype* d_B = B->gpu_pointer_const();
     dtype* d_C = out->gpu_pointer();
     add_vec_to_mat_colwise(rows, cols, d_A, d_B, d_C, alpha);
-    // cudaDeviceSyncronize();
+    //cudaDeviceSyncronize();
 }
 
 void my_Exponential(SharedStorage& in) {
@@ -128,7 +130,7 @@ void my_cross_entropy_gradient(SharedStorage& gradient,
 
 // IN PRICINPILE THATS A DUPLICATE FROM ABOVE!!!! FIND COMMON MATH FUNCTION!!!
 void my_Matrix_addition_inplace(const SharedStorage& gradient,
-                        SharedStorage& parameters, dtype alpha) {
+                                SharedStorage& parameters, dtype alpha) {
     int cols = parameters->get_cols();
     int rows = parameters->get_rows();
     const dtype* d_A = gradient->gpu_pointer_const();

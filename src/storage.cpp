@@ -22,6 +22,7 @@ void Storage::initialize_gpu_memory() {
     MY_CHECK(cudaMalloc((void**)&_gpu_pointer, nBytes));
     MY_CHECK(
         cudaMemcpy(_gpu_pointer, _cpu_pointer, nBytes, cudaMemcpyHostToDevice));
+    MY_CHECK(cudaDeviceSynchronize());
 }
 
 void Storage::update_cpu_data(Matrix new_data) {
@@ -37,6 +38,7 @@ void Storage::update_cpu_data(Matrix new_data) {
 void Storage::update_gpu_data(dtype new_data) {
     unsigned int nBytes = _data.rows() * _data.cols() * sizeof(dtype);
     MY_CHECK(cudaMemset(_gpu_pointer, new_data, nBytes));
+    MY_CHECK(cudaDeviceSynchronize());
     recent_head = "GPU";
 }
 
@@ -46,6 +48,7 @@ void Storage::sync_to_cpu() {
         unsigned int nBytes = _data.rows() * _data.cols() * sizeof(dtype);
         MY_CHECK(cudaMemcpy(_cpu_pointer, _gpu_pointer, nBytes,
                             cudaMemcpyDeviceToHost));
+        MY_CHECK(cudaDeviceSynchronize());
         recent_head = "SYNC";
     }
 }
@@ -56,6 +59,7 @@ void Storage::sync_to_gpu() {
         unsigned int nBytes = _data.rows() * _data.cols() * sizeof(dtype);
         MY_CHECK(cudaMemcpy(_gpu_pointer, _data.data(), nBytes,
                             cudaMemcpyHostToDevice));
+        MY_CHECK(cudaDeviceSynchronize());
         recent_head = "SYNC";
     }
 }

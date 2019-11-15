@@ -103,7 +103,8 @@ void NeuralNetwork::validate(std::chrono::milliseconds diff) {
     fill_hiddens(vals, train_args.x_val().transpose());
     forward(vals);
     const SharedStorage& prediction = vals[vals.size() - 1];
-    dtype total_loss = loss->loss(prediction, SharedTarget);
+    std::cout << prediction->return_data_const() << std::endl;
+    dtype total_loss = loss->loss_cpu(prediction, SharedTarget);
     std::cout << "after iter " << train_args.current_epoch() << "the loss is "
               << total_loss/obs << ", in " << diff.count() <<
               " milliseconds" << std::endl;
@@ -133,8 +134,11 @@ void NeuralNetwork::train(std::shared_ptr<GradientDescent> sgd) {
         SharedStorage& grad_in = grads[grads.size() - 1];
         loss->grad_loss(grad_in, vals[vals.size() - 1], SharedTarget,
                             SharedTarget);
-        backwards(grads, vals);
+        backward_cpu(grads, vals);
+        std::cout << grads[grads.size() - 1]->return_data_const() << std::endl;
+
         update_weights(sgd);
+        std::cout << "UPDATING\n";
         train_args.advance_total_iter();
         if (train_args.total_iter() > train_args.max_total_iter()) {
             end = std::chrono::system_clock::now();
