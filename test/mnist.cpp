@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
     l5 = &s1;
     std::vector<Layer*> vec = {l1, l2, l3, l4, l5};
     std::shared_ptr<Loss> loss = std::make_shared<CrossEntropy>(CrossEntropy());
-    NeuralNetwork n1(vec, loss, "CPU");
+    NeuralNetwork n1(vec, loss, "GPU");
     std::shared_ptr<GradientDescent> sgd =
         std::make_shared<StochasticGradientDescent>(0.001);
     if (argc == 4) {

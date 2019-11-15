@@ -7,7 +7,8 @@
 typedef std::shared_ptr<Storage> SharedStorage;
 class CrossEntropy : public Loss {
    public:
-    CrossEntropy() = default;
+    CrossEntropy();
+    CrossEntropy(const std::string&);
     virtual ~CrossEntropy() = default;
     // THE LOSSES ARE ONLY AVAILABLE ON THE HOST -> IS THAT INTENDET?
     dtype loss_cpu(const SharedStorage&, const SharedStorage&) override;
@@ -17,8 +18,19 @@ class CrossEntropy : public Loss {
     // THR GPU IS RELATIVELY SLOW HERE!!!
     void grad_loss_gpu(SharedStorage&, const SharedStorage&,
                        const SharedStorage&, const SharedStorage&) override;
+    virtual dtype loss(const SharedStorage&, const SharedStorage&) override;
+    virtual void grad_loss(SharedStorage&, const SharedStorage&,
+                           const SharedStorage&, const SharedStorage&) override;
 
    private:
-    dtype loss(const Vector&, const Vector&);
+    dtype vec_loss(const Vector&, const Vector&);
+    typedef dtype (CrossEntropy::*loss_func)(const SharedStorage&,
+                                             const SharedStorage&);
+    typedef void (CrossEntropy::*grad_func)(SharedStorage&,
+                                            const SharedStorage&,
+                                            const SharedStorage&,
+                                            const SharedStorage&);
+    CrossEntropy::loss_func fun_loss;
+    CrossEntropy::grad_func fun_grad;
 };
 #endif

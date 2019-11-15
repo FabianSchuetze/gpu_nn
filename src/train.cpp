@@ -95,7 +95,7 @@ void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
     train(sgd);
 }
 
-void NeuralNetwork::validate() {
+void NeuralNetwork::validate(std::chrono::milliseconds diff) {
     int obs = train_args.x_val().rows();
     vector<SharedStorage> vals = allocate_forward(obs);
     SharedStorage SharedTarget =
@@ -103,9 +103,10 @@ void NeuralNetwork::validate() {
     fill_hiddens(vals, train_args.x_val().transpose());
     forward(vals);
     const SharedStorage& prediction = vals[vals.size() - 1];
-    dtype total_loss = loss->loss_cpu(prediction, SharedTarget);
+    dtype total_loss = loss->loss(prediction, SharedTarget);
     std::cout << "after iter " << train_args.current_epoch() << "the loss is "
-              << total_loss/obs << std::endl;
+              << total_loss/obs << ", in " << diff.count() <<
+              " milliseconds" << std::endl;
     train_args.advance_epoch();
     train_args.reset_total_iter();
 }
@@ -122,7 +123,7 @@ void NeuralNetwork::train(std::shared_ptr<GradientDescent> sgd) {
     Matrix x_train, y_train;
     auto begin = std::chrono::system_clock::now();
     auto end = std::chrono::system_clock::now();
-    std::chrono::seconds diff;
+    std::chrono::milliseconds diff;
     while (train_args.current_epoch() < train_args.epochs()) {
         random_numbers(samples, gen);
         get_new_sample(samples, x_train, y_train);
@@ -130,14 +131,17 @@ void NeuralNetwork::train(std::shared_ptr<GradientDescent> sgd) {
         fill_hiddens(vals, x_train);
         forward(vals);
         SharedStorage& grad_in = grads[grads.size() - 1];
-        loss->grad_loss_cpu(grad_in, vals[vals.size() - 1], SharedTarget,
+        loss->grad_loss(grad_in, vals[vals.size() - 1], SharedTarget,
                             SharedTarget);
         backwards(grads, vals);
         update_weights(sgd);
-        // total_loss += loss->loss_cpu(vals[vals.size() - 1], SharedTarget);
         train_args.advance_total_iter();
         if (train_args.total_iter() > train_args.max_total_iter()) {
-            validate();
+            end = std::chrono::system_clock::now();
+            diff =
+                std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
+            validate(diff);
+            begin = std::chrono::system_clock::now();
         }
     }
 }

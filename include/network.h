@@ -1,5 +1,6 @@
 #ifndef network_h
 #define network_h
+#include <chrono>
 #include <memory>
 #include <random>
 #include <vector>
@@ -23,7 +24,7 @@ class NeuralNetwork {
     //@brief Returns a prediction from the neural network, calling this
     // function presumes that the SharedStorage is appropriate for all the
     // layers
-    //SharedStorage predict(std::vector<SharedStorage>&);
+    // SharedStorage predict(std::vector<SharedStorage>&);
     // NOT DEFINED !!!
     void backwards(std::vector<SharedStorage>& gradients,
                    const std::vector<SharedStorage>& values);
@@ -34,10 +35,10 @@ class NeuralNetwork {
     void update_weights(std::shared_ptr<GradientDescent>);
     void train(std::shared_ptr<GradientDescent>);
     void train(const Matrix&, const Matrix&, std::shared_ptr<GradientDescent>,
-            Epochs, Patience, BatchSize);
+               Epochs, Patience, BatchSize);
     void get_new_sample(const std::vector<int>&, Matrix&, Matrix&);
     void random_numbers(std::vector<int>&, std::mt19937&);
-    void validate();
+    void validate(std::chrono::milliseconds);
 
    private:
     typedef void (NeuralNetwork::*update_func)(
