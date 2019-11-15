@@ -1,8 +1,9 @@
 #include "../../include/loss/cross_entropy.h"
+#include <iomanip>
 #include <iostream>
+#include <string>
 #include "../../include/common.h"
 #include "../../include/math.h"
-
 dtype CrossEntropy::loss_cpu(const SharedStorage& prediction,
                              const SharedStorage& actual) {
     const Matrix& pred = prediction->return_data_const();
@@ -27,9 +28,12 @@ dtype CrossEntropy::loss_gpu(const SharedStorage& prediction,
 
 dtype CrossEntropy::loss(const Vector& pred, const Vector& actual) {
     dtype loss(0);
-    if (pred.sum() != 1) {
-        std::string m("predictions don't sum to one, in:\n");
-        throw std::runtime_error(m + __PRETTY_FUNCTION__);
+    dtype diff = pred.sum() - 1;
+    const static dtype epsilon = 1e-5;
+    if ((diff > epsilon) or (-diff > epsilon)) {
+        std::string m("predictions don't sum to one, they are ");
+        std::string m2{std::to_string(pred.sum()) + " in:\n"};
+        throw std::runtime_error(m + m2 + __PRETTY_FUNCTION__);
     }
     for (int i = 0; i < pred.rows(); i++) {
         if (actual(i) == 1.) {

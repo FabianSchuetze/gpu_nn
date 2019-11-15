@@ -22,7 +22,8 @@ class NeuralNetwork {
     //@brief Returns a prediction from the neural network, calling this
     // function presumes that the SharedStorage is appropriate for all the
     // layers
-    SharedStorage predict(std::vector<SharedStorage>&);
+    //SharedStorage predict(std::vector<SharedStorage>&);
+    // NOT DEFINED !!!
     void backwards(std::vector<SharedStorage>& gradients,
                    const std::vector<SharedStorage>& values);
     std::vector<SharedStorage> allocate_forward(int);

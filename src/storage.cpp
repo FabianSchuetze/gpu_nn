@@ -25,8 +25,7 @@ void Storage::initialize_gpu_memory() {
 }
 
 void Storage::update_cpu_data(Matrix new_data) {
-    std::cout << "inside the update data\n";
-    if (_cpu_pointer == NULL) {
+    if (new_data.rows() != get_rows() or new_data.cols() != get_cols()) {
         std::string m("The new data size does not match the old, in:\n");
         throw std::invalid_argument(m + __PRETTY_FUNCTION__);
     }

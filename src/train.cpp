@@ -90,18 +90,19 @@ void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
     vector<SharedStorage> grads = allocate_backward(32);
     double total_loss(0.);
     Matrix x_train, y_train;
-    Matrix tmp = Matrix::Zero(features.cols(), 32);
+    Matrix tmp = Matrix::Zero(targets.cols(), 32);
     SharedStorage SharedTarget = std::make_shared<Storage>(tmp);
     vector<int> samples(32);
-    // MatrixVec parameters_bkp(parameters);
     auto begin = std::chrono::system_clock::now();
     auto end = std::chrono::system_clock::now();
     std::chrono::seconds diff;
-    while (total_iter < 8 * features.rows()) {
+    int epoch(0);
+    while (epoch < 8) {
         random_numbers(samples, gen, features);
         get_new_sample(features, targets, samples, x_train, y_train);
         SharedTarget->update_cpu_data(y_train);
         fill_hiddens(vals, x_train);
+        forward(vals);
         SharedStorage& grad_in = grads[grads.size() - 1];
         loss->grad_loss_cpu(grad_in, vals[vals.size() - 1], SharedTarget,
                             SharedTarget);
@@ -109,5 +110,12 @@ void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
         update_weights(sgd);
         total_loss += loss->loss_cpu(vals[vals.size() - 1], SharedTarget);
         total_iter += 32;
+        if (total_iter > features.rows()) {
+            std::cout << "after iter " << epoch << "the loss is " << 
+                total_loss << std::endl;
+            epoch++;
+            total_iter = 0;
+            total_loss = 0;
+        }
     }
 }
