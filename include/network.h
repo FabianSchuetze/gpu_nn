@@ -6,6 +6,7 @@
 #include "gradient_descent/gradient_descent.h"
 #include "layer/layer.h"
 #include "loss/loss.h"
+#include "trainArgs.h"
 class NeuralNetwork {
    public:
     NeuralNetwork(std::vector<Layer*>, std::shared_ptr<Loss>);
@@ -31,10 +32,12 @@ class NeuralNetwork {
     void forward(std::vector<SharedStorage>&);
     void fill_hiddens(std::vector<SharedStorage>&, const Matrix&);
     void update_weights(std::shared_ptr<GradientDescent>);
-    void train(const Matrix&, const Matrix&, std::shared_ptr<GradientDescent>);
-    void get_new_sample(const Matrix&, const Matrix&, const std::vector<int>&,
-                        Matrix&, Matrix&);
-    void random_numbers(std::vector<int>&, std::mt19937&, const Matrix&);
+    void train(std::shared_ptr<GradientDescent>);
+    void train(const Matrix&, const Matrix&, std::shared_ptr<GradientDescent>,
+            Epochs, Patience, BatchSize);
+    void get_new_sample(const std::vector<int>&, Matrix&, Matrix&);
+    void random_numbers(std::vector<int>&, std::mt19937&);
+    void validate();
 
    private:
     typedef void (NeuralNetwork::*update_func)(
@@ -47,6 +50,7 @@ class NeuralNetwork {
     NeuralNetwork::update_func fun_update;
     std::vector<Layer*> layers;
     std::shared_ptr<Loss> loss;
+    trainArgs train_args;
     void create_loss(const std::string& s);
     void update_weights_cpu(std::shared_ptr<GradientDescent>);
     void update_weights_gpu(std::shared_ptr<GradientDescent>);

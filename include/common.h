@@ -8,6 +8,25 @@ typedef float dtype;
 typedef Eigen::Matrix<dtype, Eigen::Dynamic, Eigen::Dynamic> Matrix;
 typedef Eigen::Vector<dtype, Eigen::Dynamic> Vector;
 
+template <typename T, typename Paramter>
+class NamedType
+{
+public:
+    explicit NamedType(T const& value) : value_(value) {}
+    explicit NamedType(T&& value) : value_(std::move(value)) {}
+    T& get() { return value_; }
+    T const& get() const {return value_; }
+private:
+    T value_;
+};
+
+struct EpochParamter {};
+using Epochs = NamedType<int, EpochParamter>;
+struct PatienceParamter {};
+using Patience = NamedType<int, PatienceParamter>;
+struct BatchSizeParamter {};
+using BatchSize = NamedType<int, BatchSizeParamter>;
+
 //void print_Matrix_to_stdout(const Eigen::MatrixXd& val, std::string loc) {
     //int rows(val.rows()), cols(val.cols());
     //std::ofstream myfile(loc);

@@ -29,10 +29,16 @@ dtype CrossEntropy::loss_gpu(const SharedStorage& prediction,
 dtype CrossEntropy::loss(const Vector& pred, const Vector& actual) {
     dtype loss(0);
     dtype diff = pred.sum() - 1;
+    dtype diff_actual = actual.sum() - 1;
     const static dtype epsilon = 1e-5;
     if ((diff > epsilon) or (-diff > epsilon)) {
         std::string m("predictions don't sum to one, they are ");
         std::string m2{std::to_string(pred.sum()) + " in:\n"};
+        throw std::runtime_error(m + m2 + __PRETTY_FUNCTION__);
+    }
+    if ((diff_actual > epsilon) or (-diff_actual > epsilon)) {
+        std::string m("actual don't sum to one, they are ");
+        std::string m2{std::to_string(actual.sum()) + " in:\n"};
         throw std::runtime_error(m + m2 + __PRETTY_FUNCTION__);
     }
     for (int i = 0; i < pred.rows(); i++) {

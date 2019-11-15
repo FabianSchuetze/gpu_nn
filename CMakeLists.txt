@@ -23,6 +23,7 @@ set(${LIBRARY_TARGET_NAME}_SRC
     src/train.cpp
     src/gradient_descent/gradient_descent.cpp
     src/gradient_descent/sgd.cpp
+    src/trainArgs.cpp
 )
 if (UNIX)
   add_library(${LIBRARY_TARGET_NAME} SHARED ${${LIBRARY_TARGET_NAME}_SRC})
@@ -65,8 +66,8 @@ add_test(test_forward test_forward)
 add_test(test_backward test_backward)
 add_test(test_sgd test_sgd)
 add_test(test_mnist test_mnist)
-add_subdirectory(third_party/pybind11)
-pybind11_add_module(NeuralNetwork python/bindings.cpp)
+#add_subdirectory(third_party/pybind11)
+#pybind11_add_module(NeuralNetwork python/bindings.cpp)
 
-target_link_libraries(NeuralNetwork PRIVATE GPU_NN ${CUDA_LIBRARIES})
-target_link_libraries(NeuralNetwork PRIVATE GPU_NN cuda_obj)
+#target_link_libraries(NeuralNetwork PRIVATE GPU_NN ${CUDA_LIBRARIES})
+#target_link_libraries(NeuralNetwork PRIVATE GPU_NN cuda_obj)

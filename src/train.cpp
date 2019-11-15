@@ -7,6 +7,20 @@
 
 using Eigen::all;
 using std::vector;
+void print_Matrix_to_stdout2(const Matrix& val, std::string loc) {
+    int rows(val.rows()), cols(val.cols());
+    std::ofstream myfile(loc);
+    myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
+    myfile << std::fixed;
+    myfile << std::setprecision(2);
+    for (int row = 0; row < rows; ++row) {
+        myfile << val(row, 0);
+        for (int col = 1; col < cols; ++col) {
+            myfile << ", " << val(row, col);
+        }
+        myfile << std::endl;
+    }
+}
 
 void NeuralNetwork::backwards(std::vector<SharedStorage>& gradients,
                               const std::vector<SharedStorage>& values) {
@@ -82,15 +96,16 @@ void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
 }
 
 void NeuralNetwork::validate() {
-    vector<SharedStorage> vals = allocate_forward(train_args.x_val().rows());
-    Matrix tmp = Matrix::Zero(train_args.y_train().cols(), train_args.batch_size());
-    SharedStorage SharedTarget = std::make_shared<Storage>(tmp);
-    fill_hiddens(vals, train_args.x_val());
+    int obs = train_args.x_val().rows();
+    vector<SharedStorage> vals = allocate_forward(obs);
+    SharedStorage SharedTarget =
+        std::make_shared<Storage>(train_args.y_val().transpose());
+    fill_hiddens(vals, train_args.x_val().transpose());
     forward(vals);
     const SharedStorage& prediction = vals[vals.size() - 1];
     dtype total_loss = loss->loss_cpu(prediction, SharedTarget);
     std::cout << "after iter " << train_args.current_epoch() << "the loss is "
-              << total_loss << std::endl;
+              << total_loss/obs << std::endl;
     train_args.advance_epoch();
     train_args.reset_total_iter();
 }
@@ -100,7 +115,8 @@ void NeuralNetwork::train(std::shared_ptr<GradientDescent> sgd) {
     gen.seed(0);
     vector<SharedStorage> vals = allocate_forward(train_args.batch_size());
     vector<SharedStorage> grads = allocate_backward(train_args.batch_size());
-    Matrix tmp = Matrix::Zero(train_args.y_train().cols(), train_args.batch_size());
+    Matrix tmp =
+        Matrix::Zero(train_args.y_train().cols(), train_args.batch_size());
     SharedStorage SharedTarget = std::make_shared<Storage>(tmp);
     vector<int> samples(train_args.batch_size());
     Matrix x_train, y_train;
