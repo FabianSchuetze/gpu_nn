@@ -102,10 +102,6 @@ void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
         std::string m("N of input features != col in features, in:\n");
         throw std::invalid_argument(m + __PRETTY_FUNCTION__);
     }
-    //if (layers.back()->output_dimension() != targets.cols()) {
-        //std::string m("N of output layer dim != col in targets, in:\n");
-        //throw std::invalid_argument(m + __PRETTY_FUNCTION__);
-    //}
     train_args = std::make_unique<trainArgs>(features, targets, _epoch,
                                              _patience, _batch_size);
     train(sgd);
@@ -118,9 +114,8 @@ void NeuralNetwork::validate(std::chrono::milliseconds diff) {
         std::make_shared<Storage>(train_args->y_val().transpose());
     fill_hiddens(vals, train_args->x_val().transpose());
     forward(vals);
-    const SharedStorage& prediction = vals[vals.size() - 1];
-    //std::cout << prediction->return_data_const() << std::endl;
-    dtype total_loss = loss->loss_cpu(prediction, SharedTarget);
+    //const SharedStorage& prediction = vals[vals.size() - 1];
+    dtype total_loss = loss->loss(vals.back(), SharedTarget);
     std::cout << "after iter " << train_args->current_epoch() << "the loss is "
               << total_loss / obs << ", in " << diff.count() << " milliseconds"
               << std::endl;
