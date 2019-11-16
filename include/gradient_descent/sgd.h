@@ -8,9 +8,9 @@ class StochasticGradientDescent : public GradientDescent {
    public:
     StochasticGradientDescent(dtype);
     virtual ~StochasticGradientDescent();
-    void weight_update_cpu(const std::vector<SharedStorage>&
-        gradient, std::vector<SharedStorage>& parameters) override;
-    void weight_update_gpu(const std::vector<SharedStorage>&
-        gradient, std::vector<SharedStorage>& parameters) override;
+    void weight_update_cpu(const VecSharedStorage&, VecSharedStorage&,
+                           int) override;
+    void weight_update_gpu(const VecSharedStorage&, VecSharedStorage&,
+                           int) override;
 };
 #endif
