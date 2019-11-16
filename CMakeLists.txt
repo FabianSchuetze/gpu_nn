@@ -30,7 +30,7 @@ if (UNIX)
 endif(UNIX)
 
 # moved the CXX flags to after the cuda_add_library call
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fPIC -L /usr/lib/cuda/lib64 -lcudart  -lcublas -Wall -std=c++17")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fPIC -L /usr/lib/cuda/lib64 -lcudart  -lcublas -Wall -std=c++17")
 add_executable(test_softmax test/softmax.cpp)
 add_executable(test_dense test/dense.cpp)
 add_executable(test_relu test/relu.cpp)

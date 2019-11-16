@@ -8,19 +8,19 @@
 
 using Eigen::all;
 using std::vector;
-//void print_Matrix_to_stdout2(const Matrix& val, std::string loc) {
-    //int rows(val.rows()), cols(val.cols());
-    //std::ofstream myfile(loc);
-    //myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
-    //myfile << std::fixed;
-    //myfile << std::setprecision(2);
-    //for (int row = 0; row < rows; ++row) {
-        //myfile << val(row, 0);
-        //for (int col = 1; col < cols; ++col) {
-            //myfile << ", " << val(row, col);
-        //}
-        //myfile << std::endl;
-    //}
+// void print_Matrix_to_stdout2(const Matrix& val, std::string loc) {
+// int rows(val.rows()), cols(val.cols());
+// std::ofstream myfile(loc);
+// myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
+// myfile << std::fixed;
+// myfile << std::setprecision(2);
+// for (int row = 0; row < rows; ++row) {
+// myfile << val(row, 0);
+// for (int col = 1; col < cols; ++col) {
+// myfile << ", " << val(row, col);
+//}
+// myfile << std::endl;
+//}
 //}
 
 void NeuralNetwork::backwards(std::vector<SharedStorage>& gradients,
@@ -52,13 +52,13 @@ void NeuralNetwork::backward_gpu(vector<SharedStorage>& gradients,
     }
 }
 
-void NeuralNetwork::update_weights(std::shared_ptr<GradientDescent> opt, int
-        batch_size) {
+void NeuralNetwork::update_weights(std::shared_ptr<GradientDescent> opt,
+                                   int batch_size) {
     (this->*fun_update)(opt, batch_size);
 }
 
 void NeuralNetwork::update_weights_cpu(std::shared_ptr<GradientDescent> opt,
-        int batch_size) {
+                                       int batch_size) {
     for (Layer* layer : layers) {
         if (layer->n_paras() > 0) {
             vector<SharedStorage> parameters = layer->return_parameters();
@@ -70,7 +70,7 @@ void NeuralNetwork::update_weights_cpu(std::shared_ptr<GradientDescent> opt,
 }
 
 void NeuralNetwork::update_weights_gpu(std::shared_ptr<GradientDescent> opt,
-        int batch_size) {
+                                       int batch_size) {
     for (Layer* layer : layers) {
         if (layer->n_paras() > 0) {
             vector<SharedStorage> parameters = layer->return_parameters();
@@ -98,14 +98,14 @@ void NeuralNetwork::get_new_sample(const vector<int>& samples, Matrix& x_train,
 void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
                           std::shared_ptr<GradientDescent> sgd, Epochs _epoch,
                           Patience _patience, BatchSize _batch_size) {
-    if (layers[0]->input_dimension() != features.cols()) {
-        std::string m("N of input layer features != col in features, in:\n");
+    if (layers[0]->output_dimension() != features.cols()) {
+        std::string m("N of input features != col in features, in:\n");
         throw std::invalid_argument(m + __PRETTY_FUNCTION__);
     }
-    if (layers.back()->output_dimension() != targets.cols()) {
-        std::string m("N of output layer dim != col in targets, in:\n");
-        throw std::invalid_argument(m + __PRETTY_FUNCTION__);
-    }
+    //if (layers.back()->output_dimension() != targets.cols()) {
+        //std::string m("N of output layer dim != col in targets, in:\n");
+        //throw std::invalid_argument(m + __PRETTY_FUNCTION__);
+    //}
     train_args = std::make_unique<trainArgs>(features, targets, _epoch,
                                              _patience, _batch_size);
     train(sgd);
@@ -119,7 +119,7 @@ void NeuralNetwork::validate(std::chrono::milliseconds diff) {
     fill_hiddens(vals, train_args->x_val().transpose());
     forward(vals);
     const SharedStorage& prediction = vals[vals.size() - 1];
-    std::cout << prediction->return_data_const() << std::endl;
+    //std::cout << prediction->return_data_const() << std::endl;
     dtype total_loss = loss->loss_cpu(prediction, SharedTarget);
     std::cout << "after iter " << train_args->current_epoch() << "the loss is "
               << total_loss / obs << ", in " << diff.count() << " milliseconds"
@@ -147,14 +147,13 @@ void NeuralNetwork::train(std::shared_ptr<GradientDescent> sgd) {
         SharedTarget->update_cpu_data(y_train);
         fill_hiddens(vals, x_train);
         forward(vals);
-        SharedStorage& grad_in = grads[grads.size() - 1];
-        loss->grad_loss(grad_in, vals[vals.size() - 1], SharedTarget,
-                        SharedTarget);
-        backward_cpu(grads, vals);
-        std::cout << grads[grads.size() - 1]->return_data_const() << std::endl;
+        //SharedStorage& grad_in = grads[grads.size() - 1];
+        loss->grad_loss(grads.back(), vals.back(), SharedTarget, SharedTarget);
+        backwards(grads, vals);
+        //std::cout << grads[grads.size() - 1]->return_data_const() << std::endl;
 
         update_weights(sgd, train_args->batch_size());
-        std::cout << "UPDATING\n";
+        //std::cout << "UPDATING\n";
         train_args->advance_total_iter();
         if (train_args->total_iter() > train_args->max_total_iter()) {
             end = std::chrono::system_clock::now();
