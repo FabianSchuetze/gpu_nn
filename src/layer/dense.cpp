@@ -52,7 +52,7 @@ void Dense::forward_gpu(const SharedStorage& in, SharedStorage& out) {
     cublasOperation_t transA = CUBLAS_OP_N;
     cublasOperation_t transB = CUBLAS_OP_N;
     dtype alpha = 1;
-    dtype beta = 1;
+    dtype beta = 0;
     my_Dgemm(_handle, transA, transB, parameters[0], in, out, alpha, beta);
     my_add_vec_to_mat_colwise(out, parameters[1], 1.0f);
 }
@@ -63,13 +63,13 @@ void Dense::backward_gpu(const SharedStorage& values,
     //print_Matrix_to_stdout2(gradient_in->return_data_const(),
             //"/home/fabian/Documents/work/gpu_nn/debug/gpu_grad.txt");
     my_Dgemv(_handle, CUBLAS_OP_N, gradient_in, assistance_parameters[0],
-             gradients[1], 1, 1);
+             gradients[1], 1, 0);
     my_Dgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_T, gradient_in, values,
-             gradients[0], 1, 1);
+             gradients[0], 1, 0);
     //std::cout << "the gpu gradient is:\n"
               //<< gradients[1]->return_data_const() << std::endl;
     my_Dgemm(_handle, CUBLAS_OP_T, CUBLAS_OP_N, parameters[0], gradient_in,
-             gradient_out, 1, 1);
+             gradient_out, 1, 0);
 }
 
 void Dense::backward_cpu(const SharedStorage& values,
