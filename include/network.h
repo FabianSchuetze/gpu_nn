@@ -10,6 +10,7 @@
 #include "trainArgs.h"
 class NeuralNetwork {
    public:
+       // I NEED TO THINK ABOUT THE MOVE CONSTCUTOR
     NeuralNetwork(std::vector<Layer*>, std::shared_ptr<Loss>);
     NeuralNetwork(std::vector<Layer*>, std::shared_ptr<Loss>,
                   const std::string&);
@@ -32,17 +33,16 @@ class NeuralNetwork {
     std::vector<SharedStorage> allocate_backward(int);
     void forward(std::vector<SharedStorage>&);
     void fill_hiddens(std::vector<SharedStorage>&, const Matrix&);
-    void update_weights(std::shared_ptr<GradientDescent>);
+    void update_weights(std::shared_ptr<GradientDescent>, int);
     void train(std::shared_ptr<GradientDescent>);
     void train(const Matrix&, const Matrix&, std::shared_ptr<GradientDescent>,
                Epochs, Patience, BatchSize);
-    void get_new_sample(const std::vector<int>&, Matrix&, Matrix&);
-    void random_numbers(std::vector<int>&, std::mt19937&);
     void validate(std::chrono::milliseconds);
+    void random_numbers(std::vector<int>&, std::mt19937&);
 
    private:
     typedef void (NeuralNetwork::*update_func)(
-        std::shared_ptr<GradientDescent>);
+        std::shared_ptr<GradientDescent>, int);
     typedef void (NeuralNetwork::*forward_func)(std::vector<SharedStorage>&);
     typedef void (NeuralNetwork::*backward_func)(
         std::vector<SharedStorage>&, const std::vector<SharedStorage>&);
@@ -51,10 +51,10 @@ class NeuralNetwork {
     NeuralNetwork::update_func fun_update;
     std::vector<Layer*> layers;
     std::shared_ptr<Loss> loss;
-    trainArgs train_args;
+    std::unique_ptr<trainArgs> train_args;
     void create_loss(const std::string& s);
-    void update_weights_cpu(std::shared_ptr<GradientDescent>);
-    void update_weights_gpu(std::shared_ptr<GradientDescent>);
+    void update_weights_cpu(std::shared_ptr<GradientDescent>, int);
+    void update_weights_gpu(std::shared_ptr<GradientDescent>, int);
     void forward_gpu(std::vector<SharedStorage>&);
     void forward_cpu(std::vector<SharedStorage>&);
     void backward_cpu(std::vector<SharedStorage>&,
@@ -62,5 +62,6 @@ class NeuralNetwork {
     void backward_gpu(std::vector<SharedStorage>&,
                       const std::vector<SharedStorage>&);
     void allocate_storage(int, int&, std::vector<SharedStorage>&, const Layer*);
+    void get_new_sample(const std::vector<int>&, Matrix&, Matrix&);
 };
 #endif

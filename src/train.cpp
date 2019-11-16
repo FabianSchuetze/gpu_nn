@@ -8,20 +8,20 @@
 
 using Eigen::all;
 using std::vector;
-void print_Matrix_to_stdout2(const Matrix& val, std::string loc) {
-    int rows(val.rows()), cols(val.cols());
-    std::ofstream myfile(loc);
-    myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
-    myfile << std::fixed;
-    myfile << std::setprecision(2);
-    for (int row = 0; row < rows; ++row) {
-        myfile << val(row, 0);
-        for (int col = 1; col < cols; ++col) {
-            myfile << ", " << val(row, col);
-        }
-        myfile << std::endl;
-    }
-}
+//void print_Matrix_to_stdout2(const Matrix& val, std::string loc) {
+    //int rows(val.rows()), cols(val.cols());
+    //std::ofstream myfile(loc);
+    //myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
+    //myfile << std::fixed;
+    //myfile << std::setprecision(2);
+    //for (int row = 0; row < rows; ++row) {
+        //myfile << val(row, 0);
+        //for (int col = 1; col < cols; ++col) {
+            //myfile << ", " << val(row, col);
+        //}
+        //myfile << std::endl;
+    //}
+//}
 
 void NeuralNetwork::backwards(std::vector<SharedStorage>& gradients,
                               const std::vector<SharedStorage>& values) {
@@ -52,29 +52,30 @@ void NeuralNetwork::backward_gpu(vector<SharedStorage>& gradients,
     }
 }
 
-void NeuralNetwork::update_weights(std::shared_ptr<GradientDescent> opt) {
-    (this->*fun_update)(opt);
+void NeuralNetwork::update_weights(std::shared_ptr<GradientDescent> opt, int
+        batch_size) {
+    (this->*fun_update)(opt, batch_size);
 }
 
-void NeuralNetwork::update_weights_cpu(std::shared_ptr<GradientDescent> opt) {
+void NeuralNetwork::update_weights_cpu(std::shared_ptr<GradientDescent> opt,
+        int batch_size) {
     for (Layer* layer : layers) {
         if (layer->n_paras() > 0) {
             vector<SharedStorage> parameters = layer->return_parameters();
             const vector<SharedStorage>& gradients = layer->return_gradients();
-            opt->weight_update_cpu(gradients, parameters,
-                                   train_args->batch_size());
+            opt->weight_update_cpu(gradients, parameters, batch_size);
             layer->clear_gradients_cpu();
         }
     }
 }
 
-void NeuralNetwork::update_weights_gpu(std::shared_ptr<GradientDescent> opt) {
+void NeuralNetwork::update_weights_gpu(std::shared_ptr<GradientDescent> opt,
+        int batch_size) {
     for (Layer* layer : layers) {
         if (layer->n_paras() > 0) {
             vector<SharedStorage> parameters = layer->return_parameters();
             const vector<SharedStorage>& gradients = layer->return_gradients();
-            opt->weight_update_gpu(gradients, parameters,
-                                   train_args->batch_size());
+            opt->weight_update_gpu(gradients, parameters, batch_size);
             layer->clear_gradients_cpu();
         }
     }
@@ -152,7 +153,7 @@ void NeuralNetwork::train(std::shared_ptr<GradientDescent> sgd) {
         backward_cpu(grads, vals);
         std::cout << grads[grads.size() - 1]->return_data_const() << std::endl;
 
-        update_weights(sgd);
+        update_weights(sgd, train_args->batch_size());
         std::cout << "UPDATING\n";
         train_args->advance_total_iter();
         if (train_args->total_iter() > train_args->max_total_iter()) {

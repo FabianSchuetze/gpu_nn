@@ -68,7 +68,7 @@ TEST_CASE("NeuralNetwork backward cpu", "[backward cpu]") {
     n1.backwards(gradients, vals);
     Matrix before_weight = l2->return_parameters()[0]->return_data_const();
     Matrix before_bias = l2->return_parameters()[1]->return_data_const();
-    n1.update_weights(sgd);
+    n1.update_weights(sgd, obs);
     Matrix after_weight = l2->return_parameters()[0]->return_data_const();
     Matrix after_bias = l2->return_parameters()[1]->return_data_const();
     Matrix WeightDiff = before_weight - after_weight;
@@ -133,7 +133,7 @@ TEST_CASE("NeuralNetwork backward gpu", "[backward gpu]") {
     n1.backwards(gradients, vals);
     Matrix before_weight = l2->return_parameters()[0]->return_data_const();
     Matrix before_bias = l2->return_parameters()[1]->return_data_const();
-    n1.update_weights(sgd);
+    n1.update_weights(sgd, obs);
     Matrix after_weight = l2->return_parameters()[0]->return_data_const();
     Matrix after_bias = l2->return_parameters()[1]->return_data_const();
     Matrix WeightDiff = before_weight - after_weight;
@@ -209,7 +209,7 @@ TEST_CASE("NeuralNetwork equivalance", "[equivalance]") {
     loss->grad_loss_cpu(grad_in, vals_cpu[vals_cpu.size() - 1], SharedTarget,
                         SharedTarget);
     n_cpu.backwards(grad_cpu, vals_cpu);
-    n_cpu.update_weights(sgd);
+    n_cpu.update_weights(sgd, obs);
     Matrix after_weight = l2->return_parameters()[0]->return_data_const();
     double cpuEnd = cpuSecond() - cpuStart;
      //GPU PART
@@ -222,7 +222,7 @@ TEST_CASE("NeuralNetwork equivalance", "[equivalance]") {
     loss->grad_loss_gpu(grad_in_gpu, vals_gpu[vals_gpu.size() - 1],
                         SharedTarget, SharedTarget);
     n_gpu.backwards(grad_gpu, vals_gpu);
-    n_gpu.update_weights(sgd);
+    n_gpu.update_weights(sgd, obs);
     double gpuEnd = cpuSecond() - gpuStart;
     Matrix diff = l2->return_parameters()[0]->return_data_const() -
                   l2_gpu->return_parameters()[0]->return_data_const();

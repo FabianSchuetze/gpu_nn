@@ -36,9 +36,9 @@ TEST_CASE("Dense forward_gpu", "[gpu]") {
 
 TEST_CASE("Dense backward_gpu", "[gpu]") {
     srand((unsigned int)time(0));
-    Layer* inp1;
-    Dense s1(6, 5);
-    inp1 = &s1;
+    Layer* inp1 = new Dense(6,5);
+    //Dense s1(6, 5);
+    //inp1 = &s1;
     Matrix gradient_in = Matrix::Random(6, 3);
     Matrix gradient_out = Matrix::Zero(5, 3);
     Matrix values = Matrix::Random(5, 3);
@@ -46,6 +46,9 @@ TEST_CASE("Dense backward_gpu", "[gpu]") {
     SharedStorage shared_gradient_out = make_shared<Storage>(gradient_out);
     SharedStorage shared_values = make_shared<Storage>(values);
     inp1->backward_gpu(shared_values, shared_gradient_in, shared_gradient_out);
+    std::cout << inp1->return_gradients()[1]->return_data_const() <<
+        std::endl;
+    std::cout << gradient_in << std::endl;
     REQUIRE(inp1->return_gradients()[1]->return_data_const() ==
             gradient_in.rowwise().sum());
 }
@@ -77,15 +80,19 @@ TEST_CASE("Dense backward_cpu", "[cpu]") {
     SharedStorage shared_gradient_out = make_shared<Storage>(gradient_out);
     SharedStorage shared_values = make_shared<Storage>(values);
     inp1->backward_cpu(shared_values, shared_gradient_in, shared_gradient_out);
+    std::cout << inp1->return_gradients()[1]->return_data_const() <<
+        std::endl;
+    std::cout << gradient_in << std::endl;
     REQUIRE(inp1->return_gradients()[1]->return_data_const() ==
             gradient_in.rowwise().sum());
 }
 
 TEST_CASE("Dense backard equivalence", "[backward equivalence]") {
     srand((unsigned int)time(0));
-    Layer* inp1;
-    Dense s1(1024, 1000);
-    inp1 = &s1;
+    Layer* inp_cpu = new Dense(1024, 1000);
+    Layer* inp_gpu = new Dense(1024, 1000);
+    //Dense s1(1024, 1000);
+    //inp1 = &s1;
     Matrix gradient_in = Matrix::Random(1024, 32);
     Matrix gradient_out_cpu = Matrix::Zero(1000, 32);
     Matrix gradient_out_gpu = Matrix::Zero(1000, 32);
@@ -97,16 +104,20 @@ TEST_CASE("Dense backard equivalence", "[backward equivalence]") {
         make_shared<Storage>(gradient_out_gpu);
     SharedStorage shared_values = make_shared<Storage>(values);
     double cpuStart = cpuSecond();
-    inp1->backward_cpu(shared_values, shared_gradient_in,
+    inp_cpu->backward_cpu(shared_values, shared_gradient_in,
                        shared_gradient_out_cpu);
     double cpuEnd = cpuSecond() - cpuStart;
     double gpuStart = cpuSecond();
-    inp1->backward_gpu(shared_values, shared_gradient_in,
+    inp_gpu->backward_gpu(shared_values, shared_gradient_in,
                        shared_gradient_out_gpu);
     double gpuEnd = cpuSecond() - gpuStart;
     Matrix diff = shared_gradient_out_cpu->return_data_const() -
                   shared_gradient_out_gpu->return_data_const();
     dtype out = diff.array().abs().maxCoeff();
+    Matrix bias_diff = inp_cpu->return_gradients()[1]->return_data_const() -
+        inp_gpu->return_gradients()[1]->return_data_const();
+    dtype out_bias = bias_diff.array().abs().maxCoeff();
+    std::cout << "the bias diff is: " << out_bias << std::endl;
     dtype allowed = 1e-5;
     std::cout << "The CPU took " << cpuEnd << " and hte GPU took " << gpuEnd
               << std::endl;
