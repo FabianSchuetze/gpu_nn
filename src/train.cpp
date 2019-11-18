@@ -1,10 +1,13 @@
 #include <chrono>
 #include <iostream>
+#include <iterator>
 #include <memory>
 #include <random>
 #include <stdexcept>
+#include <thread>
 #include "../include/loss/cross_entropy.h"
 #include "../include/network.h"
+#include "../include/threadsafe_queue.hpp"
 
 using Eigen::all;
 using std::vector;
@@ -104,7 +107,44 @@ void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
     }
     train_args = std::make_unique<trainArgs>(features, targets, _epoch,
                                              _patience, _batch_size);
-    train(sgd);
+     train(sgd);
+    //std::thread produce([&]() { producer(); });
+    //std::thread consume([&]() { consumer(sgd); });
+    //while (train_args->current_epoch() < train_args->epochs()) {
+        //;
+    //}
+    //produce.join();
+    //consume.join();
+}
+
+void NeuralNetwork::producer() {
+    std::mt19937 gen;
+    gen.seed(0);
+    Matrix x_train, y_train;
+    Matrix tmp =
+        Matrix::Zero(train_args->y_train().cols(), train_args->batch_size());
+    Matrix tmp_input =
+        Matrix::Zero(train_args->x_train().cols(), train_args->batch_size());
+    SharedStorage SharedTarget = std::make_shared<Storage>(tmp);
+    SharedStorage SharedInput = std::make_shared<Storage>(tmp_input);
+    vector<int> samples(train_args->batch_size());
+    std::pair<SharedStorage, SharedStorage> data;
+    while (train_args->current_epoch() < train_args->epochs()) {
+        if (train_args->data_queue.size() < 5) {
+            random_numbers(samples, gen);
+            get_new_sample(samples, x_train, y_train);
+            SharedTarget->update_cpu_data(y_train);
+            SharedInput->update_cpu_data(x_train);
+            data = std::make_pair(SharedInput, SharedTarget);
+            train_args->data_queue.push(data);
+        } 
+        else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+    }
+    // sleep;
+    // std::this_thre
+    // fill_hiddens(vals, x_train);
 }
 
 void NeuralNetwork::validate(std::chrono::milliseconds diff) {
@@ -114,13 +154,42 @@ void NeuralNetwork::validate(std::chrono::milliseconds diff) {
         std::make_shared<Storage>(train_args->y_val().transpose());
     fill_hiddens(vals, train_args->x_val().transpose());
     forward(vals);
-    //const SharedStorage& prediction = vals[vals.size() - 1];
+    // const SharedStorage& prediction = vals[vals.size() - 1];
     dtype total_loss = loss->loss(vals.back(), SharedTarget);
     std::cout << "after iter " << train_args->current_epoch() << "the loss is "
               << total_loss / obs << ", in " << diff.count() << " milliseconds"
               << std::endl;
     train_args->advance_epoch();
     train_args->reset_total_iter();
+}
+void NeuralNetwork::consumer(std::shared_ptr<GradientDescent> sgd) {
+    // std::mt19937 gen;
+    // gen.seed(0);
+    vector<SharedStorage> vals = allocate_forward(train_args->batch_size());
+    vector<SharedStorage> grads = allocate_backward(train_args->batch_size());
+    auto begin = std::chrono::system_clock::now();
+    auto end = std::chrono::system_clock::now();
+    std::chrono::milliseconds diff;
+    std::pair<SharedStorage, SharedStorage> data;
+    while (train_args->current_epoch() < train_args->epochs()) {
+        //std::cout << "The size is:" << train_args->data_queue.size() << std::endl;
+        std::shared_ptr<std::pair<SharedStorage, SharedStorage>> out = 
+            train_args->data_queue.wait_and_pop();
+        //std::cout << "The size is:" << train_args->data_queue.size() << std::endl;
+        vals[0] = out->first;
+        forward(vals);
+        loss->grad_loss(grads.back(), vals.back(), out->second, out->second);
+        backwards(grads, vals);
+        update_weights(sgd, train_args->batch_size());
+        train_args->advance_total_iter();
+        if (train_args->total_iter() > train_args->max_total_iter()) {
+            end = std::chrono::system_clock::now();
+            diff = std::chrono::duration_cast<std::chrono::milliseconds>(end -
+                                                                         begin);
+            validate(diff);
+            begin = std::chrono::system_clock::now();
+        }
+    }
 }
 
 void NeuralNetwork::train(std::shared_ptr<GradientDescent> sgd) {
@@ -134,26 +203,44 @@ void NeuralNetwork::train(std::shared_ptr<GradientDescent> sgd) {
     vector<int> samples(train_args->batch_size());
     Matrix x_train, y_train;
     auto begin = std::chrono::system_clock::now();
+    auto begin_fill = std::chrono::system_clock::now();
+    auto begin_other = std::chrono::system_clock::now();
     auto end = std::chrono::system_clock::now();
+    // auto end_fill = std::chrono::system_clock::now();
     std::chrono::milliseconds diff;
+    std::chrono::nanoseconds diff_2;
+    std::chrono::nanoseconds diff_3;
     while (train_args->current_epoch() < train_args->epochs()) {
+        begin_fill = std::chrono::system_clock::now();
         random_numbers(samples, gen);
         get_new_sample(samples, x_train, y_train);
         SharedTarget->update_cpu_data(y_train);
         fill_hiddens(vals, x_train);
+        diff_2 += std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::system_clock::now() - begin_fill);
+        begin_other = std::chrono::system_clock::now();
         forward(vals);
-        //SharedStorage& grad_in = grads[grads.size() - 1];
+        // SharedStorage& grad_in = grads[grads.size() - 1];
         loss->grad_loss(grads.back(), vals.back(), SharedTarget, SharedTarget);
         backwards(grads, vals);
-        //std::cout << grads[grads.size() - 1]->return_data_const() << std::endl;
+        // std::cout << grads[grads.size() - 1]->return_data_const() <<
+        // std::endl;
 
         update_weights(sgd, train_args->batch_size());
-        //std::cout << "UPDATING\n";
+        // std::cout << "UPDATING\n";
         train_args->advance_total_iter();
+        diff_3 += std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::system_clock::now() - begin_other);
         if (train_args->total_iter() > train_args->max_total_iter()) {
             end = std::chrono::system_clock::now();
             diff = std::chrono::duration_cast<std::chrono::milliseconds>(end -
                                                                          begin);
+            std::cout << "the input used " << diff_2.count() << " milliseconds"
+                      << std::endl;
+            std::cout << "the other part used " << diff_3.count()
+                      << " milliseconds" << std::endl;
+            diff_2 = std::chrono::nanoseconds::zero();
+            diff_3 = std::chrono::nanoseconds::zero();
             validate(diff);
             begin = std::chrono::system_clock::now();
         }

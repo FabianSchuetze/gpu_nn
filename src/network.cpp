@@ -73,6 +73,8 @@ vector<SharedStorage> NeuralNetwork::allocate_backward(int obs) {
 
 void NeuralNetwork::fill_hiddens(vector<SharedStorage>& values,
                                  const Matrix& features) {
+    //SharedStorage test = std::make_shared<Storage>(features);
+    //values[0] = test;
     values[0]->update_cpu_data(features);
 }
 

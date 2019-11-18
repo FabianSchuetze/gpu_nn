@@ -4,6 +4,7 @@
 #include <vector>
 #include "common.h"
 #include "storage.h"
+#include "threadsafe_queue.hpp"
 
 class trainArgs {
    private:
@@ -29,12 +30,14 @@ class trainArgs {
     const Matrix& y_train() { return _y_train; }
     const Matrix& x_val() { return _x_val; }
     const Matrix& y_val() { return _y_val; }
+    threadsafe_queue<std::pair<SharedStorage, SharedStorage>> data_queue;
 
    private:
     Matrix _x_train;
     Matrix _x_val;
     Matrix _y_train;
     Matrix _y_val;
+    
     //int _iter_since_update;
     int _total_iter;
     int _current_epoch;
