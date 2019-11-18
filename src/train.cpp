@@ -121,26 +121,28 @@ void NeuralNetwork::producer() {
     std::mt19937 gen;
     gen.seed(0);
     Matrix x_train, y_train;
-    Matrix tmp =
-        Matrix::Zero(train_args->y_train().cols(), train_args->batch_size());
-    Matrix tmp_input =
-        Matrix::Zero(train_args->x_train().cols(), train_args->batch_size());
-    SharedStorage SharedTarget = std::make_shared<Storage>(tmp);
-    SharedStorage SharedInput = std::make_shared<Storage>(tmp_input);
+    //Matrix tmp =
+        //Matrix::Zero(train_args->y_train().cols(), train_args->batch_size());
+    //Matrix tmp_input =
+        //Matrix::Zero(train_args->x_train().cols(), train_args->batch_size());
+    //SharedStorage SharedTarget = std::make_shared<Storage>(tmp);
+    //SharedStorage SharedInput = std::make_shared<Storage>(tmp_input);
     vector<int> samples(train_args->batch_size());
     std::pair<SharedStorage, SharedStorage> data;
     while (train_args->current_epoch() < train_args->epochs()) {
         if (train_args->data_queue.size() < 5) {
             random_numbers(samples, gen);
             get_new_sample(samples, x_train, y_train);
-            SharedTarget->update_cpu_data(y_train);
-            SharedInput->update_cpu_data(x_train);
+            std::shared_ptr<Storage> SharedInput = 
+                std::make_shared<Storage>(x_train);
+            std::shared_ptr<Storage> SharedTarget = 
+                std::make_shared<Storage>(y_train);
             data = std::make_pair(SharedInput, SharedTarget);
             train_args->data_queue.push(data);
         } 
-        else {
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
+        //else {
+            //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        //}
     }
     // sleep;
     // std::this_thre
@@ -173,15 +175,21 @@ void NeuralNetwork::consumer(std::shared_ptr<GradientDescent> sgd) {
     std::pair<SharedStorage, SharedStorage> data;
     while (train_args->current_epoch() < train_args->epochs()) {
         //std::cout << "The size is:" << train_args->data_queue.size() << std::endl;
-        std::shared_ptr<std::pair<SharedStorage, SharedStorage>> out = 
+        std::pair<SharedStorage, SharedStorage> out = 
             train_args->data_queue.wait_and_pop();
         //std::cout << "The size is:" << train_args->data_queue.size() << std::endl;
-        vals[0] = out->first;
+        vals[0] = out.first;
+        //Matrix const in1 = vals[0]->return_data_const();
+        //Matrix const in2 = out.second->return_data_const();
         forward(vals);
-        loss->grad_loss(grads.back(), vals.back(), out->second, out->second);
+        loss->grad_loss(grads.back(), vals.back(), out.second, out.second);
         backwards(grads, vals);
         update_weights(sgd, train_args->batch_size());
         train_args->advance_total_iter();
+        //Matrix diff_mat = out.second->return_data_const() - in2;
+        //std::cout << "cummulative difference: " << 
+            //diff_mat.cwiseAbs().array().sum() << std::endl;
+        train_args->data_queue.pop();
         if (train_args->total_iter() > train_args->max_total_iter()) {
             end = std::chrono::system_clock::now();
             diff = std::chrono::duration_cast<std::chrono::milliseconds>(end -

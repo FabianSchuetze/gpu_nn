@@ -7,7 +7,7 @@ class Storage {
    public:
     //Storage();
     Storage(const Matrix&);
-    Storage(const Storage&) = delete;
+    //Storage(const Storage&) = delete;
     Storage& operator=(Storage other) = delete;
     // Storage(const Eigen::MatrixXd&&) // I need to provide that!
     ~Storage();
