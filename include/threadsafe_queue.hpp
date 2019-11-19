@@ -25,21 +25,21 @@ class threadsafe_queue {
         std::unique_lock<std::mutex> lk(mut);
         data_cond.wait(lk, [this] { return !data_queue.empty(); });
         value = data_queue.front();
-        //data_queue.pop();
-    }
-
-    void pop() {
-        std::unique_lock<std::mutex> lk(mut);
         data_queue.pop();
     }
 
-    T wait_and_pop() {
+    //void pop() {
+        //std::unique_lock<std::mutex> lk(mut);
+        //data_queue.pop();
+    //}
+
+    std::shared_ptr<T> wait_and_pop() {
         std::unique_lock<std::mutex> lk(mut);
         data_cond.wait(lk, [this] { return !data_queue.empty(); });
-        return data_queue.front();
-        //return r<T> res(std::make_shared<T>(data_queue.front()));
-        //data_queue.pop();
-        //return res;
+        //return data_queue.front();
+        std::shared_ptr<T> res(std::make_shared<T>(data_queue.front()));
+        data_queue.pop();
+        return res;
     }
 
     bool try_pop(T& value) {
