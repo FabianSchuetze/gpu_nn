@@ -79,8 +79,8 @@ void Dense::backward_cpu(const SharedStorage& values,
             //"/home/fabian/Documents/work/gpu_nn/debug/cpu_grad.txt");
     Matrix& bias_ref = gradients[1]->return_data();
     Matrix& weight_ref = gradients[0]->return_data();
-    bias_ref += gradient_in->return_data_const().rowwise().sum();
-    weight_ref += gradient_in->return_data_const() *
+    bias_ref = gradient_in->return_data_const().rowwise().sum();
+    weight_ref = gradient_in->return_data_const() *
                   values->return_data_const().transpose();
     //std::cout << "the cpu gradient is:\n"
               //<< gradients[1]->return_data_const() << std::endl;

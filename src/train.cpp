@@ -67,7 +67,9 @@ void NeuralNetwork::update_weights_cpu(std::shared_ptr<GradientDescent> opt,
             vector<SharedStorage> parameters = layer->return_parameters();
             const vector<SharedStorage>& gradients = layer->return_gradients();
             opt->weight_update_cpu(gradients, parameters, batch_size);
-            layer->clear_gradients_cpu();
+            //layer->clear_gradients_cpu();
+            //// WHEN CALCULATING GRADIENTS IN BATCHES THAT"S NOT NEEDED, MIGHT
+            //BE DANGEROUS!!!
         }
     }
 }
@@ -79,7 +81,7 @@ void NeuralNetwork::update_weights_gpu(std::shared_ptr<GradientDescent> opt,
             vector<SharedStorage> parameters = layer->return_parameters();
             const vector<SharedStorage>& gradients = layer->return_gradients();
             opt->weight_update_gpu(gradients, parameters, batch_size);
-            layer->clear_gradients_cpu();
+            //layer->clear_gradients_cpu();
         }
     }
 }
