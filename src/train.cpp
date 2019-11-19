@@ -107,26 +107,23 @@ void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
     }
     train_args = std::make_unique<trainArgs>(features, targets, _epoch,
                                              _patience, _batch_size);
-     train(sgd);
-    //std::thread produce([&]() { producer(); });
-    //std::thread consume([&]() { consumer(sgd); });
+     //train(sgd);
+    std::thread produce([&]() { producer(); });
+    std::thread consume([&]() { consumer(sgd); });
     //while (train_args->current_epoch() < train_args->epochs()) {
         //;
     //}
-    //produce.join();
-    //consume.join();
+    std::cout << "leaving iter" << std::endl;
+    produce.join();
+    std::cout << "closing produce" << std::endl;
+    consume.join();
+    std::cout << "closing consume" << std::endl;
 }
 
 void NeuralNetwork::producer() {
     std::mt19937 gen;
     gen.seed(0);
     Matrix x_train, y_train;
-    //Matrix tmp =
-        //Matrix::Zero(train_args->y_train().cols(), train_args->batch_size());
-    //Matrix tmp_input =
-        //Matrix::Zero(train_args->x_train().cols(), train_args->batch_size());
-    //SharedStorage SharedTarget = std::make_shared<Storage>(tmp);
-    //SharedStorage SharedInput = std::make_shared<Storage>(tmp_input);
     vector<int> samples(train_args->batch_size());
     std::pair<SharedStorage, SharedStorage> data;
     while (train_args->current_epoch() < train_args->epochs()) {
@@ -144,6 +141,7 @@ void NeuralNetwork::producer() {
             //std::this_thread::sleep_for(std::chrono::milliseconds(10));
         //}
     }
+    std::cout << "leaving producer" << std::endl;
     // sleep;
     // std::this_thre
     // fill_hiddens(vals, x_train);
@@ -198,6 +196,7 @@ void NeuralNetwork::consumer(std::shared_ptr<GradientDescent> sgd) {
             begin = std::chrono::system_clock::now();
         }
     }
+    std::cout << "leaving consumer" << std::endl;
 }
 
 void NeuralNetwork::train(std::shared_ptr<GradientDescent> sgd) {

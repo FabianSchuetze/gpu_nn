@@ -13,8 +13,9 @@ int main(int argc, char** argv) {
     Layer* l3 = new Relu;
     Layer* l4 = new Dense(10, 100);
     Layer* l5 = new Softmax;
-    std::shared_ptr<Loss> loss = std::make_shared<CrossEntropy>(CrossEntropy());
-    NeuralNetwork n1({l1, l2, l3, l4, l5}, loss, std::string(argv[1]));
+    std::shared_ptr<Loss> loss = std::make_shared<CrossEntropy>(CrossEntropy(
+                argv[1]));
+    NeuralNetwork n1({l1, l2, l3, l4, l5}, loss, argv[1]);
     std::shared_ptr<GradientDescent> sgd =
         std::make_shared<StochasticGradientDescent>(0.001);
     if (argc == 5) {
