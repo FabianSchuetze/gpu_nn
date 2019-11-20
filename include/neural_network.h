@@ -5,6 +5,7 @@
 #include "layer/dense.h"
 #include "layer/relu.h"
 #include "layer/input.h"
+#include "layer/dropout.h"
 #include "network.h"
 #include "storage.h"
 #include "loss/cross_entropy.h"

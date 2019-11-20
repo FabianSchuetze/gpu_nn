@@ -34,8 +34,10 @@ void Softmax::forward_cpu(const SharedStorage& in, SharedStorage& out) {
 void Softmax::forward_gpu(const SharedStorage& in, SharedStorage& out) {
     int rows = in->get_rows();
     int cols = in->get_cols();
+    // Ones could be part of the class definition
     SharedStorage ones = make_shared<Storage>(Matrix::Ones(rows, 1));
     SharedStorage tmp = make_shared<Storage>(Matrix::Zero(cols, 1));
+    // I NEED TO ADD THE PROPER MAX REDUCTION ALGORITHM!
     my_Dgemv(_handle, CUBLAS_OP_T, in, ones, tmp, 1, 1);
     my_add_vec_to_mat_colwise(in, tmp, out, -1.0f);
     my_Exponential(out);

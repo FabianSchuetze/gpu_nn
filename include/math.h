@@ -1,6 +1,8 @@
 #pragma once
 #ifndef math_h
 #define math_h
+#include <curand_kernel.h>
+#include <curand.h>
 #include <memory>
 #include "common.h"
 #include "cublas_v2.h"
@@ -24,4 +26,6 @@ void my_cross_entropy_loss(dtype&, const SharedStorage&, const SharedStorage&);
 void my_cross_entropy_gradient(SharedStorage&, const SharedStorage&,
                                const SharedStorage);
 void my_Matrix_addition_inplace(const SharedStorage&, SharedStorage&, dtype);
+void my_cuda_dropout(const SharedStorage&, const SharedStorage&, SharedStorage&,
+                     curandState*);
 #endif

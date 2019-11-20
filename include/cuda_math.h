@@ -2,6 +2,9 @@
 #ifndef cuda_math_h
 #define cuda_math_h
 #include "cublas_v2.h"
+//#include <curand.h>
+#include <curand_kernel.h>
+#include <curand.h>
 void my_cuda_Dgemm(cublasHandle_t, cublasOperation_t, cublasOperation_t, int M,
                    int N, int K, double* alpha, const double*& d_A, int,
                    const double*& d_B, int, double* beta, double*& d_C, int);
@@ -36,4 +39,7 @@ void cross_entropy_gradient(int, int, const double*, const double*, double*);
 void cross_entropy_gradient(int, int, const float*, const float*, float*);
 void matrix_addition_inplace(int, int, const float*, float*, const float);
 void matrix_addition_inplace(int, int, const double*, double*, const float);
+void dropout(int, int, const float, const float*, float*, curandState*);
+void dropout(int, int, const double, const double*, double*, curandState*);
+void cuda_init(int, int, curandState* state);
 #endif
