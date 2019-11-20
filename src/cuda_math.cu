@@ -241,40 +241,24 @@ __global__ void cuda_matrix_addition_inplace(int rows, int cols,
 }
 
 __global__ void cuda_dropout(int rows, int cols, const float prob, 
-                             const float* d_A, float* d_B,
-                             curandState* state) {
+                             const float* d_A, float* d_B) {
     unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
     unsigned int linear = row + col * rows;
     if ((row < rows) && (col < cols)) {
-        float rand = curand_uniform(&(state[linear]));
-        float in = d_A[linear];
-        float out = (rand < prob) ? in / prob : 0.;
-        d_B[linear] = out;
-        printf(
-            "rand %.3f , probability %.3f, rows %d, cols %d, linear %d "
-            "input %.3f, and outout %.3f\n",
-            rand, prob, row, col, linear, in, out);
+        d_B[linear] = (d_B[linear] < prob) ? d_A[linear] / prob : 0.;
     }
 }
 
 __global__ void cuda_dropout(int rows, int cols, double prob, 
-                             const double* d_A, double* d_B, 
-                             curandState* state) {
+                             const double* d_A, double* d_B) {
     unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
     unsigned int linear = row + col * rows;
     if ((row < rows) && (col < cols)) {
-        float rand = curand_uniform(&(state[linear]));
-        d_B[linear] = (rand < prob) ? d_A[linear] / prob : 0.;
+        //float rand = curand_uniform(&(state[linear]));
+        d_B[linear] = (d_B[linear] < prob) ? d_A[linear] / prob : 0.;
     }
-}
-
-__global__ void cuda_init(curandState* state) {
-    unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
-    unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
-    unsigned int linear = row + col * row;
-    curand_init(0, linear, 0, &state[linear]);
 }
 
 void add_vec_to_mat_colwise(int rows, int cols, double* matrix,
@@ -462,26 +446,20 @@ void matrix_addition_inplace(int rows, int cols, const double* gradient,
     // MY_CHECK(cudaDeviceSynchronize());
 }
 
-void dropout(int rows, int cols, const float prob, const float* in, float* out,
-             curandState* state) {
+void dropout(int rows, int cols, const float prob, const float* in, 
+             float* out) {
     dim3 block(16, 16);
     dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
-    cuda_dropout<<<grid, block>>>(rows, cols, prob, in, out, state);
+    cuda_dropout<<<grid, block>>>(rows, cols, prob, in, out);
     MY_CHECK(cudaPeekAtLastError());
     MY_CHECK(cudaDeviceSynchronize());
 }
 
 void dropout(int rows, int cols, const double prob, const double* in,
-             double* out, curandState* state) {
+             double* out) {
     dim3 block(16, 16);
     dim3 grid((cols + block.y - 1) / block.y, (rows + block.x - 1) / block.x);
-    cuda_dropout<<<grid, block>>>(rows, cols, prob, in, out, state);
+    cuda_dropout<<<grid, block>>>(rows, cols, prob, in, out);
     cudaDeviceSynchronize();
     MY_CHECK(cudaPeekAtLastError());
-}
-
-void cuda_init(int rows, int cols, curandState* state) {
-    dim3 block(16, 16);
-    dim3 grid((cols + block.y - 1) / block.y, (rows + block.x - 1) / block.x);
-    cuda_init<<<grid, block>>>(state);
 }

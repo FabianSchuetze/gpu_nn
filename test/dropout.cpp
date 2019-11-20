@@ -24,15 +24,18 @@ TEST_CASE("Dense forward_gpu", "[gpu]") {
     srand((unsigned int)time(0));
     // NOT A GOOD IDEAS AS IT REQUIRES TO KNOW THE NUMBER OF ELEMENTS
     // BEFOREHAND
-    Layer* inp1 = new Dropout(5, 5, 0.5);
-    Matrix in = Matrix::Random(5, 5);
-    Matrix out = Matrix::Zero(5, 5);
+    Matrix in = Matrix::Random(10, 3);
+    Matrix out = Matrix::Zero(10, 3);
     //dtype begin = out(0, 0);
     std::shared_ptr<Storage> storage_in = std::make_shared<Storage>(in);
     std::shared_ptr<Storage> storage_out = std::make_shared<Storage>(out);
+    std::shared_ptr<Storage> storage_out2 = std::make_shared<Storage>(out);
     std::cout << storage_in->return_data_const() << std::endl;
+    Layer* inp1 = new Dropout(0.5);
     inp1->forward_gpu(storage_in, storage_out);
     std::cout << storage_out->return_data_const() << std::endl;
+    inp1->forward_gpu(storage_in, storage_out2);
+    std::cout << storage_out2->return_data_const() << std::endl;
     //dtype end = storage_out->return_data_const()(0, 0);
     //REQUIRE(begin != end);
 }

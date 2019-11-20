@@ -11,7 +11,7 @@ class Dropout : public Layer {
     typedef std::vector<std::shared_ptr<Storage>> VecSharedStorage;
 
    public:
-    Dropout(int, int, dtype);
+    Dropout(dtype);
     virtual ~Dropout();
     int input_dimension() override { return 0; };
     int output_dimension() override { return 0; };
@@ -31,10 +31,10 @@ class Dropout : public Layer {
     void clear_gradients_gpu() override;
 
    private:
-    curandState* d_state;
+    curandGenerator_t gen;
     std::vector<SharedStorage> assistance_parameters;
 
     void initialize_probability(const dtype&);
-    void initialize_random(int, int);
+    void initialize_random();
 };
 #endif

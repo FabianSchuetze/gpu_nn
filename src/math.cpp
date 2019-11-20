@@ -139,12 +139,11 @@ void my_Matrix_addition_inplace(const SharedStorage& gradient,
 }
 
 void my_cuda_dropout(const SharedStorage& in, const SharedStorage& prob,
-                     SharedStorage& out, curandState* state) { 
+                     SharedStorage& out) { 
     int rows = in->get_rows();
     int cols = in->get_cols();
-    std::cout << "input is\n" << in->return_data_const() << std::endl;
     const dtype* d_A = in->gpu_pointer_const();
     const dtype probability = prob->return_data_const()(0, 0);
     dtype* d_B = out->gpu_pointer();
-    dropout(rows, cols, probability, d_A, d_B, state);
+    dropout(rows, cols, probability, d_A, d_B);
 }

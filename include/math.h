@@ -26,6 +26,5 @@ void my_cross_entropy_loss(dtype&, const SharedStorage&, const SharedStorage&);
 void my_cross_entropy_gradient(SharedStorage&, const SharedStorage&,
                                const SharedStorage);
 void my_Matrix_addition_inplace(const SharedStorage&, SharedStorage&, dtype);
-void my_cuda_dropout(const SharedStorage&, const SharedStorage&, SharedStorage&,
-                     curandState*);
+void my_cuda_dropout(const SharedStorage&, const SharedStorage&, SharedStorage&);
 #endif

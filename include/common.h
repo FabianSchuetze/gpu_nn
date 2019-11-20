@@ -65,5 +65,15 @@ using BatchSize = NamedType<int, BatchSizeParamter>;
         exit(1);                                                               \
     }                                                                          \
 }
-//}
+
+#define CHECK_CURAND(call)                                                     \
+{                                                                              \
+    curandStatus_t err;                                                        \
+    if ((err = (call)) != CURAND_STATUS_SUCCESS)                               \
+    {                                                                          \
+        fprintf(stderr, "Got CURAND error %d at %s:%d\n", err, __FILE__,       \
+                __LINE__);                                                     \
+        exit(1);                                                               \
+    }                                                                          \
+}
 #endif

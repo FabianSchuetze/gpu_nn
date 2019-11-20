@@ -39,7 +39,7 @@ void cross_entropy_gradient(int, int, const double*, const double*, double*);
 void cross_entropy_gradient(int, int, const float*, const float*, float*);
 void matrix_addition_inplace(int, int, const float*, float*, const float);
 void matrix_addition_inplace(int, int, const double*, double*, const float);
-void dropout(int, int, const float, const float*, float*, curandState*);
-void dropout(int, int, const double, const double*, double*, curandState*);
-void cuda_init(int, int, curandState* state);
+void dropout(int, int, const float, const float*, float*);
+void dropout(int, int, const double, const double*, double*);
+void cuda_init(int, int, curandState*, int);
 #endif
