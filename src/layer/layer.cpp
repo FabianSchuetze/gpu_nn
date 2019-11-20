@@ -4,8 +4,8 @@ int Layer::input_dimension() { return 0; }
 int Layer::input_dimension() const { return 0; }
 int Layer::output_dimension() { return 0; }
 int Layer::output_dimension() const { return 0; }
-void Layer::forward_gpu(const SharedStorage&, SharedStorage&) { ; };
-void Layer::forward_cpu(const SharedStorage&, SharedStorage&) { ; };
+void Layer::forward_gpu(const SharedStorage&, SharedStorage&, const std::string&) { ; };
+void Layer::forward_cpu(const SharedStorage&, SharedStorage&, const std::string&) { ; };
 void Layer::backward_gpu(const SharedStorage&, const SharedStorage&,
                          SharedStorage&) {
     ;

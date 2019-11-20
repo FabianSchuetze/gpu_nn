@@ -41,14 +41,14 @@ Dense::Dense(int rows, int cols)
     _name = "Dense";
 }
 
-void Dense::forward_cpu(const SharedStorage& in, SharedStorage& out) {
+void Dense::forward_cpu(const SharedStorage& in, SharedStorage& out, const std::string&) {
     const Matrix& in_ref = in->return_data_const();
     out->return_data() = parameters[0]->return_data_const() * in_ref;
     for (int i = 0; i < out->get_cols(); i++)
         out->return_data()(all, i) += parameters[1]->return_data_const();
 }
 
-void Dense::forward_gpu(const SharedStorage& in, SharedStorage& out) {
+void Dense::forward_gpu(const SharedStorage& in, SharedStorage& out, const std::string&) {
     cublasOperation_t transA = CUBLAS_OP_N;
     cublasOperation_t transB = CUBLAS_OP_N;
     dtype alpha = 1;

@@ -5,9 +5,9 @@
 #include "common.h"
 class Storage {
    public:
-    //Storage();
+    Storage();
     Storage(const Matrix&);
-    //Storage(const Storage&) = delete;
+    // Storage(const Storage&) = delete;
     Storage& operator=(Storage other) = delete;
     // Storage(const Eigen::MatrixXd&&) // I need to provide that!
     ~Storage();
@@ -15,12 +15,15 @@ class Storage {
     const dtype* gpu_pointer_const();
     void update_cpu_data(Matrix);
     void update_gpu_data(const dtype);
+    void update_gpu_data(const dtype*);
     dtype* cpu_pointer();
     dtype* gpu_pointer();
     int get_rows() { return _data.rows(); }
     int get_cols() { return _data.cols(); }
     Matrix& return_data();
     const Matrix& return_data_const();
+    // void resize(const Matrix&);
+    bool is_set();
 
    private:
     Matrix _data;
@@ -31,4 +34,7 @@ class Storage {
     void sync_to_cpu();
     void sync_to_gpu();
 };
+
+bool same_size(const std::shared_ptr<Storage>&,
+               const std::shared_ptr<Storage>&);
 #endif

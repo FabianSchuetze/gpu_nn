@@ -29,7 +29,7 @@ TEST_CASE("Dense forward_gpu", "[gpu]") {
     dtype begin = out(0, 0);
     std::shared_ptr<Storage> storage_in = std::make_shared<Storage>(in);
     std::shared_ptr<Storage> storage_out = std::make_shared<Storage>(out);
-    inp1->forward_gpu(storage_in, storage_out);
+    inp1->forward_gpu(storage_in, storage_out, "train");
     dtype end = storage_out->return_data_const()(0, 0);
     REQUIRE(begin != end);
 }
@@ -63,7 +63,7 @@ TEST_CASE("Dense forward_cpu", "[cpu]") {
     dtype begin = out(0, 0);
     std::shared_ptr<Storage> storage_in = std::make_shared<Storage>(in);
     std::shared_ptr<Storage> storage_out = std::make_shared<Storage>(out);
-    inp1->forward_cpu(storage_in, storage_out);
+    inp1->forward_cpu(storage_in, storage_out, "train");
     dtype end = storage_out->return_data_const()(0, 0);
     REQUIRE(begin != end);
 }
@@ -140,10 +140,10 @@ TEST_CASE("Dense forward equivalence", "[forward equivalence]") {
     std::shared_ptr<Storage> storage_out_gpu =
         std::make_shared<Storage>(out_gpu);
     double cpuStart = cpuSecond();
-    inp1->forward_cpu(storage_in, storage_out_cpu);
+    inp1->forward_cpu(storage_in, storage_out_cpu, "train");
     double cpuEnd = cpuSecond() - cpuStart;
     double gpuStart = cpuSecond();
-    inp1->forward_gpu(storage_in, storage_out_gpu);
+    inp1->forward_gpu(storage_in, storage_out_gpu, "train");
     double gpuEnd = cpuSecond() - gpuStart;
     Matrix diff = storage_out_cpu->return_data_const() -
                   storage_out_gpu->return_data_const();

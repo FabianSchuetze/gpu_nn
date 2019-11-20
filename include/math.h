@@ -17,6 +17,8 @@ void my_Dgemv(cublasHandle_t, cublasOperation_t, const SharedStorage&,
 void my_add_vec_to_mat_colwise(SharedStorage&, const SharedStorage&, dtype);
 void my_add_vec_to_mat_colwise(const SharedStorage&, const SharedStorage&,
                                SharedStorage&, dtype);
+void my_mult_elementwise(const SharedStorage&, const SharedStorage&,
+        SharedStorage&);
 void my_Exponential(SharedStorage&);
 void my_Divide_colwise(SharedStorage&, const SharedStorage&);
 void my_relu(SharedStorage&, const SharedStorage&);
@@ -26,5 +28,6 @@ void my_cross_entropy_loss(dtype&, const SharedStorage&, const SharedStorage&);
 void my_cross_entropy_gradient(SharedStorage&, const SharedStorage&,
                                const SharedStorage);
 void my_Matrix_addition_inplace(const SharedStorage&, SharedStorage&, dtype);
-void my_cuda_dropout(const SharedStorage&, const SharedStorage&, SharedStorage&);
+//void my_cuda_dropout(const SharedStorage&, SharedStorage&);
+void my_cuda_masking(dtype, SharedStorage&);
 #endif

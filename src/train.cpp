@@ -142,7 +142,7 @@ void NeuralNetwork::validate(std::chrono::milliseconds diff) {
     SharedStorage SharedTarget =
         std::make_shared<Storage>(train_args->y_val().transpose());
     fill_hiddens(vals, train_args->x_val().transpose());
-    forward(vals);
+    forward(vals, "predict");
     dtype total_loss = loss->loss(vals.back(), SharedTarget);
     std::cout << "after iter " << train_args->current_epoch() << "the loss is "
               << total_loss / obs << ", in " << diff.count() << " milliseconds"
@@ -155,12 +155,13 @@ void NeuralNetwork::consumer(std::shared_ptr<GradientDescent> sgd) {
     vector<SharedStorage> grads = allocate_backward(train_args->batch_size());
     auto begin = std::chrono::system_clock::now();
     auto end = std::chrono::system_clock::now();
+    const std::string type("train");
     std::chrono::milliseconds diff;
     while (train_args->current_epoch() < train_args->epochs()) {
         std::shared_ptr<std::pair<SharedStorage, SharedStorage>> out =
             train_args->data_queue.wait_and_pop();
         vals[0] = out->first;
-        forward(vals);
+        forward(vals, type);
         loss->grad_loss(grads.back(), vals.back(), out->second, out->second);
         backwards(grads, vals);
         update_weights(sgd, train_args->batch_size());

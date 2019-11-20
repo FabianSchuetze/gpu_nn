@@ -27,6 +27,8 @@ void exponential(int, int, double*);
 void exponential(int, int, float*);
 void divide_colwise(int, int, double*, const double*);
 void divide_colwise(int, int, float*, const float*);
+void multiply_elementwise(int, int, const float*, const float*, float*);
+void multiply_elementwise(int, int, const double*, const double*, double*);
 void relu(int, int, double*, const double*);
 void relu(int, int, float*, const float*);
 void relu_backwards(int, int, const double*, const double*, double*);
@@ -39,7 +41,10 @@ void cross_entropy_gradient(int, int, const double*, const double*, double*);
 void cross_entropy_gradient(int, int, const float*, const float*, float*);
 void matrix_addition_inplace(int, int, const float*, float*, const float);
 void matrix_addition_inplace(int, int, const double*, double*, const float);
-void dropout(int, int, const float, const float*, float*);
-void dropout(int, int, const double, const double*, double*);
+//void dropout(int, int, const float, const float*, float*);
+//void dropout(int, int, const double, const double*, double*);
 void cuda_init(int, int, curandState*, int);
+void cuda_masking(int, int, float, float*);
+void cuda_masking(int, int, double, double*);
+
 #endif

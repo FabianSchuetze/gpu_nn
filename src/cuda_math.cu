@@ -240,24 +240,41 @@ __global__ void cuda_matrix_addition_inplace(int rows, int cols,
     }
 }
 
-__global__ void cuda_dropout(int rows, int cols, const float prob, 
-                             const float* d_A, float* d_B) {
+__global__ void multiply_ele(int rows, int cols, const float* d_A,
+                             const float* d_B, float* d_C) {
     unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
     unsigned int linear = row + col * rows;
     if ((row < rows) && (col < cols)) {
-        d_B[linear] = (d_B[linear] < prob) ? d_A[linear] / prob : 0.;
+        d_C[linear] = d_A[linear] * d_B[linear];
     }
 }
 
-__global__ void cuda_dropout(int rows, int cols, double prob, 
-                             const double* d_A, double* d_B) {
+__global__ void multiply_ele(int rows, int cols, const double* d_A,
+                             const double* d_B, double* d_C) {
     unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
     unsigned int linear = row + col * rows;
     if ((row < rows) && (col < cols)) {
-        //float rand = curand_uniform(&(state[linear]));
-        d_B[linear] = (d_B[linear] < prob) ? d_A[linear] / prob : 0.;
+        d_C[linear] = d_A[linear] * d_B[linear];
+    }
+}
+
+__global__ void masking(int rows, int cols, const float prob, float* d_A) {
+    unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
+    unsigned int linear = row + col * rows;
+    if ((row < rows) && (col < cols)) {
+        d_A[linear] = (d_A[linear] < prob) ? 1/prob : 0.;
+    }
+}
+
+__global__ void masking(int rows, int cols, const double prob,double* d_A) {
+    unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
+    unsigned int linear = row + col * rows;
+    if ((row < rows) && (col < cols)) {
+        d_A[linear] = (d_A[linear] < prob) ? 1/prob : 0.;
     }
 }
 
@@ -446,20 +463,36 @@ void matrix_addition_inplace(int rows, int cols, const double* gradient,
     // MY_CHECK(cudaDeviceSynchronize());
 }
 
-void dropout(int rows, int cols, const float prob, const float* in, 
-             float* out) {
-    dim3 block(16, 16);
-    dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
-    cuda_dropout<<<grid, block>>>(rows, cols, prob, in, out);
-    MY_CHECK(cudaPeekAtLastError());
-    MY_CHECK(cudaDeviceSynchronize());
-}
-
-void dropout(int rows, int cols, const double prob, const double* in,
-             double* out) {
+void multiply_elementwise(int rows, int cols, const float* d_A,
+                          const float* d_B, float* d_C) {
     dim3 block(16, 16);
     dim3 grid((cols + block.y - 1) / block.y, (rows + block.x - 1) / block.x);
-    cuda_dropout<<<grid, block>>>(rows, cols, prob, in, out);
-    cudaDeviceSynchronize();
+    multiply_ele<<<grid, block>>>(rows, cols, d_A, d_B, d_C);
+     //cudaDeviceSynchronize();
+    MY_CHECK(cudaPeekAtLastError());
+}
+
+void multiply_elementwise(int rows, int cols, const double* d_A,
+                          const double* d_B, double* d_C) {
+    dim3 block(16, 16);
+    dim3 grid((cols + block.y - 1) / block.y, (rows + block.x - 1) / block.x);
+    multiply_ele<<<grid, block>>>(rows, cols, d_A, d_B, d_C);
+    // cudaDeviceSynchronize();
+    MY_CHECK(cudaPeekAtLastError());
+}
+
+void cuda_masking(int rows, int cols, const float prob, float* d_A) {
+    dim3 block(16, 16);
+    dim3 grid((cols + block.y - 1) / block.y, (rows + block.x - 1) / block.x);
+    masking<<<grid, block>>>(rows, cols, prob, d_A);
+     cudaDeviceSynchronize();
+    MY_CHECK(cudaPeekAtLastError());
+}
+
+void cuda_masking(int rows, int cols, const double prob, double* d_A) {
+    dim3 block(16, 16);
+    dim3 grid((cols + block.y - 1) / block.y, (rows + block.x - 1) / block.x);
+    masking<<<grid, block>>>(rows, cols, prob, d_A);
+    // cudaDeviceSynchronize();
     MY_CHECK(cudaPeekAtLastError());
 }

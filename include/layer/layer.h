@@ -18,8 +18,10 @@ class Layer {
     virtual int output_dimension() const;
     virtual std::string name() { return _name; };
     virtual std::string name() const { return _name; };
-    virtual void forward_gpu(const SharedStorage&, SharedStorage&);
-    virtual void forward_cpu(const SharedStorage&, SharedStorage&);
+    virtual void forward_gpu(const SharedStorage&, SharedStorage&,
+                             const std::string&);
+    virtual void forward_cpu(const SharedStorage&, SharedStorage&,
+                             const std::string&);
     virtual void backward_gpu(const SharedStorage&, const SharedStorage&,
                               SharedStorage&);
     virtual void backward_cpu(const SharedStorage&, const SharedStorage&,
@@ -30,7 +32,7 @@ class Layer {
     virtual VecSharedStorage return_gradients() const;
     virtual void clear_gradients_cpu();
     virtual void clear_gradients_gpu();
-    virtual int n_paras() { return parameters.size();};
+    virtual int n_paras() { return parameters.size(); };
 
    protected:
     std::vector<SharedStorage> parameters;

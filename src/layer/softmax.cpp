@@ -19,7 +19,7 @@ Softmax::Softmax() : Layer() {
     _name = "Activation";
 }
 
-void Softmax::forward_cpu(const SharedStorage& in, SharedStorage& out) {
+void Softmax::forward_cpu(const SharedStorage& in, SharedStorage& out, const std::string&) {
     int cols = in->get_cols();
     const Matrix& in_ref = in->return_data_const();
     Matrix& out_ref = out->return_data();
@@ -31,7 +31,7 @@ void Softmax::forward_cpu(const SharedStorage& in, SharedStorage& out) {
         out_ref(all, i) = out_ref(all, i).array() / summation(i);
 }
 
-void Softmax::forward_gpu(const SharedStorage& in, SharedStorage& out) {
+void Softmax::forward_gpu(const SharedStorage& in, SharedStorage& out, const std::string&) {
     int rows = in->get_rows();
     int cols = in->get_cols();
     // Ones could be part of the class definition

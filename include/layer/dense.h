@@ -11,8 +11,8 @@ class Dense : public Layer {
     int input_dimension() const override { return _input_dimension; };
     int output_dimension() override { return _output_dimension; };
     int output_dimension() const override { return _output_dimension; };
-    void forward_gpu(const SharedStorage&, SharedStorage&) override;
-    void forward_cpu(const SharedStorage&, SharedStorage&) override;
+    void forward_gpu(const SharedStorage&, SharedStorage&, const std::string&) override;
+    void forward_cpu(const SharedStorage&, SharedStorage&, const std::string&) override;
     void backward_gpu(const SharedStorage&, const SharedStorage&,
                       SharedStorage&) override;
     void backward_cpu(const SharedStorage&, const SharedStorage&,

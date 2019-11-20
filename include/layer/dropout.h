@@ -2,10 +2,10 @@
 #ifndef dropout_h
 #define dropout_h
 //#include "cublas_v2.h"
-#include "layer.h"
 #include <cuda.h>
 #include <curand.h>
 #include <curand_kernel.h>
+#include "layer.h"
 class Dropout : public Layer {
     typedef std::shared_ptr<Storage> SharedStorage;
     typedef std::vector<std::shared_ptr<Storage>> VecSharedStorage;
@@ -17,8 +17,10 @@ class Dropout : public Layer {
     int output_dimension() override { return 0; };
     int input_dimension() const override { return 0; };
     int output_dimension() const override { return 0; };
-    void forward_gpu(const SharedStorage&, SharedStorage&) override;
-    void forward_cpu(const SharedStorage&, SharedStorage&) override;
+    void forward_gpu(const SharedStorage&, SharedStorage&,
+                     const std::string&) override;
+    void forward_cpu(const SharedStorage&, SharedStorage&,
+                     const std::string&) override;
     void backward_gpu(const SharedStorage&, const SharedStorage&,
                       SharedStorage&) override;
     void backward_cpu(const SharedStorage&, const SharedStorage&,
@@ -32,9 +34,12 @@ class Dropout : public Layer {
 
    private:
     curandGenerator_t gen;
-    std::vector<SharedStorage> assistance_parameters;
+    SharedStorage masking;
+    dtype probability;
 
-    void initialize_probability(const dtype&);
     void initialize_random();
+    void initialize_masking();
+    void check_masking(const SharedStorage&);
+    void check_backward();
 };
 #endif

@@ -138,12 +138,29 @@ void my_Matrix_addition_inplace(const SharedStorage& gradient,
     matrix_addition_inplace(rows, cols, d_A, d_B, alpha);
 }
 
-void my_cuda_dropout(const SharedStorage& in, const SharedStorage& prob,
-                     SharedStorage& out) { 
-    int rows = in->get_rows();
-    int cols = in->get_cols();
-    const dtype* d_A = in->gpu_pointer_const();
-    const dtype probability = prob->return_data_const()(0, 0);
-    dtype* d_B = out->gpu_pointer();
-    dropout(rows, cols, probability, d_A, d_B);
+//void my_cuda_dropout(const SharedStorage& in, const SharedStorage& prob,
+                     //SharedStorage& out) { 
+    //int rows = in->get_rows();
+    //int cols = in->get_cols();
+    //const dtype* d_A = in->gpu_pointer_const();
+    //const dtype probability = prob->return_data_const()(0, 0);
+    //dtype* d_B = out->gpu_pointer();
+    //dropout(rows, cols, probability, d_A, d_B);
+//}
+
+void my_mult_elementwise(const SharedStorage& A, const SharedStorage& B,
+        SharedStorage& C) {
+    int rows = A->get_rows();
+    int cols = A->get_cols();
+    const dtype* d_A = A->gpu_pointer_const();
+    const dtype* d_B = B->gpu_pointer_const();
+    dtype* d_C = C->gpu_pointer();
+    multiply_elementwise(rows, cols, d_A, d_B, d_C);
+}
+
+void my_cuda_masking(dtype probability, SharedStorage& mask) {
+    int cols = mask->get_cols();
+    int rows = mask->get_rows();
+    dtype* d_A = mask->gpu_pointer();
+    cuda_masking(rows, cols, probability, d_A);
 }

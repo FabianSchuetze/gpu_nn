@@ -6,9 +6,9 @@ Input::Input(int output_dimension)
 }
 
 void Input::forward_gpu(const std::shared_ptr<Storage>&,
-                        std::shared_ptr<Storage>&) {}
+                        std::shared_ptr<Storage>&, const std::string&) {}
 void Input::forward_cpu(const std::shared_ptr<Storage>&,
-                        std::shared_ptr<Storage>&) {}
+                        std::shared_ptr<Storage>&, const std::string&) {}
 void Input::backward_gpu(const SharedStorage&, const SharedStorage&,
                          SharedStorage&) {};
 void Input::backward_cpu(const SharedStorage&, const SharedStorage&,

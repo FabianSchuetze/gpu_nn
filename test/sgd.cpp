@@ -61,7 +61,7 @@ TEST_CASE("NeuralNetwork backward cpu", "[backward cpu]") {
     vector<SharedStorage> vals = n1.allocate_forward(in.rows());
     vector<SharedStorage> gradients = n1.allocate_backward(in.rows());
     n1.fill_hiddens(vals, in.transpose());
-    n1.forward(vals);
+    n1.forward(vals, "train");
     SharedStorage& grad_in = gradients[gradients.size() - 1];
     loss->grad_loss_cpu(grad_in, vals[vals.size() - 1], SharedTarget,
                         SharedTarget);
@@ -126,7 +126,7 @@ TEST_CASE("NeuralNetwork backward gpu", "[backward gpu]") {
     vector<SharedStorage> vals = n1.allocate_forward(in.rows());
     vector<SharedStorage> gradients = n1.allocate_backward(in.rows());
     n1.fill_hiddens(vals, in.transpose());
-    n1.forward(vals);
+    n1.forward(vals, "train");
     SharedStorage& grad_in = gradients[gradients.size() - 1];
     loss->grad_loss_gpu(grad_in, vals[vals.size() - 1], SharedTarget,
                         SharedTarget);
@@ -204,7 +204,7 @@ TEST_CASE("NeuralNetwork equivalance", "[equivalance]") {
     vector<SharedStorage> vals_cpu = n_cpu.allocate_forward(in.rows());
     vector<SharedStorage> grad_cpu = n_cpu.allocate_backward(in.rows());
     n_cpu.fill_hiddens(vals_cpu, in.transpose());
-    n_cpu.forward(vals_cpu);
+    n_cpu.forward(vals_cpu, "train");
     SharedStorage& grad_in = grad_cpu[grad_cpu.size() - 1];
     loss->grad_loss_cpu(grad_in, vals_cpu[vals_cpu.size() - 1], SharedTarget,
                         SharedTarget);
@@ -217,7 +217,7 @@ TEST_CASE("NeuralNetwork equivalance", "[equivalance]") {
     vector<SharedStorage> vals_gpu = n_gpu.allocate_forward(in.rows());
     vector<SharedStorage> grad_gpu = n_gpu.allocate_backward(in.rows());
     n_gpu.fill_hiddens(vals_gpu, in.transpose());
-    n_gpu.forward(vals_gpu);
+    n_gpu.forward(vals_gpu, "train");
     SharedStorage& grad_in_gpu = grad_gpu[grad_gpu.size() - 1];
     loss->grad_loss_gpu(grad_in_gpu, vals_gpu[vals_gpu.size() - 1],
                         SharedTarget, SharedTarget);

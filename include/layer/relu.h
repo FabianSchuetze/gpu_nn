@@ -5,17 +5,19 @@
 #include "cublas_v2.h"
 #include "layer.h"
 class Relu : public Layer {
-    //typedef std::shared_ptr<Storage> SharedStorage;
+    // typedef std::shared_ptr<Storage> SharedStorage;
 
    public:
     Relu();
-    virtual ~Relu() {CHECK_CUBLAS(cublasDestroy(_handle));}
+    virtual ~Relu() { CHECK_CUBLAS(cublasDestroy(_handle)); }
     int input_dimension() override { return 0; };
     int output_dimension() override { return 0; };
     int input_dimension() const override { return 0; };
     int output_dimension() const override { return 0; };
-    void forward_gpu(const SharedStorage&, SharedStorage&) override;
-    void forward_cpu(const SharedStorage&, SharedStorage&) override;
+    void forward_gpu(const SharedStorage&, SharedStorage&,
+                     const std::string&) override;
+    void forward_cpu(const SharedStorage&, SharedStorage&,
+                     const std::string&) override;
     void backward_gpu(const SharedStorage&, const SharedStorage&,
                       SharedStorage&) override;
     void backward_cpu(const SharedStorage&, const SharedStorage&,

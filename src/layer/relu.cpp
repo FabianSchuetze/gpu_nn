@@ -13,11 +13,11 @@ Relu::Relu() : Layer() {
     _name = "Activation";
 }
 
-void Relu::forward_cpu(const SharedStorage& in, SharedStorage& out) {
+void Relu::forward_cpu(const SharedStorage& in, SharedStorage& out, const std::string&) {
     out->return_data() = in->return_data_const().cwiseMax(0.);
 }
 
-void Relu::forward_gpu(const SharedStorage& in, SharedStorage& out) {
+void Relu::forward_gpu(const SharedStorage& in, SharedStorage& out, const std::string&) {
     my_relu(out, in);
 }
 
