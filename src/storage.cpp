@@ -15,14 +15,7 @@ Storage::Storage(const Matrix& data)
     initialize_gpu_memory();
 };
 
-bool Storage::is_set() { return recent_head == "UNINIT"; }
-
-// void Storage::resize(const Matrix& new_data) {
-//_data = new_data;
-//_cpu_pointer = _data.data();
-////update_cpu_data(new_data);
-// sync_to_gpu();
-//}
+bool Storage::is_set() { return recent_head != "UNINIT"; }
 
 Storage::~Storage() {
     // delete _cpu_pointer; // I don't know how to delete this pointer properly

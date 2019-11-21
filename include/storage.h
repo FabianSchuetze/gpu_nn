@@ -5,8 +5,8 @@
 #include "common.h"
 class Storage {
    public:
-    Storage();
-    Storage(const Matrix&);
+    explicit Storage();
+    explicit Storage(const Matrix&);
     // Storage(const Storage&) = delete;
     Storage& operator=(Storage other) = delete;
     // Storage(const Eigen::MatrixXd&&) // I need to provide that!
@@ -22,7 +22,6 @@ class Storage {
     int get_cols() { return _data.cols(); }
     Matrix& return_data();
     const Matrix& return_data_const();
-    // void resize(const Matrix&);
     bool is_set();
 
    private:

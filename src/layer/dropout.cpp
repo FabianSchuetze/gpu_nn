@@ -1,10 +1,7 @@
 #include "../../include/layer/dropout.h"
-//#include <chrono>
 #include <curand.h>
-//#include <functional>
 #include <iostream>
 #include <stdexcept>
-//#include <thread>
 #include "../../include/cuda_math.h"
 #include "../../include/math.h"
 
@@ -74,20 +71,19 @@ void Dropout::check_backward() {
     }
 }
 
-void Dropout::backward_gpu(const SharedStorage& values,
-                           const SharedStorage& grad_in,
+void Dropout::backward_gpu(const SharedStorage&, const SharedStorage& grad_in,
                            SharedStorage& grad_out){
     check_backward();
     my_mult_elementwise(grad_in, masking, grad_out);
 };
 
-void Dropout::backward_cpu(const SharedStorage& values,
-                           const SharedStorage& grad_in,
+void Dropout::backward_cpu(const SharedStorage&, const SharedStorage& grad_in,
                            SharedStorage& grad_out) {
     check_backward();
     grad_out->return_data() = (masking->return_data_const().array() *
                                grad_in->return_data_const().array())
                                   .matrix();
 }
+
 void Dropout::clear_gradients_cpu(){};
 void Dropout::clear_gradients_gpu(){};
