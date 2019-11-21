@@ -11,6 +11,7 @@ class Layer {
 
    public:
     Layer() : _name("Template"){};
+    Layer(std::string s): _name(s) {};
     virtual ~Layer() = default;
     virtual int input_dimension();
     virtual int input_dimension() const;
@@ -30,8 +31,8 @@ class Layer {
     virtual VecSharedStorage return_gradients();
     virtual VecSharedStorage return_parameters() const;
     virtual VecSharedStorage return_gradients() const;
-    virtual void clear_gradients_cpu();
-    virtual void clear_gradients_gpu();
+    //virtual void clear_gradients_cpu();
+    //virtual void clear_gradients_gpu();
     virtual int n_paras() { return parameters.size(); };
 
    protected:

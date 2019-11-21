@@ -17,20 +17,20 @@ class Dense : public Layer {
                       SharedStorage&) override;
     void backward_cpu(const SharedStorage&, const SharedStorage&,
                       SharedStorage&) override;
-    VecSharedStorage return_parameters() override { return parameters; };
-    VecSharedStorage return_gradients() override { return gradients; }
-    VecSharedStorage return_parameters() const override { return parameters; };
-    VecSharedStorage return_gradients() const override { return gradients; }
-    void clear_gradients_cpu() override;
-    void clear_gradients_gpu() override;
-    int n_paras() override { return parameters.size();};
+    //VecSharedStorage return_parameters() override { return parameters; };
+    //VecSharedStorage return_gradients() override { return gradients; }
+    //VecSharedStorage return_parameters() const override { return parameters; };
+    //VecSharedStorage return_gradients() const override { return gradients; }
+    //void clear_gradients_cpu() override;
+    //void clear_gradients_gpu() override;
+    //int n_paras() override { return parameters.size();};
    private:
     void initialize_weight(int, int);
     void initialize_bias(int, int);
     void initialize_grad(int, int);
-    std::vector<SharedStorage> parameters;
+    //std::vector<SharedStorage> parameters;
     std::vector<SharedStorage> assistance_parameters;
-    std::vector<SharedStorage> gradients;
+    //std::vector<SharedStorage> gradients;
     cublasHandle_t _handle;
     int _input_dimension;
     int _output_dimension;

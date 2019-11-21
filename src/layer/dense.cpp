@@ -32,13 +32,13 @@ void print_Matrix_to_stdout2(const Matrix& val, std::string loc) {
 }
 
 Dense::Dense(int rows, int cols)
-    : Layer(), _input_dimension(cols), _output_dimension(rows) {
+    : Layer("Dense"), _input_dimension(cols), _output_dimension(rows) {
     cublasStatus_t stat = cublasCreate(&_handle);
     CHECK_CUBLAS(stat);
     initialize_weight(rows, cols);
     initialize_bias(rows, cols);
     initialize_grad(rows, cols);
-    _name = "Dense";
+    //_name = "Dense";
 }
 
 void Dense::forward_cpu(const SharedStorage& in, SharedStorage& out, const std::string&) {
@@ -75,15 +75,11 @@ void Dense::backward_gpu(const SharedStorage& values,
 void Dense::backward_cpu(const SharedStorage& values,
                          const SharedStorage& gradient_in,
                          SharedStorage& gradient_out) {
-    //print_Matrix_to_stdout2(gradient_in->return_data_const(),
-            //"/home/fabian/Documents/work/gpu_nn/debug/cpu_grad.txt");
     Matrix& bias_ref = gradients[1]->return_data();
     Matrix& weight_ref = gradients[0]->return_data();
     bias_ref = gradient_in->return_data_const().rowwise().sum();
     weight_ref = gradient_in->return_data_const() *
                   values->return_data_const().transpose();
-    //std::cout << "the cpu gradient is:\n"
-              //<< gradients[1]->return_data_const() << std::endl;
     Matrix tmp = parameters[0]->return_data_const().transpose() *
                  gradient_in->return_data_const();
     if ((tmp.rows() != gradient_out->get_rows()) or
@@ -117,15 +113,15 @@ void Dense::initialize_bias(int rows, int cols) {
     parameters.push_back(std::make_shared<Storage>(mat));
 }
 
-void Dense::clear_gradients_cpu() {
-    for (SharedStorage& grad : gradients) {
-        Matrix tmp = Matrix::Zero(grad->get_rows(), grad->get_cols());
-        grad->update_cpu_data(tmp);
-    }
-}
+//void Dense::clear_gradients_cpu() {
+    //for (SharedStorage& grad : gradients) {
+        //Matrix tmp = Matrix::Zero(grad->get_rows(), grad->get_cols());
+        //grad->update_cpu_data(tmp);
+    //}
+//}
 
-void Dense::clear_gradients_gpu() {
-    for (SharedStorage& grad : gradients) {
-        grad->update_gpu_data(0.);
-    }
-}
+//void Dense::clear_gradients_gpu() {
+    //for (SharedStorage& grad : gradients) {
+        //grad->update_gpu_data(0.);
+    //}
+//}

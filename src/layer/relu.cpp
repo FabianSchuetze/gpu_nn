@@ -7,17 +7,19 @@
 #include "../../include/math.h"
 
 using std::vector;
-Relu::Relu() : Layer() {
+Relu::Relu() : Layer("Activation") {
     cublasStatus_t stat = cublasCreate(&_handle);
     CHECK_CUBLAS(stat);
-    _name = "Activation";
+    //_name = "Activation";
 }
 
-void Relu::forward_cpu(const SharedStorage& in, SharedStorage& out, const std::string&) {
+void Relu::forward_cpu(const SharedStorage& in, SharedStorage& out,
+                       const std::string&) {
     out->return_data() = in->return_data_const().cwiseMax(0.);
 }
 
-void Relu::forward_gpu(const SharedStorage& in, SharedStorage& out, const std::string&) {
+void Relu::forward_gpu(const SharedStorage& in, SharedStorage& out,
+                       const std::string&) {
     my_relu(out, in);
 }
 
@@ -47,5 +49,5 @@ void Relu::backward_cpu(const SharedStorage& values,
     }
 }
 
-void Relu::clear_gradients_cpu(){};
-void Relu::clear_gradients_gpu(){};
+// void Relu::clear_gradients_cpu(){};
+// void Relu::clear_gradients_gpu(){};

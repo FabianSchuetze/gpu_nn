@@ -13,10 +13,10 @@ using std::vector;
 
 typedef std::shared_ptr<Storage> SharedStorage;
 
-Softmax::Softmax() : Layer() {
+Softmax::Softmax() : Layer("Activation") {
     cublasStatus_t stat = cublasCreate(&_handle);
     CHECK_CUBLAS(stat);
-    _name = "Activation";
+    //_name = "Activation";
 }
 
 void Softmax::forward_cpu(const SharedStorage& in, SharedStorage& out, const std::string&) {
@@ -49,5 +49,5 @@ void Softmax::backward_gpu(const SharedStorage&, const SharedStorage&,
                            SharedStorage&) {}
 void Softmax::backward_cpu(const SharedStorage&, const SharedStorage&,
                            SharedStorage&) {}
-void Softmax::clear_gradients_cpu(){};
-void Softmax::clear_gradients_gpu(){};
+//void Softmax::clear_gradients_cpu(){};
+//void Softmax::clear_gradients_gpu(){};
