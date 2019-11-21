@@ -4,10 +4,17 @@
 #include <stdexcept>
 #include "../../include/cuda_math.h"
 #include "../../include/math.h"
+#include <random>
+#include <iomanip>
 
 Dropout::Dropout(dtype prob) : probability(prob) {
     initialize_random();
     initialize_masking();
+    _name = "Dropout";
+    std::random_device rd;
+    gen2 = std::mt19937(rd());
+    gen2.seed(0);
+    dis = std::uniform_real_distribution<float>(0.0, 1.0);
 }
 
 void Dropout::initialize_masking() {
@@ -37,8 +44,7 @@ void Dropout::forward_cpu(const SharedStorage& in, SharedStorage& out,
     check_masking(in);
     int rows = in->get_rows();
     int cols = in->get_cols();
-    Matrix bern = Matrix::Random(rows, cols);
-    bern = bern.array() * 0.5 + 0.5;
+    Matrix bern = Matrix::NullaryExpr(rows,cols,[&](){return dis(gen2);});
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; j++) {
             masking->return_data()(i, j) =
@@ -53,9 +59,11 @@ void Dropout::forward_cpu(const SharedStorage& in, SharedStorage& out,
 void Dropout::forward_gpu(const SharedStorage& in, SharedStorage& out,
                           const std::string& type) {
     if (type == "predict") {
-        out->update_gpu_data(in->gpu_pointer_const());
+        out->update_cpu_data(in->return_data_const());
+        //out->update_gpu_data(in->gpu_pointer_const());
         return;
-    }
+    };
+    srand((unsigned int) 0);
     check_masking(in);
     int rows = in->get_rows();
     int cols = in->get_cols();

@@ -6,6 +6,7 @@
 #include <curand.h>
 #include <curand_kernel.h>
 #include "layer.h"
+#include <random>
 class Dropout : public Layer {
     typedef std::shared_ptr<Storage> SharedStorage;
     typedef std::vector<std::shared_ptr<Storage>> VecSharedStorage;
@@ -36,6 +37,8 @@ class Dropout : public Layer {
     curandGenerator_t gen;
     SharedStorage masking;
     dtype probability;
+    std::uniform_real_distribution<float> dis;
+    std::mt19937 gen2;  //here you could set the seed, but std::random_device already does that
 
     void initialize_random();
     void initialize_masking();

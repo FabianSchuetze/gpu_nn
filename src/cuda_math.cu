@@ -265,16 +265,16 @@ __global__ void masking(int rows, int cols, const float prob, float* d_A) {
     unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
     unsigned int linear = row + col * rows;
     if ((row < rows) && (col < cols)) {
-        d_A[linear] = (d_A[linear] < prob) ? 1/prob : 0.;
+        d_A[linear] = (d_A[linear] < prob) ? 1 / prob : 0.;
     }
 }
 
-__global__ void masking(int rows, int cols, const double prob,double* d_A) {
-    unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
-    unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
+__global__ void masking(int rows, int cols, const double prob, double* d_A) {
+    unsigned int row = blockIdx.y * blockDim.y + threadIdx.y;
+    unsigned int col = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int linear = row + col * rows;
     if ((row < rows) && (col < cols)) {
-        d_A[linear] = (d_A[linear] < prob) ? 1/prob : 0.;
+        d_A[linear] = (d_A[linear] < prob) ? 1 / prob : 0.;
     }
 }
 
@@ -466,33 +466,38 @@ void matrix_addition_inplace(int rows, int cols, const double* gradient,
 void multiply_elementwise(int rows, int cols, const float* d_A,
                           const float* d_B, float* d_C) {
     dim3 block(16, 16);
-    dim3 grid((cols + block.y - 1) / block.y, (rows + block.x - 1) / block.x);
+    dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     multiply_ele<<<grid, block>>>(rows, cols, d_A, d_B, d_C);
-     //cudaDeviceSynchronize();
+    cudaDeviceSynchronize();
     MY_CHECK(cudaPeekAtLastError());
 }
 
 void multiply_elementwise(int rows, int cols, const double* d_A,
                           const double* d_B, double* d_C) {
     dim3 block(16, 16);
-    dim3 grid((cols + block.y - 1) / block.y, (rows + block.x - 1) / block.x);
+    dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     multiply_ele<<<grid, block>>>(rows, cols, d_A, d_B, d_C);
-    // cudaDeviceSynchronize();
+    cudaDeviceSynchronize();
     MY_CHECK(cudaPeekAtLastError());
 }
 
 void cuda_masking(int rows, int cols, const float prob, float* d_A) {
     dim3 block(16, 16);
-    dim3 grid((cols + block.y - 1) / block.y, (rows + block.x - 1) / block.x);
+    dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
+    //printf("rows %d, cols %d", rows, cols); 
+    //printf("grid.x %d grid.y %d grid.z %d\n",grid.x, grid.y, grid.z);
+    //printf("block.x %d block.y %d block.z %d\n",block.x, block.y, block.z);
     masking<<<grid, block>>>(rows, cols, prob, d_A);
-     cudaDeviceSynchronize();
+    cudaDeviceSynchronize();
     MY_CHECK(cudaPeekAtLastError());
 }
 
 void cuda_masking(int rows, int cols, const double prob, double* d_A) {
     dim3 block(16, 16);
-    dim3 grid((cols + block.y - 1) / block.y, (rows + block.x - 1) / block.x);
+    dim3 grid((rows + block.y - 1) / block.y, (cols + block.x - 1) / block.x);
+    //printf("grid.x %d grid.y %d grid.z %d\n",grid.x, grid.y, grid.z);
+    //printf("block.x %d block.y %d block.z %d\n",block.x, block.y, block.z);
     masking<<<grid, block>>>(rows, cols, prob, d_A);
-    // cudaDeviceSynchronize();
+    cudaDeviceSynchronize();
     MY_CHECK(cudaPeekAtLastError());
 }

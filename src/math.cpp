@@ -149,8 +149,8 @@ void my_mult_elementwise(const SharedStorage& A, const SharedStorage& B,
 }
 
 void my_cuda_masking(dtype probability, SharedStorage& mask) {
-    int cols = mask->get_cols();
     int rows = mask->get_rows();
+    int cols = mask->get_cols();
     dtype* d_A = mask->gpu_pointer();
     cuda_masking(rows, cols, probability, d_A);
 }

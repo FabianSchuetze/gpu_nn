@@ -11,11 +11,12 @@ int main(int argc, char** argv) {
     Layer* l1 = new Input(data.get_x_train().cols());
     Layer* l2 = new Dense(100, data.get_x_train().cols());
     Layer* l3 = new Relu;
-    Layer* l4 = new Dense(10, 100);
-    Layer* l5 = new Softmax;
+    Layer* l4 = new Dropout(0.5);
+    Layer* l5 = new Dense(10, 100);
+    Layer* l6 = new Softmax;
     std::shared_ptr<Loss> loss = std::make_shared<CrossEntropy>(CrossEntropy(
                 argv[1]));
-    NeuralNetwork n1({l1, l2, l3, l4, l5}, loss, argv[1]);
+    NeuralNetwork n1({l1, l2, l3, l4, l5, l6}, loss, argv[1]);
     std::shared_ptr<GradientDescent> sgd =
         std::make_shared<StochasticGradientDescent>(0.001);
     if (argc == 5) {

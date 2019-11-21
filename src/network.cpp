@@ -47,8 +47,10 @@ void NeuralNetwork::allocate_storage(int obs, int& out_dim,
     } else if (layer->name() == "Input") {
         out_dim = layer->output_dimension();
     } else {
-        std::string m("Cannot figure out name, in:\n");
-        throw std::invalid_argument(m + __PRETTY_FUNCTION__);
+        std::stringstream ss;
+        ss << "Cannot figure out name, in:\n" << __PRETTY_FUNCTION__
+            << "\ncalled from " << __FILE__ << " at " << __LINE__;
+        throw std::invalid_argument(ss.str());
     }
     inp.push_back(std::make_shared<Storage>(Matrix::Zero(out_dim, obs)));
 }
@@ -73,16 +75,16 @@ vector<SharedStorage> NeuralNetwork::allocate_backward(int obs) {
 
 void NeuralNetwork::fill_hiddens(vector<SharedStorage>& values,
                                  const Matrix& features) {
-    //SharedStorage test = std::make_shared<Storage>(features);
-    //values[0] = test;
     values[0]->update_cpu_data(features);
 }
 
-void NeuralNetwork::forward(vector<SharedStorage>& values, const std::string& type) {
+void NeuralNetwork::forward(vector<SharedStorage>& values,
+                            const std::string& type) {
     (this->*fun_forward)(values, type);
 }
 
-void NeuralNetwork::forward_gpu(vector<SharedStorage>& values, const std::string& type) {
+void NeuralNetwork::forward_gpu(vector<SharedStorage>& values,
+                                const std::string& type) {
     int i = 0;
     for (size_t layer_idx = 1; layer_idx < layers.size(); ++layer_idx) {
         layers[layer_idx]->forward_gpu(values[i], values[i + 1], type);
@@ -90,7 +92,8 @@ void NeuralNetwork::forward_gpu(vector<SharedStorage>& values, const std::string
     }
 }
 
-void NeuralNetwork::forward_cpu(vector<SharedStorage>& values, const std::string& type) {
+void NeuralNetwork::forward_cpu(vector<SharedStorage>& values,
+                                const std::string& type) {
     int i = 0;
     for (size_t layer_idx = 1; layer_idx < layers.size(); ++layer_idx) {
         layers[layer_idx]->forward_cpu(values[i], values[i + 1], type);
@@ -99,7 +102,6 @@ void NeuralNetwork::forward_cpu(vector<SharedStorage>& values, const std::string
 }
 
 Matrix NeuralNetwork::predict(const Matrix& input) {
-    //std::cout <<input << std::endl;
     SharedStorage inp = std::make_shared<Storage>(input);
     vector<SharedStorage> vals = allocate_forward(input.rows());
     fill_hiddens(vals, input.transpose());
