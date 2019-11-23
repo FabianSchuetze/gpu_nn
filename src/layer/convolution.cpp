@@ -39,6 +39,7 @@ Convolution::Convolution(FilterShape filtershape, Pad pad, Stride stride,
 Convolution::~Convolution() {
     CHECK_CUDNN(cudnnDestroyTensorDescriptor(input_descriptor));
     CHECK_CUDNN(cudnnDestroyTensorDescriptor(output_descriptor));
+    CHECK_CUDNN(cudnnDestroyTensorDescriptor(gradient_descriptor));
     CHECK_CUDNN(cudnnDestroyFilterDescriptor(kernel_descriptor));
     CHECK_CUDNN(cudnnDestroyConvolutionDescriptor(convolution_descriptor));
     CHECK_CUDNN(cudnnDestroy(cudnn));
@@ -83,8 +84,23 @@ void Convolution::resize_gpu(int new_batch_size) {
                                            /*channels=*/_filters.get(),
                                            /*image_height=*/_out.get().first,
                                            /*image_width=*/_out.get().second));
+    CHECK_CUDNN(cudnnSetTensor4dDescriptor(gradient_descriptor,
+                                           /*format=*/CUDNN_TENSOR_NHWC,
+                                           /*dataType=*/CUDNN_DATA_FLOAT,
+                                           /*batch_size=*/new_batch_size,
+                                           /*channels=*/_filters.get(),
+                                           /*image_height=*/_out.get().first,
+                                           /*image_width=*/_out.get().second));
     CHECK_CUDNN(cudnnSetFilter4dDescriptor(
         kernel_descriptor,
+        /*dataType=*/CUDNN_DATA_FLOAT,
+        /*format=*/CUDNN_TENSOR_NHWC,
+        /*out_channels=*/_filters.get(),
+        /*in_channels=*/_channels.get(),
+        /*kernel_height=*/_filter_shape.get().first,
+        /*kernel_width=*/_filter_shape.get().second));
+    CHECK_CUDNN(cudnnSetFilter4dDescriptor(
+        weight_grad_descriptor,
         /*dataType=*/CUDNN_DATA_FLOAT,
         /*format=*/CUDNN_TENSOR_NHWC,
         /*out_channels=*/_filters.get(),
@@ -101,6 +117,14 @@ void Convolution::allocate_memory() {
         output_descriptor, convolution_algorithm, &workspace_bytes));
     cudaMalloc(&d_workspace, workspace_bytes);
     std::cerr << "Workspace size: " << (workspace_bytes / 1048576.0) << "MB"
+              << std::endl;
+    // backward filter
+    CHECK_CUDNN(cudnnGetConvolutionBackwardFilterWorkspaceSize(
+        cudnn, input_descriptor, gradient_descriptor, convolution_descriptor,
+        weight_grad_descriptor, convolution_bwd_algorithm,
+        &workspace_bwd_bytes));
+    cudaMalloc(&d_workspace_bwd, workspace_bwd_bytes);
+    std::cerr << "Workspace BWD size: " << (workspace_bytes / 1048576.0) << "MB"
               << std::endl;
 }
 
@@ -125,8 +149,11 @@ void Convolution::initialize_algorithm() {
     CHECK_CUDNN(cudnnGetConvolutionForwardAlgorithm(
         cudnn, input_descriptor, kernel_descriptor, convolution_descriptor,
         output_descriptor, CUDNN_CONVOLUTION_FWD_PREFER_FASTEST,
-        // CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM,
         /*memoryLimitInBytes=*/0, &convolution_algorithm));
+    CHECK_CUDNN(cudnnGetConvolutionBackwardFilterAlgorithm(
+        cudnn, input_descriptor, gradient_descriptor, convolution_descriptor,
+        weight_grad_descriptor, CUDNN_CONVOLUTION_BWD_FILTER_PREFER_FASTEST,
+        /*memoryLimitInBytes=*/0, &convolution_bwd_algorithm));
 }
 
 void Convolution::initialize_grad() {
@@ -194,23 +221,22 @@ void Convolution::forward_cpu(const SharedStorage& in, SharedStorage& out,
                               const std::string&) {
     resize_cpu(in->get_cols());
     im2col(in);
-    print_Matrix_to_stdout2(col->return_data_const(),
-                            "/home/fabian/Documents/work/gpu_nn/debug/col.txt");
-    print_Matrix_to_stdout2(
-        parameters[0]->return_data_const(),
-        "/home/fabian/Documents/work/gpu_nn/debug/weight.txt");
     out->return_data() =
         parameters[0]->return_data_const() * col->return_data_const();
-    // int out_rows =
-    // out->return_data() = Eigen::Map<Matrix>(
-    // out->return_data() = tmp;
-    print_Matrix_to_stdout2(out->return_data_const(),
-                            "/home/fabian/Documents/work/gpu_nn/debug/out.txt");
 }
 
-void Convolution::backward_gpu(const SharedStorage&, const SharedStorage&,
-                               SharedStorage&) {
-    ;
+void Convolution::backward_gpu(const SharedStorage& values,
+                               const SharedStorage& gradient_in,
+                               SharedStorage& gradient_out) {
+    const float alpha = 1.0f, beta = 0.f;
+    checkCUDNN(cudnnConvolutionBackwardFilter(
+        cudnn, &alpha, input_descriptor, values->gpu_pointer_const(),
+        gradient_descriptor, gradient_in->gpu_pointer_const(),
+        convolution_descriptor,
+        //CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM,
+         convolution_bwd_algorithm,
+        d_workspace_bwd, workspace_bwd_bytes, &beta, 
+        weight_grad_descriptor, gradients[0]->gpu_pointer()));
 };
 
 void Convolution::backward_cpu(const SharedStorage&, const SharedStorage&,

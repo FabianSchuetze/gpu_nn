@@ -33,11 +33,16 @@ class Convolution : public Layer {
     cudnnHandle_t cudnn;
     cudnnTensorDescriptor_t input_descriptor;
     cudnnTensorDescriptor_t output_descriptor;
+    cudnnTensorDescriptor_t gradient_descriptor;
     cudnnFilterDescriptor_t kernel_descriptor;
+    cudnnFilterDescriptor_t weight_grad_descriptor;
     cudnnConvolutionDescriptor_t convolution_descriptor;
     cudnnConvolutionFwdAlgo_t convolution_algorithm;
+    cudnnConvolutionBwdFilterAlgo_t convolution_bwd_algorithm;
     size_t workspace_bytes;
+    size_t workspace_bwd_bytes;
     void* d_workspace;
+    void* d_workspace_bwd;
     int batch_size;
     SharedStorage col;
 
