@@ -43,7 +43,8 @@ class Convolution : public Layer {
     void initialize_cudnn_handles();
     void resize(int);
     void allocate_memory();
-    void initialize_data_structures();
+    void initialize_algorithm();
+    void initialize_kernel();
 
     // im2col function
     //
