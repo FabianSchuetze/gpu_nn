@@ -101,16 +101,16 @@ using ImageShape = NamedPair<int, ImageShapeParameter>;
         }                                                                    \
     }
 
-#define CHECK_CUDNN(call)                                                   \
-    {                                                                       \
-        cudnnStatus_t err;                                                  \
-        if ((err = (call)) != CUDNN_STATUS_SUCCESS) {                       \
-            fprintf(stderr, "Got CUDNN error %d at %s:%d\n", err, __FILE__, \
-                    __LINE__);                                              \
-            exit(1);                                                        \
-        }                                                                   \
-    }
-#define checkCUDNN(expression)                               \
+//#define CHECK_CUDNN(call)                                                   \
+    //{                                                                       \
+        //cudnnStatus_t err;                                                  \
+        //if ((err = (call)) != CUDNN_STATUS_SUCCESS) {                       \
+            //fprintf(stderr, "Got CUDNN error %d at %s:%d\n", err, __FILE__, \
+                    //__LINE__);                                              \
+            //exit(1);                                                        \
+        //}                                                                   \
+    //}
+#define CHECK_CUDNN(expression)                               \
   {                                                          \
     cudnnStatus_t status = (expression);                     \
     if (status != CUDNN_STATUS_SUCCESS) {                    \
