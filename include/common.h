@@ -3,6 +3,7 @@
 #include <eigen-git-mirror/Eigen/Dense>
 #include <fstream>
 #include <iomanip>
+//#include <iostream>
 
 typedef float dtype;
 typedef Eigen::Matrix<dtype, Eigen::Dynamic, Eigen::Dynamic> Matrix;
@@ -20,12 +21,35 @@ private:
     T value_;
 };
 
+template <typename T, typename Paramter>
+class NamedPair
+{
+public:
+    explicit NamedPair(T const& v1, T const& v2) : value_() {value_ = std::make_pair<T,T>(v1, v2);}
+    std::pair<T,T>& get() { return value_; }
+    std::pair<T,T> const& get() const {return value_; }
+private:
+    std::pair<T,T> value_;
+};
+
 struct EpochParamter {};
 using Epochs = NamedType<int, EpochParamter>;
 struct PatienceParamter {};
 using Patience = NamedType<int, PatienceParamter>;
 struct BatchSizeParamter {};
 using BatchSize = NamedType<int, BatchSizeParamter>;
+struct PadParameter {};
+using Pad = NamedType<int, PadParameter>;
+struct StrideParameter {};
+using Stride = NamedType<int, StrideParameter>;
+struct FiltersParameter {};
+using Filters = NamedType<int, FiltersParameter>;
+struct ChannelsParameter {};
+using Channels = NamedType<int, ChannelsParameter>;
+struct FilterShapeParameter  {};
+using FilterShape = NamedPair<int, FilterShapeParameter>;
+struct ImageShapeParameter  {};
+using ImageShape = NamedPair<int, ImageShapeParameter>;
 
 //void print_Matrix_to_stdout(const Eigen::MatrixXd& val, std::string loc) {
     //int rows(val.rows()), cols(val.cols());
@@ -76,4 +100,25 @@ using BatchSize = NamedType<int, BatchSizeParamter>;
         exit(1);                                                               \
     }                                                                          \
 }
+
+#define CHECK_CUDNN(call)                                                     \
+{                                                                              \
+    cudnnStatus_t err;                                                        \
+    if ((err = (call)) != CUDNN_STATUS_SUCCESS)                               \
+    {                                                                          \
+        fprintf(stderr, "Got CUDNN error %d at %s:%d\n", err, __FILE__,       \
+                __LINE__);                                                     \
+        exit(1);                                                               \
+    }                                                                          \
+}
+//#define checkCUDNN(expression)                               \
+  //{                                                          \
+    //cudnnStatus_t status = (expression);                     \
+    //if (status != CUDNN_STATUS_SUCCESS) {                    \
+      //std::cerr << "Error on line " << __LINE__ << ": "      \
+                //<< cudnnGetErrorString(status) << std::endl; \
+      //std::exit(EXIT_FAILURE);                               \
+    //}                                                        \
+  //}
 #endif
+

@@ -28,4 +28,10 @@ int main(int argc, char** argv) {
     } else
         n1.train(data.get_x_train(), data.get_y_train(), sgd, Epochs(10),
                  Patience(10), BatchSize(32));
+    delete l1;
+    delete l2;
+    delete l3;
+    delete l4;
+    delete l5;
+    delete l6;
 }

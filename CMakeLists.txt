@@ -25,13 +25,14 @@ set(${LIBRARY_TARGET_NAME}_SRC
     src/gradient_descent/gradient_descent.cpp
     src/gradient_descent/sgd.cpp
     src/trainArgs.cpp
+    src/layer/convolution.cpp
 )
 if (UNIX)
   add_library(${LIBRARY_TARGET_NAME} SHARED ${${LIBRARY_TARGET_NAME}_SRC})
 endif(UNIX)
 
 # moved the CXX flags to after the cuda_add_library call
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fPIC -lcurand -L /usr/lib/cuda/lib64 -lcudart  -lcublas -Wall -std=c++17")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fPIC -lcudnn -lcurand -L /usr/lib/cuda/lib64 -lcudart  -lcublas -Wall -std=c++17")
 set(${LIBRARY_TARGET_NAME}_TEST
     test/softmax.cpp
     test/dense.cpp

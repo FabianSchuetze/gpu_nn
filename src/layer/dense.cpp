@@ -31,6 +31,8 @@ void print_Matrix_to_stdout2(const Matrix& val, std::string loc) {
     }
 }
 
+
+
 Dense::Dense(int rows, int cols)
     : Layer("Dense"), _input_dimension(cols), _output_dimension(rows) {
     cublasStatus_t stat = cublasCreate(&_handle);
