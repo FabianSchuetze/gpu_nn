@@ -5,6 +5,7 @@
 #include <cudnn.h>
 #include "../common.h"
 #include "layer.h"
+#include "../workspace_manager.hpp"
 class Convolution : public Layer {
    public:
     Convolution(FilterShape, Pad, Stride, Filters, ImageShape, Channels);
@@ -37,10 +38,11 @@ class Convolution : public Layer {
     cudnnConvolutionFwdAlgo_t convolution_algorithm;
     cudnnConvolutionBwdFilterAlgo_t convolution_bwd_algorithm;
     cudnnConvolutionBwdDataAlgo_t convolution_bwd_data_algo;
-    size_t ffw_bytes, bwd_bytes, data_bdw_bytes;
-    void* d_workspace;
-    void* d_workspace_bwd;
-    void* d_workspace_bwd_data;
+    WorkspaceManager ffw, bwd, bwd_data;
+    //size_t ffw_bytes, bwd_bytes, data_bdw_bytes;
+    //void* d_workspace;
+    //void* d_workspace_bwd;
+    //void* d_workspace_bwd_data;
     int batch_size;
     SharedStorage col;
 
@@ -53,6 +55,5 @@ class Convolution : public Layer {
     void initialize_algorithm();
     void initialize_kernel();
     void calculate_output_size();
-    void free_workspace();
 };
 #endif
