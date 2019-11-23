@@ -18,31 +18,26 @@ class Convolution : public Layer {
     void backward_cpu(const SharedStorage&, const SharedStorage&,
                       SharedStorage&) override;
 
-    SharedStorage Column; //contains the converted image
+    SharedStorage Column;  // contains the converted image
     void im2col(const SharedStorage&);
+
    private:
     FilterShape _filter_shape;
     Pad _pad;
     Stride _stride;
     Filters _filters;
-    ImageShape _inp;
-    ImageShape _out;
+    ImageShape _inp, _out;
     Channels _channels;
     void initialize_weight();
     void initialize_grad();
     cudnnHandle_t cudnn;
-    cudnnTensorDescriptor_t input_descriptor;
-    cudnnTensorDescriptor_t output_descriptor;
-    cudnnTensorDescriptor_t gradient_descriptor;
-    cudnnFilterDescriptor_t kernel_descriptor;
-    cudnnFilterDescriptor_t weight_grad_descriptor;
-    cudnnConvolutionDescriptor_t convolution_descriptor;
+    cudnnTensorDescriptor_t input_des, output_des;
+    cudnnFilterDescriptor_t kernel_des;
+    cudnnConvolutionDescriptor_t convolution_des;
     cudnnConvolutionFwdAlgo_t convolution_algorithm;
     cudnnConvolutionBwdFilterAlgo_t convolution_bwd_algorithm;
     cudnnConvolutionBwdDataAlgo_t convolution_bwd_data_algo;
-    size_t workspace_bytes;
-    size_t workspace_bwd_bytes;
-    size_t workspace_bwd_data_bytes;
+    size_t ffw_bytes, bwd_bytes, data_bdw_bytes;
     void* d_workspace;
     void* d_workspace_bwd;
     void* d_workspace_bwd_data;
@@ -53,14 +48,11 @@ class Convolution : public Layer {
     void resize(int);
     void resize_gpu(int);
     void resize_cpu(int);
+    void initialize_tensors(int);
     void allocate_memory();
     void initialize_algorithm();
     void initialize_kernel();
     void calculate_output_size();
-
-    // im2col function
-    //
-    // int _input_dimension;
-    // int _output_dimension;
+    void free_workspace();
 };
 #endif
