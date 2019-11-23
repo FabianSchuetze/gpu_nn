@@ -42,6 +42,7 @@ class Convolution : public Layer {
     SharedStorage col;
 
     void initialize_cudnn_handles();
+    void resize(int);
     void resize_gpu(int);
     void resize_cpu(int);
     void allocate_memory();
