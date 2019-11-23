@@ -28,6 +28,9 @@ void my_cross_entropy_loss(dtype&, const SharedStorage&, const SharedStorage&);
 void my_cross_entropy_gradient(SharedStorage&, const SharedStorage&,
                                const SharedStorage);
 void my_Matrix_addition_inplace(const SharedStorage&, SharedStorage&, dtype);
-//void my_cuda_dropout(const SharedStorage&, SharedStorage&);
 void my_cuda_masking(dtype, SharedStorage&);
+void im2col(const dtype* input_data, const int depth, const int height,
+            const int width, const int filter_h, const int filter_w,
+            const int pad_t, const int pad_l, const int pad_b, const int pad_r,
+            const int stride_h, const int stride_w, dtype* col_data);
 #endif

@@ -19,12 +19,14 @@ class Convolution : public Layer {
                       SharedStorage&) override;
 
     SharedStorage Column; //contains the converted image
+    void im2col(const SharedStorage&);
    private:
     FilterShape _filter_shape;
     Pad _pad;
     Stride _stride;
     Filters _filters;
-    ImageShape _image_shape;
+    ImageShape _inp;
+    ImageShape _out;
     Channels _channels;
     void initialize_weight();
     void initialize_grad();
@@ -37,14 +39,15 @@ class Convolution : public Layer {
     size_t workspace_bytes;
     void* d_workspace;
     int batch_size;
+    SharedStorage col;
 
-    void im2col_cpu(const SharedStorage&);
-    void im2col_gpu(const SharedStorage&);
     void initialize_cudnn_handles();
-    void resize(int);
+    void resize_gpu(int);
+    void resize_cpu(int);
     void allocate_memory();
     void initialize_algorithm();
     void initialize_kernel();
+    void calculate_output_size();
 
     // im2col function
     //

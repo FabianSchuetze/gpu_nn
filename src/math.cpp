@@ -36,7 +36,7 @@ void my_Dgemm(cublasHandle_t handle, cublasOperation_t transA,
     dtype* d_C = C->gpu_pointer();
     my_cuda_Dgemm(handle, transA, transB, M, N, K, &alpha, d_A, LDA, d_B, LDB,
                   &beta, d_C, LDC);
-    //cudaDeviceSyncronize();
+    // cudaDeviceSyncronize();
 }
 
 void my_Dgemv(cublasHandle_t handle, cublasOperation_t transA,
@@ -48,7 +48,7 @@ void my_Dgemv(cublasHandle_t handle, cublasOperation_t transA,
     const dtype* d_B = B->gpu_pointer_const();
     dtype* d_C = C->gpu_pointer();
     my_cuda_Dgemv(handle, transA, M, N, &alpha, d_A, d_B, &beta, d_C);
-    //cudaDeviceSyncronize();
+    // cudaDeviceSyncronize();
 }
 
 void my_add_vec_to_mat_colwise(SharedStorage& A, const SharedStorage& B,
@@ -58,7 +58,7 @@ void my_add_vec_to_mat_colwise(SharedStorage& A, const SharedStorage& B,
     dtype* d_A = A->gpu_pointer();
     const dtype* d_B = B->gpu_pointer_const();
     add_vec_to_mat_colwise(rows, cols, d_A, d_B, alpha);
-    //cudaDeviceSyncronize();
+    // cudaDeviceSyncronize();
 }
 
 void my_add_vec_to_mat_colwise(const SharedStorage& in, const SharedStorage& B,
@@ -69,7 +69,7 @@ void my_add_vec_to_mat_colwise(const SharedStorage& in, const SharedStorage& B,
     const dtype* d_B = B->gpu_pointer_const();
     dtype* d_C = out->gpu_pointer();
     add_vec_to_mat_colwise(rows, cols, d_A, d_B, d_C, alpha);
-    //cudaDeviceSyncronize();
+    // cudaDeviceSyncronize();
 }
 
 void my_Exponential(SharedStorage& in) {
@@ -139,7 +139,7 @@ void my_Matrix_addition_inplace(const SharedStorage& gradient,
 }
 
 void my_mult_elementwise(const SharedStorage& A, const SharedStorage& B,
-        SharedStorage& C) {
+                         SharedStorage& C) {
     int rows = A->get_rows();
     int cols = A->get_cols();
     const dtype* d_A = A->gpu_pointer_const();
@@ -153,4 +153,33 @@ void my_cuda_masking(dtype probability, SharedStorage& mask) {
     int cols = mask->get_cols();
     dtype* d_A = mask->gpu_pointer();
     cuda_masking(rows, cols, probability, d_A);
+}
+
+void im2col(const dtype* input_data, const int depth, const int height,
+            const int width, const int filter_h, const int filter_w,
+            const int pad_t, const int pad_l, const int pad_b, const int pad_r,
+            const int stride_h, const int stride_w, dtype* col_data) {
+    int height_col = (height + pad_t + pad_b - filter_h) / stride_h + 1;
+    int width_col = (width + pad_l + pad_r - filter_w) / stride_w + 1;
+
+    int h_pad = -pad_t;
+    for (int h = 0; h < height_col; ++h) {
+        int w_pad = -pad_l;
+        for (int w = 0; w < width_col; ++w) {
+            for (int ih = h_pad; ih < h_pad + filter_h; ++ih) {
+                for (int iw = w_pad; iw < w_pad + filter_w; ++iw) {
+                    if (ih >= 0 && ih < height && iw >= 0 && iw < width) {
+                        memcpy(col_data, input_data + (ih * width + iw) * depth,
+                               sizeof(dtype) * depth);
+                    } else {
+                        // This should be simply padded with zero.
+                        memset(col_data, 0, sizeof(dtype) * depth);
+                    }
+                    col_data += depth;
+                }
+            }
+            w_pad += stride_w;
+        }
+        h_pad += stride_h;
+    }
 }

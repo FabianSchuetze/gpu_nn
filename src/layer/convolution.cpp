@@ -1,5 +1,6 @@
 #include "../../include/layer/convolution.h"
 #include <iostream>
+#include "../../include/math.h"
 
 Convolution::Convolution(FilterShape filtershape, Pad pad, Stride stride,
                          Filters filters, ImageShape imageshape,
@@ -8,11 +9,13 @@ Convolution::Convolution(FilterShape filtershape, Pad pad, Stride stride,
       _pad(pad),
       _stride(stride),
       _filters(filters),
-      _image_shape(imageshape),
+      _inp(imageshape),
+      _out(0,0),
       _channels(channels),
       workspace_bytes(0),
       d_workspace(NULL),
       batch_size(0) {
+    calculate_output_size();
     initialize_weight();
     initialize_grad();
     initialize_cudnn_handles();
@@ -34,7 +37,23 @@ void Convolution::initialize_cudnn_handles() {
     CHECK_CUDNN(cudnnCreateFilterDescriptor(&kernel_descriptor));
 }
 
-void Convolution::resize(int new_batch_size) {
+
+void Convolution::calculate_output_size() {
+    int h_num = (_inp.get().first - _filter_shape.get().first + 2*_pad.get());
+    int w_num = (_inp.get().second - _filter_shape.get().second + 2*_pad.get());
+    if ((not (h_num % _stride.get())) or (not (w_num % _stride.get()))) {
+        std::stringstream ss;
+        ss << "Output size is not an integer, in:\n" << __PRETTY_FUNCTION__
+            << "\ncalled from " << __FILE__ << " at " << __LINE__;
+        throw std::invalid_argument(ss.str());
+    }
+    int height = h_num / _stride.get() + 1;
+    int width = w_num / _stride.get() + 1;
+    _out = ImageShape(height, width);
+
+}
+
+void Convolution::resize_gpu(int new_batch_size) {
     if (batch_size == new_batch_size) return;
     cudaFree(d_workspace);
     CHECK_CUDNN(
@@ -43,16 +62,16 @@ void Convolution::resize(int new_batch_size) {
                                    /*dataType=*/CUDNN_DATA_FLOAT,
                                    /*batch_size=*/new_batch_size,
                                    /*channels=*/_channels.get(),
-                                   /*image_height=*/_image_shape.get().first,
-                                   /*image_width=*/_image_shape.get().second));
+                                   /*image_height=*/_inp.get().first,
+                                   /*image_width=*/_inp.get().second));
     CHECK_CUDNN(
         cudnnSetTensor4dDescriptor(output_descriptor,
                                    /*format=*/CUDNN_TENSOR_NHWC,
                                    /*dataType=*/CUDNN_DATA_FLOAT,
                                    /*batch_size=*/new_batch_size,
                                    /*channels=*/_filters.get(),
-                                   /*image_height=*/_image_shape.get().first,
-                                   /*image_width=*/_image_shape.get().second));
+                                   /*image_height=*/_out.get().first,
+                                   /*image_width=*/_out.get().second));
     CHECK_CUDNN(cudnnSetFilter4dDescriptor(
         kernel_descriptor,
         /*dataType=*/CUDNN_DATA_FLOAT,
@@ -119,7 +138,7 @@ void Convolution::initialize_weight() {
 
 void Convolution::forward_gpu(const SharedStorage& in, SharedStorage& out,
                               const std::string&) {
-    resize(in->get_cols());
+    resize_gpu(in->get_cols());
     const float alpha = 1, beta = 0;
     checkCUDNN(cudnnConvolutionForward(
         cudnn, &alpha, input_descriptor, in->gpu_pointer_const(),
@@ -128,8 +147,37 @@ void Convolution::forward_gpu(const SharedStorage& in, SharedStorage& out,
         workspace_bytes, &beta, output_descriptor, out->gpu_pointer()));
 }
 
+void Convolution::im2col(const SharedStorage& image) {
+    dtype* colp = col->cpu_pointer();
+    dtype const* imagep = image->cpu_pointer_const();
+    for (int t = 0; t < image->get_cols(); ++t) {
+        ::im2col(imagep, _channels.get(), _inp.get().first, _inp.get().second,
+               _filter_shape.get().first, _filter_shape.get().second,
+               _pad.get(), _pad.get(), _pad.get(), _pad.get(),
+               _stride.get(), _stride.get(), colp);
+        imagep += _inp.get().first * _inp.get().second * _channels.get();
+        colp += _filter_shape.get().first * _filter_shape.get().second  *
+            _channels.get() * _out.get().first * _out.get().second;
+    }
+}
+
+void Convolution::resize_cpu(int new_batch_size) {
+    if (batch_size == new_batch_size)
+        return;
+    int rows = _filter_shape.get().first * _filter_shape.get().second *
+        _channels.get();
+    int cols = _out.get().first  * _out.get().second * new_batch_size;
+    Matrix tmp = Matrix::Zero(rows, cols);
+    col = std::make_shared<Storage>(tmp);
+}
+
 void Convolution::forward_cpu(const SharedStorage& in, SharedStorage& out,
-                              const std::string&) {}
+                              const std::string&) {
+    resize_cpu(in->get_cols());
+    im2col(in);
+    out->return_data() = parameters[0]->return_data_const() *
+        col->return_data_const();
+}
 void Convolution::backward_gpu(const SharedStorage&, const SharedStorage&,
                                SharedStorage&) {
     ;
@@ -138,4 +186,3 @@ void Convolution::backward_cpu(const SharedStorage&, const SharedStorage&,
                                SharedStorage&) {
     ;
 };
-
