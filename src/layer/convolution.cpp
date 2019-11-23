@@ -5,7 +5,7 @@
 Convolution::Convolution(FilterShape filtershape, Pad pad, Stride stride,
                          Filters filters, ImageShape imageshape,
                          Channels channels)
-    : _filter_shape(filtershape),
+    : Layer("Convolution"), _filter_shape(filtershape),
       _pad(pad),
       _stride(stride),
       _filters(filters),
@@ -34,6 +34,15 @@ void Convolution::initialize_cudnn_handles() {
     CHECK_CUDNN(cudnnCreateTensorDescriptor(&output_des));
     CHECK_CUDNN(cudnnCreateFilterDescriptor(&kernel_des));
     CHECK_CUDNN(cudnnCreateConvolutionDescriptor(&convolution_des));
+    //CHECK_CUDNN(cudnnCreateConvolutionDescriptor(&convolution_des));
+}
+
+int Convolution::output_dimension() {
+    return _filters.get() * _out.first() * _out.second();
+}
+
+int Convolution::output_dimension() const {
+    return  _filters.get() * _out.first() * _out.second();
 }
 
 void Convolution::calculate_output_size() {
@@ -104,18 +113,17 @@ void Convolution::initialize_kernel() {
         /*in_channels=*/_channels.get(),
         /*kernel_height=*/_filter_shape.get().first,
         /*kernel_width=*/_filter_shape.get().second));
-    int pad = _pad.get();
-    int stride = _stride.get();
-    const int dilation = 1;
-    CHECK_CUDNN(cudnnCreateConvolutionDescriptor(&convolution_des));
+    //int pad = _pad.get();
+    //int stride = _stride.get();
+    //const int dilation = 1;
     CHECK_CUDNN(
         cudnnSetConvolution2dDescriptor(convolution_des,
-                                        /*pad_height=*/pad,
-                                        /*pad_width=*/pad,
-                                        /*vertical_stride=*/stride,
-                                        /*horizontal_stride=*/stride,
-                                        /*dilation_height=*/dilation,
-                                        /*dilation_width=*/dilation,
+                                        /*pad_height=*/_pad.get(),
+                                        /*pad_width=*/_pad.get(),
+                                        /*vertical_stride=*/_stride.get(),
+                                        /*horizontal_stride=*/_stride.get(),
+                                        /*dilation_height=*/1,
+                                        /*dilation_width=*/1,
                                         /*mode=*/CUDNN_CROSS_CORRELATION,
                                         /*computeType=*/CUDNN_DATA_FLOAT));
 }

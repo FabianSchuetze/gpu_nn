@@ -34,22 +34,30 @@ void NeuralNetwork::allocate_storage(int obs, int& out_dim,
                                      const Layer* layer) {
     if (layer->name() == "Dense") {
         if (layer->input_dimension() != out_dim) {
-            std::string m("Dimensions do not fit, in:\n");
-            throw std::invalid_argument(m + __PRETTY_FUNCTION__);
+            int input_dim = layer->input_dimension();
+            std::stringstream ss;
+            ss << "Dimension do not fit, in:\n"
+               << __PRETTY_FUNCTION__ << "\n Previous output:" << out_dim
+               << " expected input " << input_dim << "\ncalled from "
+               << __FILE__ << " at " << __LINE__;
+            throw std::invalid_argument(ss.str());
         }
         out_dim = layer->output_dimension();
     } else if (layer->name() == "Activation")
         ;
     else if (layer->name() == "BatchNorm") {
         ;
+    } else if (layer->name() == "Convolution") {
+        out_dim = layer->output_dimension();
     } else if (layer->name() == "Dropout") {
         ;
     } else if (layer->name() == "Input") {
         out_dim = layer->output_dimension();
     } else {
         std::stringstream ss;
-        ss << "Cannot figure out name, in:\n" << __PRETTY_FUNCTION__
-            << "\ncalled from " << __FILE__ << " at " << __LINE__;
+        ss << "Cannot figure out name, in:\n"
+           << __PRETTY_FUNCTION__ << "\ncalled from " << __FILE__ << " at "
+           << __LINE__;
         throw std::invalid_argument(ss.str());
     }
     inp.push_back(std::make_shared<Storage>(Matrix::Zero(out_dim, obs)));
@@ -87,9 +95,11 @@ void NeuralNetwork::forward_gpu(vector<SharedStorage>& values,
                                 const std::string& type) {
     int i = 0;
     for (size_t layer_idx = 1; layer_idx < layers.size(); ++layer_idx) {
+        std::cout << "layer name " << layers[layer_idx]->name() << std::endl;
         layers[layer_idx]->forward_gpu(values[i], values[i + 1], type);
         i++;
     }
+    std::cout << "finisehd forward gpu\n" << std::endl;
 }
 
 void NeuralNetwork::forward_cpu(vector<SharedStorage>& values,

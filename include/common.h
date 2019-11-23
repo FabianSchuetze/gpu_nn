@@ -29,8 +29,8 @@ class NamedPair {
         value_ = std::make_pair(v1, v2);
     }
     std::pair<T, T>& get() { return value_; }
-    T& first() { return value_.first; }
-    T& second() { return value_.second; }
+    T& first() const { return const_cast<T&>(value_.first); }
+    T& second()  const { return const_cast<T&> (value_.second); }
     std::pair<T, T> const& get() const { return value_; }
 
    private:

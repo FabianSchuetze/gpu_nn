@@ -8,6 +8,8 @@
 #include "../workspace_manager.hpp"
 class Convolution : public Layer {
    public:
+    int output_dimension() override;
+    int output_dimension() const override;
     Convolution(FilterShape, Pad, Stride, Filters, ImageShape, Channels);
     virtual ~Convolution();
     void forward_gpu(const SharedStorage&, SharedStorage&,
@@ -39,10 +41,6 @@ class Convolution : public Layer {
     cudnnConvolutionBwdFilterAlgo_t convolution_bwd_algorithm;
     cudnnConvolutionBwdDataAlgo_t convolution_bwd_data_algo;
     WorkspaceManager ffw, bwd, bwd_data;
-    //size_t ffw_bytes, bwd_bytes, data_bdw_bytes;
-    //void* d_workspace;
-    //void* d_workspace_bwd;
-    //void* d_workspace_bwd_data;
     int batch_size;
     SharedStorage col;
 
