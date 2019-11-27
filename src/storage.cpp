@@ -25,7 +25,6 @@ Storage::~Storage() {
 
 void Storage::initialize_gpu_memory() {
     unsigned int nBytes = _data.rows() * _data.cols() * sizeof(dtype);
-    std::cout << "the updated size is: " << nBytes << std::endl;
     MY_CHECK(cudaMalloc((void**)&_gpu_pointer, nBytes));
     MY_CHECK(
         cudaMemcpy(_gpu_pointer, _cpu_pointer, nBytes, cudaMemcpyHostToDevice));

@@ -290,31 +290,32 @@ __global__ void CudaPoolBackwards(const float* top_diff, const float* mask,
                                   float* bottom_diff) {
     int row = (blockIdx.x * blockDim.x + threadIdx.x);
     int col = (blockIdx.y * blockDim.y + threadIdx.y);
-    int c = (blockIdx.z * blockDim.z + threadIdx.z);
+    int part = (blockIdx.z * blockDim.z + threadIdx.z);
+    int c = part % channels;
+    int n = part / channels;
     int out_height = (rows - window) / stride + 1;
     int out_width = (cols - window) / stride + 1;
-    if (row < rows && col < cols && c < channels) {
+    if (row < rows && col < cols && c < channels && n < batches) {
         const int phstart = (row < window) ? 0 : (row - window) / stride + 1;
         const int phend = min(row / stride + 1, out_height);
         const int pwstart = (cols < window) ? 0 : (col - window) / stride + 1;
         const int pwend = min(col / stride + 1, out_width);
-        const int idx = c * rows * cols + row * cols + col;
-        for (int n = 0; n < batches; ++n) {
-            dtype gradient = 0;
+        //const int idx = c * rows * cols + row * cols + col;
+        const int offset = (n * channels + c) * out_height * out_width;
+        const dtype* const top_diff_slice = top_diff + offset;
+        const float* const mask_slice = mask + offset;
+        dtype gradient = 0;
             for (int ph = phstart; ph < phend; ++ph) {
                 for (int pw = pwstart; pw < pwend; ++pw) {
-                    int li = out_width * (c * out_height + ph) + pw;
-                    if (mask[li] == row * cols + col) {
-                        gradient += top_diff[li];
+                    int li = out_width * ph + pw;
+                    if (mask_slice[li] == row * cols + col) {
+                        gradient += top_diff_slice[li];
                         // bottom_diff[idx] += top_diff[li];
                     }
                 }
             }
-            bottom_diff[idx] = gradient;
-            mask += out_width * out_height * channels;
-            top_diff += out_width * out_height * channels;
-            bottom_diff += channels * rows * cols;
-        }
+            bottom_diff[n * channels * rows * cols + c * rows * cols +
+                row * cols + col] = gradient;
     }
 }
 
@@ -613,43 +614,35 @@ void pooling_gpu(const float* bottom_data, int window, int stride, int rows,
     MY_CHECK(cudaPeekAtLastError());
 }
 
-void pooling_backward_gpu(const float* bottom_data, const float* mask,
-                          int window, int stride, int rows, int cols,
-                          int channels, int batches, float* dest) {
-    if (((rows - window) % stride) or ((cols - window) % stride)) {
-        throw std::invalid_argument("Doesnt match");
-    }
-    printf("inside the pooling function\n");
-    dim3 block(16, 16, 4);
-    dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y,
-              (channels + block.z - 1) / block.z);
-    double beg = cpuSecond();
-    CudaPoolBackwards<<<grid, block>>>(bottom_data, mask, window, stride, rows,
-                                       cols, channels, batches, dest);
-    MY_CHECK(cudaDeviceSynchronize());
-    MY_CHECK(cudaPeekAtLastError());
-    double end = cpuSecond() - beg;
-    printf("it took: %.3f\n", end);
-}
+//void pooling_backward_gpu(const float* bottom_data, const float* mask,
+                          //int window, int stride, int rows, int cols,
+                          //int channels, int batches, float* dest) {
+    //if (((rows - window) % stride) or ((cols - window) % stride)) {
+        //throw std::invalid_argument("Doesnt match");
+    //}
+    //dim3 block(16, 16, 4);
+    //dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y,
+              //(channels + block.z - 1) / block.z);
+    //CudaPoolBackwards<<<grid, block>>>(bottom_data, mask, window, stride, rows,
+                                       //cols, channels, batches, dest);
+    //MY_CHECK(cudaDeviceSynchronize());
+    //MY_CHECK(cudaPeekAtLastError());
+//}
 
-void pooling_backward_gpu2(const float* src, const float* mask, int window,
+void pooling_backward_gpu(const float* src, const float* mask, int window,
                            int stride, int rows, int cols, int channels,
                            int batches, float* dest) {
     if (((rows - window) % stride) or ((cols - window) % stride)) {
         throw std::invalid_argument("Doesnt match");
     }
-    printf("inside the pooling function\n");
     int out_height = (rows - window) / stride + 1;
     int out_width = (cols - window) / stride + 1;
     dim3 block(512);
     int eles = rows * cols * channels * batches;
     dim3 grid((eles + block.x - 1) / block.x);
-    double beg = cpuSecond();
     MaxPoolBackward<<<grid, block>>>(eles, src, mask, batches, channels, rows,
                                      cols, out_height, out_width, window,
                                      stride, dest);
     MY_CHECK(cudaDeviceSynchronize());
     MY_CHECK(cudaPeekAtLastError());
-    double end = cpuSecond() - beg;
-    printf("it took: %.3f\n", end);
 }

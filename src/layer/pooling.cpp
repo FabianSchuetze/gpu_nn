@@ -1,4 +1,5 @@
 #include "../../include/layer/pooling.h"
+#include <sys/time.h>
 #include <iostream>
 #include "../../include/cuda_math.h"
 #include "../../include/math.h"
@@ -13,16 +14,22 @@ Pooling::Pooling(Window window, Stride stride, ImageShape imageshape,
     initialize_masking();
 }
 
+double cpuSecond() {
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+    return ((double)tp.tv_sec + (double)tp.tv_usec * 1e-6);
+}
+
 void Pooling::initialize_masking() { mask = std::make_shared<Storage>(); }
 
 void inline Pooling::check_input_size(const SharedStorage& in) {
     int rows = _channels.get() * _inp.first() * _inp.second();
-    if ((rows != in->get_rows()) or (batch_size != in->get_cols()))  {
-            std::stringstream ss;
-            ss << "Dimension do not fit, in:\n"
-               << __PRETTY_FUNCTION__ << "\ncalled from "
-               << __FILE__ << " at " << __LINE__;
-            throw std::invalid_argument(ss.str());
+    if ((rows != in->get_rows()) or (batch_size != in->get_cols())) {
+        std::stringstream ss;
+        ss << "Dimension do not fit, in:\n"
+           << __PRETTY_FUNCTION__ << "\ncalled from " << __FILE__ << " at "
+           << __LINE__;
+        throw std::invalid_argument(ss.str());
     }
 }
 
@@ -54,8 +61,7 @@ void Pooling::forward_cpu(const std::shared_ptr<Storage>& in,
 void Pooling::backward_gpu(const SharedStorage&,
                            const SharedStorage& gradient_in,
                            SharedStorage& gradient_out) {
-    std::cout << "pooling backwards\n" << std::endl;
-    pooling_backward_gpu2(
+    pooling_backward_gpu(
         gradient_in->gpu_pointer_const(), mask->gpu_pointer_const(),
         _window.get(), _stride.get(), _inp.first(), _inp.second(),
         _channels.get(), batch_size, gradient_out->gpu_pointer());
