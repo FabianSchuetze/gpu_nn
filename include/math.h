@@ -39,4 +39,7 @@ void im2col_cpu(const dtype* input_data, const int depth, const int height,
             const int stride_h, const int stride_w, dtype* col_data);
 void pooling_cpu(const float* src, int window, int stride, int rows, int cols,
                  int channels, int n_batches, float* dest, float* mask);
+void pooling_backward_cpu(const float* src, const float* mask, int window,
+                          int stride, int rows, int cols, int channels,
+                          int n_batches, float* dest);
 #endif
