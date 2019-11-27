@@ -183,3 +183,109 @@ void im2col(const dtype* input_data, const int depth, const int height,
         h_pad += stride_h;
     }
 }
+
+
+inline bool is_a_ge_zero_and_a_lt_b(int a, int b) {
+  return static_cast<unsigned>(a) < static_cast<unsigned>(b);
+}
+
+void im2col_cpu(const dtype* data_im, const int channels,
+    const int height, const int width, const int kernel_h, const int kernel_w,
+    const int pad_h, const int pad_w,
+    const int stride_h, const int stride_w,
+    const int dilation_h, const int dilation_w,
+    dtype* data_col) {
+  const int output_h = (height + 2 * pad_h -
+    (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
+  const int output_w = (width + 2 * pad_w -
+    (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
+  const int channel_size = height * width;
+  for (int channel = channels; channel--; data_im += channel_size) {
+    for (int kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
+      for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
+        int input_row = -pad_h + kernel_row * dilation_h;
+        for (int output_rows = output_h; output_rows; output_rows--) {
+          if (!is_a_ge_zero_and_a_lt_b(input_row, height)) {
+            for (int output_cols = output_w; output_cols; output_cols--) {
+              *(data_col++) = 0;
+            }
+          } else {
+            int input_col = -pad_w + kernel_col * dilation_w;
+            for (int output_col = output_w; output_col; output_col--) {
+              if (is_a_ge_zero_and_a_lt_b(input_col, width)) {
+                *(data_col++) = data_im[input_row * width + input_col];
+              } else {
+                *(data_col++) = 0;
+              }
+              input_col += stride_w;
+            }
+          }
+          input_row += stride_h;
+        }
+      }
+    }
+  }
+}
+
+void pooling_cpu(const float* src, int window, int stride, int rows, int cols,
+                 int channels, int n_batches, float* dest, float* mask) {
+    if (((rows - window) % stride) or ((cols - window) % stride)) {
+        throw std::invalid_argument("Doesnt match");
+    }
+    int out_height = (rows - window) / stride + 1;
+    int out_width = (cols - window) / stride + 1;
+    for (int n = 0; n < n_batches; ++n) {
+        for (int c = 0; c < channels; ++c) {
+            for (int ph = 0; ph < out_height; ++ph) {
+                for (int pw = 0; pw < out_width; ++pw) {
+                    int hstart = ph * stride;
+                    int wstart = pw * stride;
+                    // int hend = std::min(hstart + window, rows);
+                    // int wend = std::min(wstart + window, cols);
+                    int hend = hstart + window;
+                    int wend = wstart + window;
+                    // hstart = std::max(hstart, 0);
+                    // wstart = std::max(wstart, 0);
+                    const int pool_index = ph * out_width + pw;
+                    for (int h = hstart; h < hend; ++h) {
+                        for (int w = wstart; w < wend; ++w) {
+                            const int index = h * cols + w;
+                            if (src[index] > dest[pool_index]) {
+                                dest[pool_index] = src[index];
+                                mask[pool_index] = index;
+                            }
+                        }
+                    }
+                }
+            }
+            src += (rows * cols);
+            dest += (out_height * out_width);
+            mask += (out_height * out_width);
+        }
+    }
+}
+
+void pooling_backward_cpu(const float* src, const float* mask, int window,
+                          int stride, int rows, int cols, int channels,
+                          int n_batches, float* dest) {
+    if (((rows - window) % stride) or ((cols - window) % stride)) {
+        throw std::invalid_argument("Doesnt match");
+    }
+    int out_height = (rows - window) / stride + 1;
+    int out_width = (cols - window) / stride + 1;
+    for (int n = 0; n < n_batches; ++n) {
+        for (int c = 0; c < channels; ++c) {
+            for (int ph = 0; ph < out_height; ++ph) {
+                for (int pw = 0; pw < out_width; ++pw) {
+                    int index = ph * out_width + pw;
+                    int dest_idx = mask[index];
+                    dest[dest_idx] += src[index];
+                }
+            }
+            dest += (rows * cols);
+            src += out_height * out_width;
+            mask += out_height * out_width;
+        }
+    }
+}
+

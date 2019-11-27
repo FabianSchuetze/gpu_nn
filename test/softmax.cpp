@@ -28,9 +28,9 @@ TEST_CASE("NeuralNetwork gpu", "[gpu]") {
 
 TEST_CASE("NeuralNetwork cpu", "[cpu]") {
     srand((unsigned int) time(0));
-    Layer* inp1;
-    Softmax s1;
-    inp1 = &s1;
+    Layer* inp1 = new Softmax;
+    //Softmax s1;
+    //inp1 = &s1;
     Matrix in = Matrix::Random(6, 5);
     Matrix out = Matrix::Zero(6, 5);
     std::shared_ptr<Storage> storage_in = std::make_shared<Storage>(in);
@@ -43,9 +43,9 @@ TEST_CASE("NeuralNetwork cpu", "[cpu]") {
 
 TEST_CASE("NeuralNetwork equivalence", "[equivalence]") {
     srand((unsigned int) time(0));
-    Layer* inp1;
-    Softmax s1;
-    inp1 = &s1;
+    Layer* inp1 = new Softmax;
+    //Softmax s1;
+    //inp1 = &s1;
     Matrix in = Matrix::Random(1024, 100);
     Matrix out = Matrix::Zero(1024, 100);
     std::shared_ptr<Storage> storage_in = std::make_shared<Storage>(in);

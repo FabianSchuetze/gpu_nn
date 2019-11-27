@@ -95,11 +95,11 @@ void NeuralNetwork::forward_gpu(vector<SharedStorage>& values,
                                 const std::string& type) {
     int i = 0;
     for (size_t layer_idx = 1; layer_idx < layers.size(); ++layer_idx) {
-        std::cout << "layer name " << layers[layer_idx]->name() << std::endl;
+        //std::cout << "layer name " << layers[layer_idx]->name() << std::endl;
         layers[layer_idx]->forward_gpu(values[i], values[i + 1], type);
         i++;
     }
-    std::cout << "finisehd forward gpu\n" << std::endl;
+    //std::cout << "finisehd forward gpu\n" << std::endl;
 }
 
 void NeuralNetwork::forward_cpu(vector<SharedStorage>& values,

@@ -51,6 +51,8 @@ struct FiltersParameter {};
 using Filters = NamedType<int, FiltersParameter>;
 struct ChannelsParameter {};
 using Channels = NamedType<int, ChannelsParameter>;
+struct WindowParameter {};
+using Window = NamedType<int, WindowParameter>;
 struct FilterShapeParameter {};
 using FilterShape = NamedPair<int, FilterShapeParameter>;
 struct ImageShapeParameter {};

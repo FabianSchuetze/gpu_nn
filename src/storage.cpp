@@ -20,7 +20,7 @@ bool Storage::is_set() { return recent_head != "UNINIT"; }
 Storage::~Storage() {
     // delete _cpu_pointer; // I don't know how to delete this pointer properly
     cudaFree(_gpu_pointer);
-    delete _cpu_pointer;
+    //delete _cpu_pointer;
 }
 
 void Storage::initialize_gpu_memory() {

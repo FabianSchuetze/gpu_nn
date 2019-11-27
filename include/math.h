@@ -33,4 +33,10 @@ void im2col(const dtype* input_data, const int depth, const int height,
             const int width, const int filter_h, const int filter_w,
             const int pad_t, const int pad_l, const int pad_b, const int pad_r,
             const int stride_h, const int stride_w, dtype* col_data);
+void im2col_cpu(const dtype* input_data, const int depth, const int height,
+            const int width, const int filter_h, const int filter_w,
+            const int pad_t, const int pad_l, const int pad_b, const int pad_r,
+            const int stride_h, const int stride_w, dtype* col_data);
+void pooling_cpu(const float* src, int window, int stride, int rows, int cols,
+                 int channels, int n_batches, float* dest, float* mask);
 #endif

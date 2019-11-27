@@ -46,5 +46,12 @@ void matrix_addition_inplace(int, int, const double*, double*, const float);
 void cuda_init(int, int, curandState*, int);
 void cuda_masking(int, int, float, float*);
 void cuda_masking(int, int, double, double*);
+void pooling_gpu(const float* const bottom_data, const int window,
+                 const int stride, int rows, int cols, const int channels,
+                 int batches, float* top_data, float* mask);
+void pooling_backward_gpu(const float* bottom_data, const float* mask,
+                           const int window, const int stride, int rows,
+                           int cols, const int channels, const int batches,
+                           float* dest);
 
 #endif

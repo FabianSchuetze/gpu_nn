@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <type_traits>
+//#include <type_traits>
 #include "../include/neural_network.h"
 #include "../third_party/mnist/include/mnist/get_data.h"
 

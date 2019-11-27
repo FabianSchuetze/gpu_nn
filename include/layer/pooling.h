@@ -5,9 +5,10 @@
 class Pooling : public Layer {
    public:
     Pooling(int);
+    Pooling(Window, Stride, ImageShape, Channels);
     virtual ~Pooling() = default;
-    int output_dimension() override { return _output_dimension; };
-    int output_dimension() const override { return _output_dimension; };
+    //int output_dimension() override { return _output_dimension; };
+    //int output_dimension() const override { return _output_dimension; };
     void forward_gpu(const std::shared_ptr<Storage>&,
                      std::shared_ptr<Storage>&, const std::string&) override;
     void forward_cpu(const std::shared_ptr<Storage>&,
@@ -18,6 +19,14 @@ class Pooling : public Layer {
                       SharedStorage&) override;
 
    private:
-    int _output_dimension;
+    SharedStorage mask;
+    Window _window;
+    Stride _stride;
+    ImageShape _inp;
+    Channels _channels;
+    int batch_size;
+
+    void check_masking(const SharedStorage&);
+    void initialize_masking();
 };
 #endif
