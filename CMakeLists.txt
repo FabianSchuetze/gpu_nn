@@ -46,6 +46,7 @@ set(${LIBRARY_TARGET_NAME}_TEST
     test/sgd.cpp
     test/dropout.cpp
     test/mnist.cpp
+    test/pooling.cpp
 )
 
 enable_testing()
