@@ -53,5 +53,9 @@ void pooling_backward_gpu(const float* bottom_data, const float* mask,
                            const int window, const int stride, int rows,
                            int cols, const int channels, const int batches,
                            float* dest);
+void pooling_backward_gpu2(const float* bottom_data, const float* mask,
+                           const int window, const int stride, int rows,
+                           int cols, const int channels, const int batches,
+                           float* dest);
 
 #endif

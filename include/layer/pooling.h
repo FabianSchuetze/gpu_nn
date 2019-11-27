@@ -28,5 +28,6 @@ class Pooling : public Layer {
 
     void check_masking(const SharedStorage&);
     void initialize_masking();
+    void inline check_input_size(const SharedStorage&);
 };
 #endif
