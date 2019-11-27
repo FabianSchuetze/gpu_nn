@@ -290,32 +290,33 @@ __global__ void CudaPoolBackwards(const float* top_diff, const float* mask,
                                   float* bottom_diff) {
     int row = (blockIdx.x * blockDim.x + threadIdx.x);
     int col = (blockIdx.y * blockDim.y + threadIdx.y);
-    int part = (blockIdx.z * blockDim.z + threadIdx.z);
-    int c = part % channels;
-    int n = part / channels;
+    int c = (blockIdx.z * blockDim.z + threadIdx.z);
     int out_height = (rows - window) / stride + 1;
     int out_width = (cols - window) / stride + 1;
-    if (row < rows && col < cols && c < channels && n < batches) {
-        const int phstart = (row < window) ? 0 : (row - window) / stride + 1;
+    if (row < rows && col < cols && c < channels) {
+        const int phstart = (row < window) ? 0 : (row + window) / stride + 1;
         const int phend = min(row / stride + 1, out_height);
-        const int pwstart = (cols < window) ? 0 : (col - window) / stride + 1;
+        const int pwstart = (cols < window) ? 0 : (col + window) / stride + 1;
         const int pwend = min(col / stride + 1, out_width);
-        //const int idx = c * rows * cols + row * cols + col;
-        const int offset = (n * channels + c) * out_height * out_width;
-        const dtype* const top_diff_slice = top_diff + offset;
-        const float* const mask_slice = mask + offset;
+        const int idx = c * rows * cols + row * cols + col;
+        for (int n = 0; n < batches; ++n) {
         dtype gradient = 0;
             for (int ph = phstart; ph < phend; ++ph) {
                 for (int pw = pwstart; pw < pwend; ++pw) {
-                    int li = out_width * ph + pw;
-                    if (mask_slice[li] == row * cols + col) {
-                        gradient += top_diff_slice[li];
+                    int li = out_width * (c *  out_height + ph) + pw;
+                    if (mask[li] == row * cols + col) {
+                        gradient += top_diff[li];
                         // bottom_diff[idx] += top_diff[li];
                     }
                 }
             }
-            bottom_diff[n * channels * rows * cols + c * rows * cols +
-                row * cols + col] = gradient;
+            bottom_diff[idx] = gradient;
+            mask += out_width * out_height * channels;
+            top_diff += out_width * out_height * channels;
+            bottom_diff += channels * rows * cols;
+            //bottom_diff[n * channels * rows * cols + c * rows * cols +
+        }
+                //row * cols + col] = gradient;
     }
 }
 
@@ -614,7 +615,8 @@ void pooling_gpu(const float* bottom_data, int window, int stride, int rows,
     MY_CHECK(cudaPeekAtLastError());
 }
 
-//void pooling_backward_gpu(const float* bottom_data, const float* mask,
+// linear access is 20 % faster!
+//void pooling_backward_gpu_my(const float* bottom_data, const float* mask,
                           //int window, int stride, int rows, int cols,
                           //int channels, int batches, float* dest) {
     //if (((rows - window) % stride) or ((cols - window) % stride)) {

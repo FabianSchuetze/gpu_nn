@@ -49,7 +49,7 @@ void cuda_masking(int, int, double, double*);
 void pooling_gpu(const float* const bottom_data, const int window,
                  const int stride, int rows, int cols, const int channels,
                  int batches, float* top_data, float* mask);
-//void pooling_backward_gpu(const float* bottom_data, const float* mask,
+//void pooling_backward_gpu_my(const float* bottom_data, const float* mask,
                            //const int window, const int stride, int rows,
                            //int cols, const int channels, const int batches,
                            //float* dest);
