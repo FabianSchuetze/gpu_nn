@@ -25,7 +25,8 @@ class Im2ColLayer : public Layer {
 
     void output_shape();
     void check_size(const SharedStorage&, const SharedStorage&);
-    void advance_pointers(const float*&, float*&, int);
+    void advance_pointers_forward(const float*&, float*&, int);
+    void advance_pointers_backward(const float*&, float*&);
 
 
 };

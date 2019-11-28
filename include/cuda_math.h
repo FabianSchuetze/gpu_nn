@@ -60,5 +60,8 @@ void pooling_backward_gpu(const float* bottom_data, const float* mask,
 void im2col_gpu(const float* data_im, int channels, int height, const int width,
                 int kernel_h, const int kernel_w, int pad, int stride,
                 float* data_col);
+void col2im_gpu(const dtype* data_col, int channels, int height, int width,
+                int kernel_h, int kernel_w, int pad, int stride,
+                dtype* data_im);
 
 #endif

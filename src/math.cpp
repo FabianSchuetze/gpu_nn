@@ -196,6 +196,37 @@ void im2col_cpu(const float* data_im, int channels, int rows, int cols,
     }
 }
 
+void col2im_cpu(const dtype* data_col, int channels, int rows, int cols,
+                int kernel_h, int kernel_w, int pad, int stride,
+                dtype* data_im) {
+    const int out_height = (rows + 2 * pad - kernel_h) / stride + 1;
+    const int out_width = (rows + 2 * pad - kernel_h) / stride + 1;
+    const int channel_size = rows * cols;
+    for (int channel = channels; channel--; data_im += channel_size) {
+        for (int kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
+            for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
+                int input_row = -pad + kernel_row;
+                for (int output_rows = out_height; output_rows; output_rows--) {
+                    if (!is_a_ge_zero_and_a_lt_b(input_row, rows)) {
+                        data_col += out_width;
+                    } else {
+                        int input_col = -pad + kernel_col;
+                        for (int output_col = out_width; output_col;
+                             output_col--) {
+                            if (is_a_ge_zero_and_a_lt_b(input_col, cols)) {
+                                data_im[input_row * cols + input_col] +=
+                                    *data_col;
+                            }
+                            data_col++;
+                            input_col += stride;
+                        }
+                    }
+                    input_row += stride;
+                }
+            }
+        }
+    }
+}
 void pooling_cpu(const float* src, int window, int stride, int rows, int cols,
                  int channels, int n_batches, float* dest, float* mask) {
     if (((rows - window) % stride) or ((cols - window) % stride)) {

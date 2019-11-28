@@ -1,7 +1,7 @@
 #include "../../include/layer/im2col_layer.h"
-#include "../../include/math.h"
-#include "../../include/cuda_math.h"
 #include <iostream>
+#include "../../include/cuda_math.h"
+#include "../../include/math.h"
 Im2ColLayer::Im2ColLayer(FilterShape filtershape, Pad pad, Stride stride,
                          Filters filters, ImageShape imageshape,
                          Channels channels)
@@ -24,7 +24,8 @@ void Im2ColLayer::output_shape() {
     _out = ImageShape(out_height, out_width);
 }
 
-void Im2ColLayer::check_size(const SharedStorage& in, const SharedStorage& out) {
+void Im2ColLayer::check_size(const SharedStorage& in,
+                             const SharedStorage& out) {
     int col_rows = _out.first() * _out.second();
     int col_cols =
         _kernel.first() * _kernel.second() * _channels.get() * in->get_cols();
@@ -46,8 +47,8 @@ void Im2ColLayer::check_size(const SharedStorage& in, const SharedStorage& out) 
     }
 }
 
-void Im2ColLayer::advance_pointers(const float*& input, float*& column,
-                                   int input_rows) {
+void Im2ColLayer::advance_pointers_forward(const float*& input, float*& column,
+                                           int input_rows) {
     input += (input_rows);
     column += (_out.first() * _out.second() * _kernel.first() *
                _kernel.second() * _channels.get());
@@ -61,7 +62,7 @@ void Im2ColLayer::forward_gpu(const SharedStorage& in, SharedStorage& out,
         im2col_gpu(inpp, _channels.get(), _inp.first(), _inp.second(),
                    _kernel.first(), _kernel.second(), _pad.get(), _stride.get(),
                    colp);
-        advance_pointers(inpp, colp, in->get_rows());
+        advance_pointers_forward(inpp, colp, in->get_rows());
     }
 }
 
@@ -72,12 +73,39 @@ void Im2ColLayer::forward_cpu(const SharedStorage& in, SharedStorage& out,
     float* colp = out->cpu_pointer();
     for (int n = 0; n < in->get_cols(); n++) {
         im2col_cpu(inpp, _channels.get(), _inp.first(), _inp.second(),
-                     _kernel.first(), _kernel.second(), _pad.get(),
-                     _stride.get(), colp);
-        advance_pointers(inpp, colp, in->get_rows());
+                   _kernel.first(), _kernel.second(), _pad.get(), _stride.get(),
+                   colp);
+        advance_pointers_forward(inpp, colp, in->get_rows());
     }
 }
-void Im2ColLayer::backward_gpu(const SharedStorage&, const SharedStorage&,
-                               SharedStorage&){};
-void Im2ColLayer::backward_cpu(const SharedStorage&, const SharedStorage&,
-                               SharedStorage&){};
+void Im2ColLayer::advance_pointers_backward(const float*& input,
+                                            float*& output) {
+    input += _out.first() * _out.second() * _kernel.first() * _kernel.second() *
+             _channels.get();
+    output += _inp.first() * _inp.second() * _channels.get();
+}
+void Im2ColLayer::backward_cpu(const SharedStorage&,
+                               const SharedStorage& gradient_in,
+                               SharedStorage& gradient_out) {
+    const float* colp = gradient_in->cpu_pointer_const();
+    float* imgp = gradient_out->cpu_pointer();
+    for (int n = 0; n < gradient_out->get_cols(); n++) {
+        col2im_cpu(colp, _channels.get(), _inp.first(), _inp.second(),
+                   _kernel.first(), _kernel.second(), _pad.get(), _stride.get(),
+                   imgp);
+        advance_pointers_backward(colp, imgp);
+    }
+}
+
+void Im2ColLayer::backward_gpu(const SharedStorage&,
+                               const SharedStorage& gradient_in,
+                               SharedStorage& gradient_out) {
+    const float* colp = gradient_in->gpu_pointer_const();
+    float* imgp = gradient_out->gpu_pointer();
+    for (int n = 0; n < gradient_out->get_cols(); n++) {
+        col2im_gpu(colp, _channels.get(), _inp.first(), _inp.second(),
+                   _kernel.first(), _kernel.second(), _pad.get(), _stride.get(),
+                   imgp);
+        advance_pointers_backward(colp, imgp);
+    }
+}

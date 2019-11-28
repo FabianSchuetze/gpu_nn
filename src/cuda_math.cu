@@ -416,6 +416,43 @@ __global__ void im2col_gpu_kernel(int numThreads, const dtype* data_im,
     }
 }
 
+__global__ void col2im_gpu_kernel(int numThreads, const dtype* data_col,
+                                  int height, int width, int channels,
+                                  int kernel_h, int kernel_w, const int pad,
+                                  const int stride, const int height_col,
+                                  const int width_col, dtype* data_im) {
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if (index < numThreads) {
+        dtype val = 0;
+        int w_im = index % width + pad;
+        int h_im = (index / width) % height + pad;
+        int c_im = index / (width * height);
+        // compute the start and end of the output
+        int w_col_start =
+            (w_im < kernel_w) ? 0 : (w_im - kernel_w) / stride + 1;
+        int w_col_end = min(w_im / stride + 1, width_col);
+        int h_col_start =
+            (h_im < kernel_h) ? 0 : (h_im - kernel_h) / stride + 1;
+        int h_col_end = min(h_im / stride + 1, height_col);
+        for (int h_col = h_col_start; h_col < h_col_end; h_col += 1) {
+            for (int w_col = w_col_start; w_col < w_col_end; w_col += 1) {
+                int h_k = (h_im - h_col * stride);
+                int w_k = (w_im - w_col * stride);
+                // if (h_k % dilation_h == 0 && w_k % dilation_w == 0) {
+                // h_k /= dilation_h;
+                // w_k /= dilation_w;
+                int data_col_index =
+                    (((c_im * kernel_h + h_k) * kernel_w + w_k) * height_col +
+                     h_col) *
+                        width_col +
+                    w_col;
+                val += data_col[data_col_index];
+            }
+        }
+        data_im[index] = val;
+    }
+}
+
 void add_vec_to_mat_colwise(int rows, int cols, double* matrix,
                             const double* vector, double alpha) {
     dim3 block(256);
@@ -697,6 +734,24 @@ void im2col_gpu(const float* data_im, int channels, int height, const int width,
     im2col_gpu_kernel<<<grid, block>>>(numThreads, data_im, height, width,
                                        kernel_h, kernel_w, pad, stride,
                                        out_height, out_width, data_col);
+    MY_CHECK(cudaDeviceSynchronize());
+    MY_CHECK(cudaPeekAtLastError());
+}
+
+void col2im_gpu(const dtype* data_col, int channels, int height, int width,
+                int kernel_h, int kernel_w, int pad, int stride,
+                dtype* data_im) {
+    int out_height = (height + 2 * pad - kernel_h) / stride + 1;
+    int out_width = (width + 2 * pad - kernel_w) / stride + 1;
+    int numThreads = channels * height * width;
+    dim3 block(512);
+    dim3 grid((numThreads + block.x - 1) / block.x);
+    // To avoid involving atomic operations, we will launch one kernel per
+    // bottom dimension, and then in the kernel add up the top dimensions.
+    // NOLINT_NEXT_LINE(whitespace/operators)
+    col2im_gpu_kernel<<<grid, block>>>(numThreads, data_col, height, width,
+                                       channels, kernel_h, kernel_w, pad,
+                                       stride, out_height, out_width, data_im);
     MY_CHECK(cudaDeviceSynchronize());
     MY_CHECK(cudaPeekAtLastError());
 }
