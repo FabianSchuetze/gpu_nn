@@ -8,6 +8,7 @@
 #include "layer/dropout.h"
 #include "layer/convolution.h"
 #include "layer/pooling.h"
+#include "layer/im2col_layer.h"
 #include "network.h"
 #include "storage.h"
 #include "loss/cross_entropy.h"

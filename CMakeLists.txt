@@ -25,8 +25,9 @@ set(${LIBRARY_TARGET_NAME}_SRC
     src/gradient_descent/gradient_descent.cpp
     src/gradient_descent/sgd.cpp
     src/trainArgs.cpp
-    src/layer/convolution.cpp
+    #src/layer/convolution.cpp
     src/layer/pooling.cpp
+    src/layer/im2col_layer.cpp
 )
 if (UNIX)
   add_library(${LIBRARY_TARGET_NAME} SHARED ${${LIBRARY_TARGET_NAME}_SRC})
@@ -37,7 +38,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3 -fPIC\
     -lcudnn -lcurand -L /usr/lib/cuda/lib64 -lcudart  -lcublas\
     -Wall -std=c++17 -Wno-error=unused-command-line-argument")
 set(${LIBRARY_TARGET_NAME}_TEST
-    test/convolution.cpp
+    test/im2col_layer.cpp
+    #test/convolution.cpp
     test/softmax.cpp
     test/dense.cpp
     test/cross_entropy.cpp

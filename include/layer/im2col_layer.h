@@ -1,15 +1,12 @@
 #pragma once
-#ifndef convolution_h
-#define convolution_h
-//#include "cublas_v2.h"
-#include "../common.h"
+#ifndef im2col_layer_h
+#define im2col_layer_h
 #include "layer.h"
-class Convolution : public Layer {
+class Im2ColLayer : public Layer {
+
    public:
-    int output_dimension() override;
-    int output_dimension() const override;
-    Convolution(FilterShape, Pad, Stride, Filters, ImageShape, Channels);
-    virtual ~Convolution();
+    Im2ColLayer(FilterShape, Pad, Stride, Filters, ImageShape, Channels);
+    virtual ~Im2ColLayer() { };
     void forward_gpu(const SharedStorage&, SharedStorage&,
                      const std::string&) override;
     void forward_cpu(const SharedStorage&, SharedStorage&,
@@ -18,20 +15,18 @@ class Convolution : public Layer {
                       SharedStorage&) override;
     void backward_cpu(const SharedStorage&, const SharedStorage&,
                       SharedStorage&) override;
-
-    //SharedStorage Column;  // contains the converted image
-
    private:
-    FilterShape _filter_shape;
+    FilterShape _kernel;
     Pad _pad;
     Stride _stride;
     Filters _filters;
     ImageShape _inp, _out;
     Channels _channels;
-    int batch_size;
-    void initialize_weight();
-    void initialize_grad();
 
-    void initialize_kernel();
+    void output_shape();
+    void check_size(const SharedStorage&, const SharedStorage&);
+    void advance_pointers(const float*&, float*&, int);
+
+
 };
 #endif

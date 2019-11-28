@@ -18,12 +18,13 @@ TEST_CASE("Pooling cpu", "[cpu]") {
     Stride stride(1);
     ImageShape image(2, 4);
     Channels channels(2);
+    Pad pad(1);
     int batches(3);
     int out_height = (image.first() - window.get()) / stride.get() + 1;
     int out_width = (image.second() - window.get()) / stride.get() + 1;
     srand((unsigned int)time(0));
     Layer* inp1 =
-        new Pooling(Window(2), Stride(1), ImageShape(2, 4), Channels(2));
+        new Pooling(window, stride, ImageShape(2, 4), Channels(2));
     Matrix test = Matrix::Random(
         image.first() * image.second() * channels.get(), batches);
     std::shared_ptr<Storage> input = std::make_shared<Storage>(test);
