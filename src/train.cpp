@@ -112,11 +112,11 @@ void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
     }
     train_args = std::make_unique<trainArgs>(features, targets, _epoch,
                                              _patience, _batch_size);
-    train(sgd);
-    // std::thread produce([&]() { producer(); });
-    // std::thread consume([&]() { consumer(sgd); });
-    // produce.join();
-    // consume.join();
+    //train(sgd);
+     std::thread produce([&]() { producer(); });
+     std::thread consume([&]() { consumer(sgd); });
+     produce.join();
+     consume.join();
 }
 
 void NeuralNetwork::producer() {

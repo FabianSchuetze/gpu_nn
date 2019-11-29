@@ -3,6 +3,29 @@
 #include "../include/neural_network.h"
 #include "../third_party/cifar10/include/cifar/get_data.h"
 
+void n_missclassified(const Matrix& y_pred, const Matrix& y_true) {
+    int missclassified(0);
+    for (int i = 0; i < y_pred.rows(); ++i) {
+        int arg_pred =0;
+        int arg_true = 0;
+        dtype max_pred = y_pred(i, 0);
+        dtype max_true = y_true(i, 0);
+        for (int j = 0; j < 10; ++j) {
+            if (max_pred < y_pred(i,j)) {
+                arg_pred = j;
+                max_pred = y_pred(i, j);
+            }
+            if (max_true < y_true(i,j)) {
+                arg_true = j;
+                max_true = y_true(i, j);
+            }
+        }
+        if (arg_true != arg_pred)
+            missclassified++;
+    }
+    std::cout << "fraction miassclassified : " <<
+        float(missclassified) / y_pred.rows() << std::endl;
+}
 int main(int argc, char** argv) {
     // if ((argc != 2) and (argc != 5))
     // throw std::invalid_argument("Must have one or four arguemnts");
@@ -22,18 +45,14 @@ int main(int argc, char** argv) {
     NeuralNetwork n1({l1, l2, l3, l4, l5, l6}, loss, "GPU");
     std::shared_ptr<GradientDescent> sgd =
         std::make_shared<StochasticGradientDescent>(0.001);
-    // if (argc == 5) {
-    // Epochs epoch(strtol(argv[2], NULL, 10));
-    // Patience patience(strtol(argv[3], NULL, 10));
-    // BatchSize batch_size(strtol(argv[4], NULL, 10));
-    // n1.train(data.get_x_train(), data.get_y_train(), sgd, epoch, patience,
-    // batch_size);
-    n1.train(data.get_x_train(), data.get_y_train(), sgd, Epochs(10),
+    n1.train(data.get_x_train(), data.get_y_train(), sgd, Epochs(1),
              Patience(10), BatchSize(32));
-    delete l1;
-    delete l2;
-    delete l3;
-    delete l4;
-    delete l5;
-    delete l6;
+    Matrix predictions = n1.predict(data.get_x_test());
+    n_missclassified(predictions, data.get_y_test());
+    //delete l1;
+    //delete l2;
+    //delete l3;
+    //delete l4;
+    //delete l5;
+    //delete l6;
 }
