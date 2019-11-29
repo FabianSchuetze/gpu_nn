@@ -39,17 +39,22 @@ int main(int argc, char** argv) {
     Layer* l3 = new Convolution(FilterShape(3, 3), Pad(1), Stride(1),
                                 Filters(5), ImageShape(32, 32), Channels(3));
     Layer* l4 = new Relu;
-    Layer* l5 = new Dense(10, 32 * 32 * 5);
-    Layer* l6 = new Softmax;
+    Layer* l5 = new Im2ColLayer(FilterShape(3, 3), Pad(1), Stride(1),
+                                ImageShape(32, 32), Channels(5));
+    Layer* l6 = new Convolution(FilterShape(3, 3), Pad(1), Stride(1),
+                                Filters(5), ImageShape(32, 32), Channels(5));
+    Layer* l7 = new Relu;
+    Layer* l8 = new Dense(10, 32 * 32 * 5);
+    Layer* l9 = new Softmax;
     std::shared_ptr<Loss> loss =
         std::make_shared<CrossEntropy>(CrossEntropy("GPU"));
-    NeuralNetwork n1({l1, l2, l3, l4, l5, l6}, loss, "GPU");
+    NeuralNetwork n1({l1, l2, l3, l4, l5, l6, l7, l8, l9}, loss, "GPU");
     std::shared_ptr<GradientDescent> sgd =
         std::make_shared<StochasticGradientDescent>(0.001);
     n1.train(data.get_x_train(), data.get_y_train(), sgd, Epochs(2),
              Patience(10), BatchSize(32));
-    Matrix predictions = n1.predict(data.get_x_test());
-    n_missclassified(predictions, data.get_y_test());
+    //Matrix predictions = n1.predict(data.get_x_test());
+    //n_missclassified(predictions, data.get_y_test());
     //delete l1;
     //delete l2;
     //delete l3;
