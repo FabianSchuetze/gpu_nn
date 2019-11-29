@@ -5,8 +5,12 @@
 class Im2ColLayer : public Layer {
 
    public:
-    Im2ColLayer(FilterShape, Pad, Stride, Filters, ImageShape, Channels);
+    Im2ColLayer(FilterShape, Pad, Stride, ImageShape, Channels);
     virtual ~Im2ColLayer() { };
+    int output_dimension() override;
+    int output_dimension() const override;
+    virtual int n_cols() override;
+    virtual int n_cols() const override;
     void forward_gpu(const SharedStorage&, SharedStorage&,
                      const std::string&) override;
     void forward_cpu(const SharedStorage&, SharedStorage&,
@@ -19,7 +23,6 @@ class Im2ColLayer : public Layer {
     FilterShape _kernel;
     Pad _pad;
     Stride _stride;
-    Filters _filters;
     ImageShape _inp, _out;
     Channels _channels;
 

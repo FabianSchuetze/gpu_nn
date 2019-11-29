@@ -1,0 +1,65 @@
+#ifndef GUARD_get_data_h
+#define GUARD_get_data_h
+#include <eigen-git-mirror/Eigen/Dense>
+#include <eigen-git-mirror/unsupported/Eigen/CXX11/Tensor>
+#include <vector>
+#include "cifar10_reader.hpp"
+
+typedef Eigen::Tensor<double, 4, Eigen::RowMajor> Tensor;
+class Cifar10 {
+   public:
+    Cifar10();
+    Tensor get_x_train() { return x_train; }
+    Tensor get_x_test() { return x_test; }
+    Eigen::MatrixXd get_y_train() { return y_train; }
+    Eigen::MatrixXd get_y_test() { return y_test; }
+
+   private:
+    Tensor x_train, x_test;
+    Eigen::MatrixXd y_train, y_test;
+    Eigen::MatrixXd generate_labels(const std::vector<unsigned char>&);
+    Tensor generate_features(const std::vector<std::vector<uint8_t>>&);
+    std::vector<double> read_vector(const std::vector<std::vector<uint8_t>>&);
+};
+
+std::vector<double> Cifar10::read_vector(
+    const std::vector<std::vector<uint8_t>>& inp) {
+    int size = inp.size();
+    std::vector<double> res;
+    res.reserve(size * 3072 + 1);
+    for (int i = 0; i < size; ++i) {
+        for (int j = 0; j < 3072; ++j) {
+            res.push_back(inp[i][j]);
+        }
+    }
+    return res;
+}
+
+Eigen::MatrixXd Cifar10::generate_labels(
+    const std::vector<unsigned char>& inp) {
+    int size = inp.size();
+    Eigen::MatrixXd res = Eigen::MatrixXd::Zero(size, 10);
+    for (int i = 0; i < size; ++i) {
+        for (int j = 0; j < 10; ++j) {
+            if (inp[i] == j) res(i, j) = 1;
+        }
+    }
+    return res;
+}
+
+Tensor Cifar10::generate_features(
+    const std::vector<std::vector<uint8_t>>& inp) {
+    int size = inp.size();
+    std::vector<double> tmp = read_vector(inp);
+    Tensor tmp2 = Eigen::TensorMap<Tensor>(tmp.data(), size, 3, 32, 32);
+}
+
+Cifar10::Cifar10() : x_train(), x_test(), y_train(), y_test() {
+    auto dataset =
+        cifar::read_dataset<std::vector, std::vector, uint8_t, uint8_t>();
+    y_train = generate_labels(dataset.training_labels);
+    y_test = generate_labels(dataset.test_labels);
+    x_train = generate_features(dataset.training_images);
+    x_test = generate_features(dataset.test_images);
+}
+#endif

@@ -29,7 +29,7 @@ TEST_CASE("NeuralNetwork cpu", "[cpu]") {
     int out_width =
         (image.second() + 2 * pad.get() - kernel.second()) / stride.get() + 1;
     Layer* inp1 =
-        new Im2ColLayer(kernel, pad, stride, filters, image, channels);
+        new Im2ColLayer(kernel, pad, stride, image, channels);
     Layer* l2 = new Convolution(kernel, pad, stride, filters, image, channels);
     Matrix _input = Matrix::Random(
         image.first() * image.second() * channels.get(), batches);
@@ -59,7 +59,7 @@ TEST_CASE("NeuralNetwork gpu", "[gpu]") {
     int out_width =
         (image.second() + 2 * pad.get() - kernel.second()) / stride.get() + 1;
     Layer* inp1 =
-        new Im2ColLayer(kernel, pad, stride, filters, image, channels);
+        new Im2ColLayer(kernel, pad, stride, image, channels);
     Layer* l2 = new Convolution(kernel, pad, stride, filters, image, channels);
     Matrix _input = Matrix::Random(
         image.first() * image.second() * channels.get(), batches);
@@ -89,9 +89,9 @@ TEST_CASE("NeuralNetwork forward equivalence", "[forward equivalance]") {
     int out_width =
         (image.second() + 2 * pad.get() - kernel.second()) / stride.get() + 1;
     Layer* im2col_cpu =
-        new Im2ColLayer(kernel, pad, stride, filters, image, channels);
+        new Im2ColLayer(kernel, pad, stride, image, channels);
     Layer* im2col_gpu =
-        new Im2ColLayer(kernel, pad, stride, filters, image, channels);
+        new Im2ColLayer(kernel, pad, stride, image, channels);
     Layer* conv_cpu =
         new Convolution(kernel, pad, stride, filters, image, channels);
     Layer* conv_gpu =
@@ -151,7 +151,7 @@ TEST_CASE("NeuralNetwork backward gpu", "[backward gpu]") {
     int out_width =
         (image.second() + 2 * pad.get() - kernel.second()) / stride.get() + 1;
     Layer* inp1 =
-        new Im2ColLayer(kernel, pad, stride, filters, image, channels);
+        new Im2ColLayer(kernel, pad, stride, image, channels);
     Layer* l2 = new Convolution(kernel, pad, stride, filters, image, channels);
     Matrix _input = Matrix::Random(
         image.first() * image.second() * channels.get(), batches);
@@ -190,7 +190,7 @@ TEST_CASE("NeuralNetwork backward cpu", "[backward cpu]") {
     int out_width =
         (image.second() + 2 * pad.get() - kernel.second()) / stride.get() + 1;
     Layer* inp1 =
-        new Im2ColLayer(kernel, pad, stride, filters, image, channels);
+        new Im2ColLayer(kernel, pad, stride, image, channels);
     Layer* l2 = new Convolution(kernel, pad, stride, filters, image, channels);
     Matrix _input = Matrix::Random(
         image.first() * image.second() * channels.get(), batches);
@@ -230,9 +230,9 @@ TEST_CASE("NeuralNetwork backward equivalence", "[backward equivalance]") {
     int out_width =
         (image.second() + 2 * pad.get() - kernel.second()) / stride.get() + 1;
     Layer* im2col_cpu =
-        new Im2ColLayer(kernel, pad, stride, filters, image, channels);
+        new Im2ColLayer(kernel, pad, stride, image, channels);
     Layer* im2col_gpu =
-        new Im2ColLayer(kernel, pad, stride, filters, image, channels);
+        new Im2ColLayer(kernel, pad, stride, image, channels);
     Layer* conv_cpu =
         new Convolution(kernel, pad, stride, filters, image, channels);
     Layer* conv_gpu =

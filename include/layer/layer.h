@@ -17,6 +17,8 @@ class Layer {
     virtual int input_dimension() const;
     virtual int output_dimension();
     virtual int output_dimension() const;
+    virtual int n_cols();
+    virtual int n_cols() const;
     virtual std::string name() { return _name; };
     virtual std::string name() const { return _name; };
     virtual void forward_gpu(const SharedStorage&, SharedStorage&,

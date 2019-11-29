@@ -11,7 +11,6 @@
 #include "../../include/math.h"
 
 using Eigen::all;
-// using Eigen::MatrixXd;
 using std::vector;
 
 typedef std::shared_ptr<Storage> SharedStorage;
@@ -31,8 +30,6 @@ typedef std::shared_ptr<Storage> SharedStorage;
     //}
 //}
 
-
-
 Dense::Dense(int rows, int cols)
     : Layer("Dense"), _input_dimension(cols), _output_dimension(rows) {
     cublasStatus_t stat = cublasCreate(&_handle);
@@ -40,7 +37,6 @@ Dense::Dense(int rows, int cols)
     initialize_weight(rows, cols);
     initialize_bias(rows, cols);
     initialize_grad(rows, cols);
-    //_name = "Dense";
 }
 
 void Dense::forward_cpu(const SharedStorage& in, SharedStorage& out, const std::string&) {
@@ -62,14 +58,10 @@ void Dense::forward_gpu(const SharedStorage& in, SharedStorage& out, const std::
 void Dense::backward_gpu(const SharedStorage& values,
                          const SharedStorage& gradient_in,
                          SharedStorage& gradient_out) {
-    //print_Matrix_to_stdout2(gradient_in->return_data_const(),
-            //"/home/fabian/Documents/work/gpu_nn/debug/gpu_grad.txt");
     my_Dgemv(_handle, CUBLAS_OP_N, gradient_in, assistance_parameters[0],
              gradients[1], 1, 0);
     my_Dgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_T, gradient_in, values,
              gradients[0], 1, 0);
-    //std::cout << "the gpu gradient is:\n"
-              //<< gradients[1]->return_data_const() << std::endl;
     my_Dgemm(_handle, CUBLAS_OP_T, CUBLAS_OP_N, parameters[0], gradient_in,
              gradient_out, 1, 0);
 }

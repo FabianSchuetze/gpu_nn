@@ -20,8 +20,6 @@ class Convolution : public Layer {
     void backward_cpu(const SharedStorage&, const SharedStorage&,
                       SharedStorage&) override;
 
-    //SharedStorage Column;  // contains the converted image
-
    private:
     FilterShape _kernel;
     Pad _pad;

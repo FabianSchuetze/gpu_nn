@@ -3,18 +3,31 @@
 #include "../../include/cuda_math.h"
 #include "../../include/math.h"
 Im2ColLayer::Im2ColLayer(FilterShape filtershape, Pad pad, Stride stride,
-                         Filters filters, ImageShape imageshape,
-                         Channels channels)
+                         ImageShape imageshape, Channels channels)
     : Layer("Im2ColLayer"),
       _kernel(filtershape),
       _pad(pad),
       _stride(stride),
-      _filters(filters),
       _inp(imageshape),
       _out(0, 0),
       _channels(channels) {
     output_shape();
 };
+
+int Im2ColLayer::output_dimension() {
+    return _out.first() * _out.second();
+}
+
+int Im2ColLayer::output_dimension() const {
+    return  _out.first() * _out.second();
+}
+
+int Im2ColLayer::n_cols() {
+    return _channels.get() * _kernel.first() * _kernel.second();
+}
+int Im2ColLayer::n_cols() const {
+    return _channels.get() * _kernel.first() * _kernel.second();
+}
 
 void Im2ColLayer::output_shape() {
     int out_height =

@@ -8,7 +8,6 @@ using std::vector;
 NeuralNetwork::NeuralNetwork(vector<Layer*> _layers,
                              std::shared_ptr<Loss> _loss)
     : layers(_layers), loss(_loss) {
-    // create_loss(_loss);
     fun_forward = &NeuralNetwork::forward_gpu;
     fun_backward = &NeuralNetwork::backward_gpu;
     fun_update = &NeuralNetwork::update_weights_gpu;
@@ -51,6 +50,9 @@ void NeuralNetwork::allocate_storage(int obs, int& out_dim,
         out_dim = layer->output_dimension();
     } else if (layer->name() == "Dropout") {
         ;
+    } else if (layer->name() == "Im2ColLayer") {
+        out_dim = layer->output_dimension();
+        obs  *= layer->n_cols();
     } else if (layer->name() == "Input") {
         out_dim = layer->output_dimension();
     } else {

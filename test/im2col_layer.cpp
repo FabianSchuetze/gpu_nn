@@ -28,7 +28,7 @@ TEST_CASE("NeuralNetwork im2col_layer cpu", "[cpu]") {
     int out_width =
         (image.second() + 2 * pad.get() - kernel.second()) / stride.get() + 1;
     Layer* inp1 =
-        new Im2ColLayer(kernel, pad, stride, filters, image, channels);
+        new Im2ColLayer(kernel, pad, stride, image, channels);
     Matrix _input = Matrix::Random(
         image.first() * image.second() * channels.get(), batches);
     std::shared_ptr<Storage> input = std::make_shared<Storage>(_input);
@@ -55,7 +55,7 @@ TEST_CASE("NeuralNetwork im2col_layer gpu", "[gpu]") {
     int out_width =
         (image.second() + 2 * pad.get() - kernel.second()) / stride.get() + 1;
     Layer* inp1 =
-        new Im2ColLayer(kernel, pad, stride, filters, image, channels);
+        new Im2ColLayer(kernel, pad, stride, image, channels);
     Matrix _input = Matrix::Random(
         image.first() * image.second() * channels.get(), batches);
     std::shared_ptr<Storage> input = std::make_shared<Storage>(_input);
@@ -84,7 +84,7 @@ TEST_CASE("NeuralNetwork im2col_layer equivlance", "[equivlance]") {
     int out_width =
         (image.second() + 2 * pad.get() - kernel.second()) / stride.get() + 1;
     Layer* inp1 =
-        new Im2ColLayer(kernel, pad, stride, filters, image, channels);
+        new Im2ColLayer(kernel, pad, stride, image, channels);
     Matrix _input = Matrix::Random(
         image.first() * image.second() * channels.get(), batches);
     std::shared_ptr<Storage> input = std::make_shared<Storage>(_input);
@@ -123,7 +123,7 @@ TEST_CASE("NeuralNetwork im2col_layer backward cpu", "[cpu]") {
     int out_width =
         (image.second() + 2 * pad.get() - kernel.second()) / stride.get() + 1;
     Layer* inp1 =
-        new Im2ColLayer(kernel, pad, stride, filters, image, channels);
+        new Im2ColLayer(kernel, pad, stride, image, channels);
     Matrix _input = Matrix::Random(
         image.first() * image.second() * channels.get(), batches);
     Matrix _grad_out = Matrix::Zero(
@@ -152,7 +152,7 @@ TEST_CASE("NeuralNetwork im2col_layer backward gpu", "[gpu]") {
     int out_width =
         (image.second() + 2 * pad.get() - kernel.second()) / stride.get() + 1;
     Layer* inp1 =
-        new Im2ColLayer(kernel, pad, stride, filters, image, channels);
+        new Im2ColLayer(kernel, pad, stride, image, channels);
     Matrix _input = Matrix::Random(
         image.first() * image.second() * channels.get(), batches);
     Matrix _grad_out = Matrix::Zero(
@@ -183,7 +183,7 @@ TEST_CASE("im2col_layer equivlance backwards", "[equivlance back]") {
     int out_width =
         (image.second() + 2 * pad.get() - kernel.second()) / stride.get() + 1;
     Layer* inp1 =
-        new Im2ColLayer(kernel, pad, stride, filters, image, channels);
+        new Im2ColLayer(kernel, pad, stride, image, channels);
     Matrix _input = Matrix::Random(
         image.first() * image.second() * channels.get(), batches);
     Matrix _grad_cpu = Matrix::Zero(
