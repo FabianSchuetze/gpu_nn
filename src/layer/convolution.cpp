@@ -1,8 +1,8 @@
 #include "../../include/layer/convolution.h"
-#include <iostream>
-#include "../../include/math.h"
 #include <cblas.h>
+#include <iostream>
 #include "../../include/cuda_math.h"
+#include "../../include/math.h"
 
 Convolution::Convolution(FilterShape filtershape, Pad pad, Stride stride,
                          Filters filters, ImageShape imageshape,
@@ -21,7 +21,7 @@ Convolution::Convolution(FilterShape filtershape, Pad pad, Stride stride,
     initialize_grad();
     output_shape();
 }
-Convolution::~Convolution() {CHECK_CUBLAS(cublasDestroy(_handle));};
+Convolution::~Convolution() { CHECK_CUBLAS(cublasDestroy(_handle)); };
 
 void Convolution::output_shape() {
     int out_height =
@@ -81,9 +81,10 @@ void Convolution::check_size(const SharedStorage& out) {
         throw std::invalid_argument(ss.str());
     }
 }
-void Convolution::advance_pointers_forward(const float*& input, float*& output) {
+void Convolution::advance_pointers_forward(const float*& input,
+                                           float*& output) {
     input += (_out.first() * _out.second() * _kernel.first() *
-               _kernel.second() * _channels.get());
+              _kernel.second() * _channels.get());
     output += _out.first() * _out.second() * _filters.get();
 }
 
@@ -120,9 +121,77 @@ void Convolution::forward_cpu(const SharedStorage& in, SharedStorage& out,
     }
 }
 
+void Convolution::advance_pointers_backward(const float*& grad_in,
+                                            const float*& values,
+                                            float*& grad_out) {
+    grad_in += _out.first() * _out.second() * _filters.get();
+    values += (_out.first() * _out.second() * _kernel.first() *
+               _kernel.second() * _channels.get());
+    grad_out += (_out.first() * _out.second() * _kernel.first() *
+                 _kernel.second() * _channels.get());
+}
+
+void Convolution::backwards_weight_grad_para(int& M, int& N, int& K) {
+    M = _channels.get() * _kernel.first() * _kernel.second();
+    N = _filters.get();
+    K = _out.first() * _out.second();
+}
+
+void Convolution::check_size_backwards(const SharedStorage& values,
+                                       const SharedStorage& grad_out) {
+    if ((values->get_cols() != grad_out->get_cols()) or
+        (values->get_rows() != grad_out->get_rows())) {
+        std::stringstream ss;
+        ss << "values and grad_out must have same dimension, in:\n"
+           << __PRETTY_FUNCTION__ << "\ncalled from " << __FILE__ << " at "
+           << __LINE__;
+        throw std::invalid_argument(ss.str());
+    }
+}
+
 void Convolution::backward_gpu(const SharedStorage& values,
                                const SharedStorage& gradient_in,
-                               SharedStorage& gradient_out){};
+                               SharedStorage& gradient_out) {
+    check_size_backwards(values, gradient_out);
+    int M, N, K;
+    backwards_weight_grad_para(M, N, K);
+    const float* valp = values->gpu_pointer_const();
+    const float* grad_inp = gradient_in->gpu_pointer_const();
+    const float* wp = parameters[0]->gpu_pointer_const();
+    float* weight_gradp = gradients[0]->gpu_pointer();
+    float* grad_outp = gradient_out->gpu_pointer();
+    float beta = 0.0f;
+    float alpha = 1.0f;
+    float* alphap = &alpha;
+    for (int n = 0; n < gradient_in->get_cols(); ++n) {
+        my_cuda_Dgemm(_handle, CUBLAS_OP_T, CUBLAS_OP_N, M, N, K, alphap,
+                    valp, K, grad_inp, K, &beta, weight_gradp, M);
+        beta = 0.0f;
+        my_cuda_Dgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_T, K, M, N, alphap,
+                    grad_inp, K, wp, M, &beta, grad_outp, K);
+        beta = 1.0f;
+        advance_pointers_backward(grad_inp, valp, grad_outp);
+    }
+}
 
-void Convolution::backward_cpu(const SharedStorage&, const SharedStorage&,
-                               SharedStorage&){};
+void Convolution::backward_cpu(const SharedStorage& values,
+                               const SharedStorage& gradient_in,
+                               SharedStorage& gradient_out) {
+    check_size_backwards(values, gradient_out);
+    int M, N, K;
+    backwards_weight_grad_para(M, N, K);
+    const float* valp = values->cpu_pointer_const();
+    const float* grad_inp = gradient_in->cpu_pointer_const();
+    const float* wp = parameters[0]->cpu_pointer_const();
+    float* weight_gradp = gradients[0]->cpu_pointer();
+    float* grad_outp = gradient_out->cpu_pointer();
+    float beta = 0.0f;
+    for (int n = 0; n < gradient_in->get_cols(); ++n) {
+        cblas_sgemm(CblasColMajor, CblasTrans, CblasNoTrans, M, N, K, 1.0f,
+                    valp, K, grad_inp, K, beta, weight_gradp, M);
+        cblas_sgemm(CblasColMajor, CblasNoTrans, CblasTrans, K, M, N, 1.0f,
+                    grad_inp, K, wp, M, 0.0f, grad_outp, K);
+        beta = 1.0f;
+        advance_pointers_backward(grad_inp, valp, grad_outp);
+    }
+}

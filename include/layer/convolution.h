@@ -35,8 +35,12 @@ class Convolution : public Layer {
     void initialize_grad();
     void initialize_kernel();
     void check_size(const SharedStorage&);
+    void check_size_backwards(const SharedStorage&, const SharedStorage&);
     int n_batches(const SharedStorage& in);
     void output_shape();
     void advance_pointers_forward(const float*&, float*&);
+    void advance_pointers_backward(const float*&, const float*&, float*&);
+    void backwards_weight_grad_para(int&, int&, int&);
+    void backwards_out_grad_para(int&, int&, int&);
 };
 #endif

@@ -34,21 +34,21 @@ if (UNIX)
 endif(UNIX)
 
 # moved the CXX flags to after the cuda_add_library call
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g  -fPIC\
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3 -fPIC\
     -lcudnn -lcurand -L /usr/lib/cuda/lib64 -lcudart  -lcublas -lblas\
     -Wall -std=c++17 -Wno-error=unused-command-line-argument")
 set(${LIBRARY_TARGET_NAME}_TEST
     test/im2col_layer.cpp
     test/convolution.cpp
-    #test/softmax.cpp
-    #test/dense.cpp
-    #test/cross_entropy.cpp
-    #test/forward.cpp
-    #test/backward.cpp
-    #test/sgd.cpp
-    #test/dropout.cpp
-    #test/mnist.cpp
-    #test/pooling.cpp
+    test/softmax.cpp
+    test/dense.cpp
+    test/cross_entropy.cpp
+    test/forward.cpp
+    test/backward.cpp
+    test/sgd.cpp
+    test/dropout.cpp
+    test/mnist.cpp
+    test/pooling.cpp
 )
 
 enable_testing()
