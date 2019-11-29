@@ -4,6 +4,7 @@
 //#include "cublas_v2.h"
 #include "../common.h"
 #include "layer.h"
+#include "cublas_v2.h"
 class Convolution : public Layer {
    public:
     int output_dimension() override;
@@ -22,16 +23,20 @@ class Convolution : public Layer {
     //SharedStorage Column;  // contains the converted image
 
    private:
-    FilterShape _filter_shape;
+    FilterShape _kernel;
     Pad _pad;
     Stride _stride;
     Filters _filters;
     ImageShape _inp, _out;
     Channels _channels;
-    int batch_size;
+    cublasHandle_t _handle;
+
     void initialize_weight();
     void initialize_grad();
-
     void initialize_kernel();
+    void check_size(const SharedStorage&);
+    int n_batches(const SharedStorage& in);
+    void output_shape();
+    void advance_pointers_forward(const float*&, float*&);
 };
 #endif

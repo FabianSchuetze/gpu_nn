@@ -10,43 +10,32 @@
 #include "../third_party/mnist/include/mnist/get_data.h"
 int main() {
     srand((unsigned int)time(0));
-    Filters filters(2);
-    Mnist data = Mnist();
-    srand((unsigned int)time(0));
-    // Layer* l1 = new Input(data.get_x_train().cols());
-    Layer* inp1 = new Convolution(FilterShape(3, 3), Pad(1), Stride(1),
-                                  Filters(2), ImageShape(3, 3), Channels(1));
-    Layer* inp2 = new Convolution(FilterShape(3, 3), Pad(1), Stride(1),
-                                  Filters(2), ImageShape(3, 3), Channels(1));
-    // Layer* l2 = new Dense(10, data.get_x_train().cols() * 3);
-    // Layer* l3 = new Softmax;
-    // std::shared_ptr<Loss> loss = std::make_shared<CrossEntropy>(CrossEntropy(
-    //"GPU"));
-    // NeuralNetwork n1({l1, inp1, l2, l3}, loss, "GPU");
-    // std::shared_ptr<GradientDescent> sgd =
-    // std::make_shared<StochasticGradientDescent>(0.001);
-    // n1.train(data.get_x_train(), data.get_y_train(), sgd, Epochs(10),
-    // Patience(10), BatchSize(32));
-    // delete l1;
-    // delete l2;
-    // delete l3;
-    //}
-    // Layer* inp2 = new Convolution(FilterShape(3, 3), Pad(1), Stride(1),
-    // filters, ImageShape(5, 5), Channels(2));
-    int batch_size(2);
-    Matrix in = Matrix::Random(3 * 3 * 1, batch_size);
-    Matrix out = Matrix::Zero(3 * 3 * filters.get(), batch_size);
-    Matrix grad_out = Matrix::Zero(3 * 3 * filters.get(), batch_size);
-    std::shared_ptr<Storage> storage_in = std::make_shared<Storage>(in);
-    std::shared_ptr<Storage> storage_in_cpu = std::make_shared<Storage>(in);
-    std::shared_ptr<Storage> storage_out = std::make_shared<Storage>(out);
-    std::shared_ptr<Storage> storage_out_cpu =
-        std::make_shared<Storage>(grad_out);
-    std::cout << storage_in->return_data_const() << std::endl;
-    inp1->forward_gpu(storage_in, storage_out, "train");
-    // inp1->backward_gpu(storage_in, storage_out, storage_grad_out);
-    std::cout << "gpu data\n" << storage_out->return_data_const() << std::endl;
-    inp2->forward_cpu(storage_in_cpu, storage_out_cpu, "train");
-    std::cout << "cpu data\n"
-              << storage_out_cpu->return_data_const() << std::endl;
+    FilterShape kernel(2, 2);
+    Stride stride(1);
+    Pad pad(1);
+    Filters filters(3);
+    ImageShape image(2, 2);
+    Channels channels(2);
+    int batches(3);
+    int out_height =
+        (image.first() + 2 * pad.get() - kernel.first()) / stride.get() + 1;
+    int out_width =
+        (image.second() + 2 * pad.get() - kernel.second()) / stride.get() + 1;
+    Layer* inp1 =
+        new Im2ColLayer(kernel, pad, stride, filters, image, channels);
+    Layer* l2 = 
+        new Convolution(kernel, pad, stride, filters, image, channels);
+    Matrix _input = Matrix::Random(
+        image.first() * image.second() * channels.get(), batches);
+    std::shared_ptr<Storage> input = std::make_shared<Storage>(_input);
+    Matrix _out =
+        Matrix::Zero(out_height * out_width, channels.get() * kernel.first() *
+                                                 kernel.second() * batches);
+    Matrix _out2 =
+        Matrix::Zero(out_height * out_width * filters.get(), batches);
+    std::shared_ptr<Storage> output_cpu = std::make_shared<Storage>(_out);
+    std::shared_ptr<Storage> conv_out = std::make_shared<Storage>(_out2);
+    inp1->forward_cpu(input, output_cpu, "train");
+    l2->forward_cpu(output_cpu,  conv_out, "train");
+    std::cout << conv_out->return_data_const() << std::endl;
 }
