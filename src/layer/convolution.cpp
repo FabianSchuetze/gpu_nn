@@ -2,6 +2,7 @@
 #include <iostream>
 #include "../../include/math.h"
 #include <cblas.h>
+#include "../../include/cuda_math.h"
 
 Convolution::Convolution(FilterShape filtershape, Pad pad, Stride stride,
                          Filters filters, ImageShape imageshape,
@@ -81,14 +82,28 @@ void Convolution::check_size(const SharedStorage& out) {
     }
 }
 void Convolution::advance_pointers_forward(const float*& input, float*& output) {
-    //input += (input_rows);
     input += (_out.first() * _out.second() * _kernel.first() *
                _kernel.second() * _channels.get());
     output += _out.first() * _out.second() * _filters.get();
 }
 
 void Convolution::forward_gpu(const SharedStorage& in, SharedStorage& out,
-                              const std::string&) {}
+                              const std::string&) {
+    const float* inpp = in->gpu_pointer_const();
+    const float* wp = parameters[0]->gpu_pointer_const();
+    float* outp = out->gpu_pointer();
+    int M = _out.first() * _out.second();
+    int N = _filters.get();
+    int K = _channels.get() * _kernel.first() * _kernel.second();
+    float alpha = 1.0f;
+    float beta = 0.0f;
+    float* alphap = &alpha;
+    for (int n = 0; n < n_batches(in); ++n) {
+        my_cuda_Dgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_N, M, N, K, alphap, inpp,
+                      M, wp, K, &beta, outp, M);
+        advance_pointers_forward(inpp, outp);
+    }
+}
 
 void Convolution::forward_cpu(const SharedStorage& in, SharedStorage& out,
                               const std::string&) {
@@ -98,11 +113,9 @@ void Convolution::forward_cpu(const SharedStorage& in, SharedStorage& out,
     int N = _filters.get();
     int K = _channels.get() * _kernel.first() * _kernel.second();
     for (int n = 0; n < n_batches(in); ++n) {
-        std::cout << "finised\n" << std::endl;
         cblas_sgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, M, N, K, 1.0f,
                     inpp, M, parameters[0]->cpu_pointer_const(), K, 0.0f, outp,
                     M);
-        std::cout << out->cpu_pointer();
         advance_pointers_forward(inpp, outp);
     }
 }
