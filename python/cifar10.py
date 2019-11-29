@@ -43,6 +43,6 @@ if __name__ == "__main__":
     model.add(Dense(10, activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer=KERAS_SGD)
     early = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
-    hist = model.fit(x_train, y_train, epochs=10, verbose=1, batch_size=32,
+    hist = model.fit(x_train, y_train, epochs=2, verbose=1, batch_size=32,
                      validation_split=0.2, callbacks=[early])
     pred, argpred = get_predictions(model, x_test)

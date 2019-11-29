@@ -52,7 +52,7 @@ Matrix Cifar10::labels(const std::vector<uint8_t>& inp) {
 Matrix Cifar10::features(const std::vector<std::vector<uint8_t>>& inp) {
     int size               = inp.size();
     std::vector<dtype> tmp = read(inp);
-    Matrix tmp2            = Eigen::Map<Matrix>(tmp.data(), 3024, size);
+    Matrix tmp2            = Eigen::Map<Matrix>(tmp.data(), 3072, size);
     Matrix tmp3            = tmp2.transpose();
     tmp3                   = (tmp3.array() / 255).matrix();
     return tmp3;

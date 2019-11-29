@@ -33,19 +33,20 @@ int main(int argc, char** argv) {
     Matrix test = data.get_x_train();
     srand((unsigned int)time(0));
     Layer* l1 = new Input(data.get_x_train().cols());
+    //Layer* l2 = new Dense(200, 3 * 32 * 32);
     Layer* l2 = new Im2ColLayer(FilterShape(3, 3), Pad(1), Stride(1),
                                 ImageShape(32, 32), Channels(3));
     Layer* l3 = new Convolution(FilterShape(3, 3), Pad(1), Stride(1),
                                 Filters(5), ImageShape(32, 32), Channels(3));
     Layer* l4 = new Relu;
-    Layer* l5 = new Dense(10, Filters(5).get() * 32 * 32);
+    Layer* l5 = new Dense(10, 32 * 32 * 5);
     Layer* l6 = new Softmax;
     std::shared_ptr<Loss> loss =
         std::make_shared<CrossEntropy>(CrossEntropy("GPU"));
     NeuralNetwork n1({l1, l2, l3, l4, l5, l6}, loss, "GPU");
     std::shared_ptr<GradientDescent> sgd =
         std::make_shared<StochasticGradientDescent>(0.001);
-    n1.train(data.get_x_train(), data.get_y_train(), sgd, Epochs(1),
+    n1.train(data.get_x_train(), data.get_y_train(), sgd, Epochs(2),
              Patience(10), BatchSize(32));
     Matrix predictions = n1.predict(data.get_x_test());
     n_missclassified(predictions, data.get_y_test());
