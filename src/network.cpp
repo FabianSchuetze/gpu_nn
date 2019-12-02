@@ -6,20 +6,20 @@
 #include "../include/loss/cross_entropy.h"
 using std::vector;
 
-void print_Matrix_to_stdout2(const Matrix& val, std::string loc) {
-    int rows(val.rows()), cols(val.cols());
-    std::ofstream myfile(loc);
-    myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
-    myfile << std::fixed;
-    myfile << std::setprecision(2);
-    for (int row = 0; row < rows; ++row) {
-        myfile << val(row, 0);
-        for (int col = 1; col < cols; ++col) {
-            myfile << ", " << val(row, col);
-        }
-        myfile << std::endl;
-    }
-}
+//void print_Matrix_to_stdout2(const Matrix& val, std::string loc) {
+    //int rows(val.rows()), cols(val.cols());
+    //std::ofstream myfile(loc);
+    //myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
+    //myfile << std::fixed;
+    //myfile << std::setprecision(2);
+    //for (int row = 0; row < rows; ++row) {
+        //myfile << val(row, 0);
+        //for (int col = 1; col < cols; ++col) {
+            //myfile << ", " << val(row, col);
+        //}
+        //myfile << std::endl;
+    //}
+//}
 NeuralNetwork::NeuralNetwork(vector<Layer*> _layers,
                              std::shared_ptr<Loss> _loss)
     : layers(_layers), loss(_loss) {
@@ -112,11 +112,9 @@ void NeuralNetwork::forward_gpu(vector<SharedStorage>& values,
                                 const std::string& type) {
     int i = 0;
     for (size_t layer_idx = 1; layer_idx < layers.size(); ++layer_idx) {
-        // std::cout << "layer name " << layers[layer_idx]->name() << std::endl;
         layers[layer_idx]->forward_gpu(values[i], values[i + 1], type);
         i++;
     }
-    // std::cout << "finisehd forward gpu\n" << std::endl;
 }
 
 void NeuralNetwork::forward_cpu(vector<SharedStorage>& values,
@@ -149,10 +147,8 @@ void NeuralNetwork::producer_predict(
     int batch_size(0);
     while (iter < total) {
         if (pred_queue->size() < 5) {
-            // unsigned int start_position = iter * 10;
             vector<int> samples = predict_sample(iter, total);
             get_new_predict_sample(samples, input, x);
-            // unsigned int len = samples.size() *10;
             SharedStorage inp = std::make_shared<Storage>(x);
             if (inp->get_cols() != batch_size) {
                 vals = allocate_forward(x.cols());
@@ -193,16 +189,8 @@ void NeuralNetwork::predict(const Matrix& input, SharedStorage& SharedTarget) {
 Matrix NeuralNetwork::predict(const Matrix& input) {
     Matrix output = Matrix::Zero(10, input.rows());
     SharedStorage SharedTarget = std::make_shared<Storage>(output);
-    //predict(input, SharedTarget);
-    threadsafe_queue<vector<SharedStorage>> pred_queue;
-    threadsafe_queue<vector<SharedStorage>>* ppred_queue = &pred_queue;
-    std::thread produce([&]() { producer_predict(input, ppred_queue); });
-    std::thread consume([&]() { consumer_predict(SharedTarget, ppred_queue); });
-    produce.join();
-    consume.join();
-    //print_Matrix_to_stdout2(SharedTarget->return_data_const(),
-            //"/home/fabian/Documents/work/gpu_nn/debug/output.txt");
-    return SharedTarget->return_data_const();
+    predict(input, SharedTarget);
+    return SharedTarget->return_data_const().transpose();
 }
 
 //Matrix NeuralNetwork::predict(const Matrix& input) {

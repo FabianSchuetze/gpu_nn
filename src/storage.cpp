@@ -61,8 +61,6 @@ void Storage::update_gpu_data(const dtype* src) {
 void Storage::update_gpu_data(const dtype* src,
                               const unsigned int dest_position,
                               const unsigned int length) {
-    //std::cout << "copy device to device";
-    // dtype * dest = _gpu_pointer + dest_position;
     MY_CHECK(cudaMemcpy(&_gpu_pointer[dest_position], src,
                         length * sizeof(dtype), cudaMemcpyDeviceToDevice));
     MY_CHECK(cudaDeviceSynchronize());

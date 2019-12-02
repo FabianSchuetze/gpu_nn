@@ -30,6 +30,7 @@ class trainArgs {
     const Matrix& y_train() { return _y_train; }
     const Matrix& x_val() { return _x_val; }
     const Matrix& y_val() { return _y_val; }
+    const SharedStorage& y_val_shared() {return _y_val_shared;}
     threadsafe_queue<std::pair<SharedStorage, SharedStorage>> data_queue;
 
    private:
@@ -37,6 +38,8 @@ class trainArgs {
     Matrix _x_val;
     Matrix _y_train;
     Matrix _y_val;
+
+    SharedStorage _y_val_shared;
     
     //int _iter_since_update;
     int _total_iter;

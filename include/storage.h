@@ -16,6 +16,7 @@ class Storage {
     void update_cpu_data(Matrix);
     void update_gpu_data(const dtype);
     void update_gpu_data(const dtype*);
+    void update_gpu_data(const dtype*, const unsigned int, const unsigned int);
     dtype* cpu_pointer();
     dtype* gpu_pointer();
     int get_rows() { return _data.rows(); }
