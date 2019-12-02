@@ -24,7 +24,22 @@ void n_missclassified(const Matrix& y_pred, const Matrix& y_true) {
             missclassified++;
     }
     std::cout << "fraction miassclassified : " <<
-        float(missclassified) / y_pred.rows() << std::endl;
+        float(missclassified) / y_pred.rows() << " and " <<
+       "number missclassified " << missclassified <<  std::endl;
+}
+void print_Matrix_to_stdout2(const Matrix& val, std::string loc) {
+    int rows(val.rows()), cols(val.cols());
+    std::ofstream myfile(loc);
+    myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
+    myfile << std::fixed;
+    myfile << std::setprecision(2);
+    for (int row = 0; row < rows; ++row) {
+        myfile << val(row, 0);
+        for (int col = 1; col < cols; ++col) {
+            myfile << ", " << val(row, col);
+        }
+        myfile << std::endl;
+    }
 }
 int main(int argc, char** argv) {
     // if ((argc != 2) and (argc != 5))
@@ -37,24 +52,30 @@ int main(int argc, char** argv) {
     Layer* l2 = new Im2ColLayer(FilterShape(3, 3), Pad(1), Stride(1),
                                 ImageShape(32, 32), Channels(3));
     Layer* l3 = new Convolution(FilterShape(3, 3), Pad(1), Stride(1),
-                                Filters(5), ImageShape(32, 32), Channels(3));
+                                Filters(32), ImageShape(32, 32), Channels(3));
     Layer* l4 = new Relu;
     Layer* l5 = new Im2ColLayer(FilterShape(3, 3), Pad(1), Stride(1),
-                                ImageShape(32, 32), Channels(5));
+                                ImageShape(32, 32), Channels(32));
     Layer* l6 = new Convolution(FilterShape(3, 3), Pad(1), Stride(1),
-                                Filters(5), ImageShape(32, 32), Channels(5));
+                                Filters(32), ImageShape(32, 32), Channels(32));
     Layer* l7 = new Relu;
-    Layer* l8 = new Dense(10, 32 * 32 * 5);
+    Layer *p1 = new Pooling(Window(2), Stride(2), ImageShape(32, 32), 
+                            Channels(32));
+    Layer* l8 = new Dense(10, 16 * 16 * 32);
     Layer* l9 = new Softmax;
     std::shared_ptr<Loss> loss =
         std::make_shared<CrossEntropy>(CrossEntropy("GPU"));
-    NeuralNetwork n1({l1, l2, l3, l7, l8, l9}, loss, "GPU");
+    NeuralNetwork n1({l1, l2, l3, l4, l5, l6, l7, p1, l8, l9}, loss, "GPU");
     std::shared_ptr<GradientDescent> sgd =
         std::make_shared<StochasticGradientDescent>(0.001);
-    n1.train(data.get_x_train(), data.get_y_train(), sgd, Epochs(10),
+    n1.train(data.get_x_train(), data.get_y_train(), sgd, Epochs(5),
              Patience(10), BatchSize(32));
-    //Matrix predictions = n1.predict(data.get_x_test());
-    //n_missclassified(predictions, data.get_y_test());
+    print_Matrix_to_stdout2(data.get_x_test(), 
+            "/home/fabian/Documents/work/gpu_nn/debug/x_test.txt");
+    Matrix predictions = n1.predict(data.get_x_test());
+    print_Matrix_to_stdout2(predictions, 
+            "/home/fabian/Documents/work/gpu_nn/debug/predictions.txt");
+    n_missclassified(predictions, data.get_y_test());
     //delete l1;
     //delete l2;
     //delete l3;

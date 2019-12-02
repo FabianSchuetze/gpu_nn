@@ -4,7 +4,8 @@ warnings.simplefilter(action='ignore', category=DeprecationWarning)
 from sklearn import datasets
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 import keras
-from keras.layers import Dense, Conv2D, Activation, Flatten
+from keras.layers import Dense, Conv2D, Activation, Flatten,\
+        MaxPooling2D
 from keras.callbacks import EarlyStopping
 import numpy as np
 from keras.datasets import cifar10
@@ -40,6 +41,7 @@ if __name__ == "__main__":
     model.add(Conv2D(32, (3, 3), strides=(1, 1), use_bias=False,
               padding='same'))
     model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
     # model.add(Conv2D(32, (3, 3)))
     # model.add(Activation('relu'))
     model.add(Flatten())
@@ -50,5 +52,5 @@ if __name__ == "__main__":
                      validation_split=0.2, callbacks=[early])
     pred, argpred = get_predictions(model, x_test)
     ARG = np.argwhere(y_test)[:, 1]
-    missclassified = ((argpred - ARG) != 0) / len(ARG)
+    missclassified = ((argpred - ARG) != 0).sum() / len(ARG)
     print("The number of missclassifed is %.3f" % (missclassified))

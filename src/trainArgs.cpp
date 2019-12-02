@@ -21,6 +21,7 @@ trainArgs::trainArgs(const Matrix& features, const Matrix& target,
       _epochs(__epochs.get()),
       _patience(__patience.get()) {
     train_test_split(features, target, 0.2);
+    _y_val_shared = std::make_shared<Storage>(_y_val.transpose());
 };
 
 void trainArgs::train_test_split(const Matrix& features, const Matrix& target,

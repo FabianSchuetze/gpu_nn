@@ -10,14 +10,29 @@ Pooling::Pooling(Window window, Stride stride, ImageShape imageshape,
       _stride(stride),
       _inp(imageshape),
       _channels(channels),
+      _out(0, 0),
       batch_size(0) {
     initialize_masking();
+    output_shape();
 }
 
 double cpuSecond() {
     struct timeval tp;
     gettimeofday(&tp, NULL);
     return ((double)tp.tv_sec + (double)tp.tv_usec * 1e-6);
+}
+
+void Pooling::output_shape() {
+    int out_height = (_inp.first()- _window.get()) / _stride.get() + 1;
+    int out_width = (_inp.second() - _window.get()) / _stride.get() + 1;
+    _out = ImageShape(out_height, out_width);
+}
+
+int Pooling::output_dimension() {
+    return _out.first() * _out.second() * _channels.get();
+}
+int Pooling::output_dimension() const {
+    return _out.first() * _out.second() * _channels.get();
 }
 
 void Pooling::initialize_masking() { mask = std::make_shared<Storage>(); }
