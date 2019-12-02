@@ -65,6 +65,8 @@ void NeuralNetwork::allocate_storage(int obs, int& out_dim,
         out_dim = layer->output_dimension();
     } else if (layer->name() == "Dropout") {
         ;
+    } else if (layer->name() == "Pooling") {
+        out_dim = layer->output_dimension();
     } else if (layer->name() == "Im2ColLayer") {
         out_dim = layer->output_dimension();
         obs *= layer->n_cols();
