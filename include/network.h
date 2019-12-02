@@ -66,7 +66,7 @@ class NeuralNetwork {
     void get_new_sample(const std::vector<int>&, Matrix&, Matrix&);
     void consumer(std::shared_ptr<GradientDescent>);
     void producer();
-    void predict_sample(std::vector<int>&, std::mt19937&);
-    void get_new_predict_sample(const std::vector<int>&, Matrix&, Matrix&);
+    std::vector<int> predict_sample(int&, int);
+    void get_new_predict_sample(const std::vector<int>&, const Matrix&, Matrix&);
 };
 #endif

@@ -36,6 +36,9 @@ if __name__ == "__main__":
     model = keras.Sequential()
     model.add(Conv2D(5, (3, 3), strides=(1, 1), use_bias=False,
               padding='same', input_shape=x_train.shape[1:]))
+    # model.add(Activation('relu'))
+    # model.add(Conv2D(5, (3, 3), strides=(1, 1), use_bias=False,
+              # padding='same'))
     model.add(Activation('relu'))
     # model.add(Conv2D(32, (3, 3)))
     # model.add(Activation('relu'))
@@ -43,6 +46,6 @@ if __name__ == "__main__":
     model.add(Dense(10, activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer=KERAS_SGD)
     early = EarlyStopping(monitor='val_loss', patience=20, verbose=1)
-    hist = model.fit(x_train, y_train, epochs=2, verbose=1, batch_size=32,
+    hist = model.fit(x_train, y_train, epochs=10, verbose=1, batch_size=32,
                      validation_split=0.2, callbacks=[early])
     pred, argpred = get_predictions(model, x_test)

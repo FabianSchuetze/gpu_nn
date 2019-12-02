@@ -14,20 +14,20 @@ using Eigen::all;
 using std::make_shared;
 using std::shared_ptr;
 using std::vector;
-void print_Matrix_to_stdout2(const Matrix& val, std::string loc) {
-    int rows(val.rows()), cols(val.cols());
-    std::ofstream myfile(loc);
-    myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
-    myfile << std::fixed;
-    myfile << std::setprecision(2);
-    for (int row = 0; row < rows; ++row) {
-        myfile << val(row, 0);
-        for (int col = 1; col < cols; ++col) {
-            myfile << ", " << val(row, col);
-        }
-        myfile << std::endl;
-    }
-}
+// void print_Matrix_to_stdout2(const Matrix& val, std::string loc) {
+// int rows(val.rows()), cols(val.cols());
+// std::ofstream myfile(loc);
+// myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
+// myfile << std::fixed;
+// myfile << std::setprecision(2);
+// for (int row = 0; row < rows; ++row) {
+// myfile << val(row, 0);
+// for (int col = 1; col < cols; ++col) {
+// myfile << ", " << val(row, col);
+//}
+// myfile << std::endl;
+//}
+//}
 
 void NeuralNetwork::backwards(std::vector<SharedStorage>& gradients,
                               const std::vector<SharedStorage>& values) {
@@ -96,24 +96,11 @@ void NeuralNetwork::random_numbers(vector<int>& samples, std::mt19937& gen) {
     for (size_t i = 0; i < samples.size(); i++) samples[i] = uniform(gen);
 }
 
-void NeuralNetwork::predict_sample(vector<int>& samples, std::mt19937& gen) {
-    std::uniform_int_distribution<> uniform(0,
-                                            train_args->x_val().rows() - 1);
-    for (size_t i = 0; i < samples.size(); i++) samples[i] = uniform(gen);
-}
-
 void NeuralNetwork::get_new_sample(const vector<int>& samples, Matrix& x_train,
                                    Matrix& y_train) {
     if (!train_args) throw std::runtime_error("Train args is not set");
     x_train = train_args->x_train()(samples, all).transpose();
     y_train = train_args->y_train()(samples, all).transpose();
-}
-
-void NeuralNetwork::get_new_predict_sample(const vector<int>& samples,
-                                           Matrix& x, Matrix& y) {
-    if (!train_args) throw std::runtime_error("Train args is not set");
-    x = train_args->x_val()(samples, all).transpose();
-    y = train_args->y_val()(samples, all).transpose();
 }
 
 void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
@@ -151,46 +138,19 @@ void NeuralNetwork::producer() {
 }
 
 void NeuralNetwork::validate(std::chrono::milliseconds diff) {
+    Matrix predictions = predict(train_args->x_val());
+    SharedStorage pred = std::make_shared<Storage>(predictions);
+    SharedStorage SharedTarget =
+        std::make_shared<Storage>(train_args->y_val().transpose());
+    dtype total_loss = loss->loss_cpu(pred, SharedTarget);
     size_t obs = train_args->x_val().rows();
-    std::cout << "inside validate\n";
-    vector<SharedStorage> vals = allocate_forward(32);
-    size_t iter = 0;
-    Matrix x_val, y_val;
-    vector<int> samples(32);
-    std::mt19937 gen;
-    gen.seed(0);
-    Matrix tmp =
-        Matrix::Zero(train_args->y_train().cols(), train_args->batch_size());
-    SharedStorage SharedTarget = std::make_shared<Storage>(tmp);
-    // std::pair<SharedStorage, SharedStorage> data;
-    dtype total_loss(0.);
-    while (iter < obs) {
-        predict_sample(samples, gen);
-        get_new_predict_sample(samples, x_val, y_val);
-        SharedTarget->update_cpu_data(y_val);
-        //print_Matrix_to_stdout2(
-            //x_val, "/home/fabian/Documents/work/gpu_nn/debug/x_val" +
-                       //std::to_string(iter));
-         //std::this_thread::sleep_for (std::chrono::seconds(1));
-        // shared_ptr<Storage> SharedInput = make_shared<Storage>(x_val);
-        // shared_ptr<Storage> SharedTarget = make_shared<Storage>(y_val);
-        //std::cout << iter << std::endl;
-        fill_hiddens(vals, x_val);
-        //std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        // vals[0] = SharedInput;
-        ////SharedStorage SharedTarget =
-        ////std::make_shared<Storage>(train_args->y_val().transpose());
-        // fill_hiddens(vals, train_args->x_val().transpose());
-        forward_cpu(vals, "predict");
-        total_loss += loss->loss_cpu(vals.back(), SharedTarget);
-        iter += 32;
-    }
     std::cout << "after iter " << train_args->current_epoch() << "the loss is "
               << total_loss / obs << ", in " << diff.count() << " milliseconds"
               << std::endl;
     train_args->advance_epoch();
     train_args->reset_total_iter();
 }
+
 void NeuralNetwork::consumer(std::shared_ptr<GradientDescent> sgd) {
     vector<SharedStorage> vals = allocate_forward(train_args->batch_size());
     vector<SharedStorage> grads = allocate_backward(train_args->batch_size());
