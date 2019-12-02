@@ -2,6 +2,7 @@
 #include <iostream>
 #include <memory>
 #include <stdexcept>
+#include <thread>
 #include "../include/loss/cross_entropy.h"
 using std::vector;
 
@@ -139,20 +140,91 @@ vector<int> NeuralNetwork::predict_sample(int& iter, int total) {
     return samples;
 }
 
-Matrix NeuralNetwork::predict(const Matrix& input) {
+void NeuralNetwork::producer_predict(
+    const Matrix& input, threadsafe_queue<vector<SharedStorage>>* pred_queue) {
     int iter = 0;
-    const int total = input.rows();
-    Matrix output = Matrix::Zero(input.rows(), 10);
+    int total = input.rows();
     Matrix x;
+    vector<SharedStorage> vals;
+    int batch_size(0);
     while (iter < total) {
-        vector<int> samples = predict_sample(iter, total);
-        get_new_predict_sample(samples, input, x);
-        SharedStorage inp = std::make_shared<Storage>(x);
-        vector<SharedStorage> vals = allocate_forward(x.cols());
-        vals[0] = inp;
-        forward(vals, "predict");
-        output(samples, Eigen::all) =
-            vals.back()->return_data_const().transpose();
+        if (pred_queue->size() < 5) {
+            // unsigned int start_position = iter * 10;
+            vector<int> samples = predict_sample(iter, total);
+            get_new_predict_sample(samples, input, x);
+            // unsigned int len = samples.size() *10;
+            SharedStorage inp = std::make_shared<Storage>(x);
+            if (inp->get_cols() != batch_size) {
+                vals = allocate_forward(x.cols());
+                batch_size = inp->get_cols();
+            }
+            vals[0] = inp;
+            pred_queue->push(vals);
+        }
     }
-    return output.transpose();
 }
+
+void NeuralNetwork::consumer_predict(
+    SharedStorage& target,
+    threadsafe_queue<vector<SharedStorage>>* pred_queue) {
+    int iter = 0;
+    int total = target->get_cols();
+    while (iter < total) {
+        //std::cout << "consumer size: " << pred_queue->size() << std::endl;
+        unsigned int start_position = iter * 10;
+        std::shared_ptr<vector<SharedStorage>> out = pred_queue->wait_and_pop();
+        forward(*out, "predict");
+        unsigned int obs = (*out)[0]->get_cols();
+        target->update_gpu_data(out->back()->gpu_pointer_const(),
+                                start_position, obs * 10);
+        iter += obs;
+    }
+}
+
+void NeuralNetwork::predict(const Matrix& input, SharedStorage& SharedTarget) {
+    threadsafe_queue<vector<SharedStorage>> pred_queue;
+    threadsafe_queue<vector<SharedStorage>>* ppred_queue = &pred_queue;
+    std::thread produce([&]() { producer_predict(input, ppred_queue); });
+    std::thread consume([&]() { consumer_predict(SharedTarget, ppred_queue); });
+    produce.join();
+    consume.join();
+}
+
+Matrix NeuralNetwork::predict(const Matrix& input) {
+    Matrix output = Matrix::Zero(10, input.rows());
+    SharedStorage SharedTarget = std::make_shared<Storage>(output);
+    //predict(input, SharedTarget);
+    threadsafe_queue<vector<SharedStorage>> pred_queue;
+    threadsafe_queue<vector<SharedStorage>>* ppred_queue = &pred_queue;
+    std::thread produce([&]() { producer_predict(input, ppred_queue); });
+    std::thread consume([&]() { consumer_predict(SharedTarget, ppred_queue); });
+    produce.join();
+    consume.join();
+    //print_Matrix_to_stdout2(SharedTarget->return_data_const(),
+            //"/home/fabian/Documents/work/gpu_nn/debug/output.txt");
+    return SharedTarget->return_data_const();
+}
+
+//Matrix NeuralNetwork::predict(const Matrix& input) {
+    //std::cout << "inside predict\n";
+    //int iter = 0;
+    //const int total = input.rows();
+    //Matrix output = Matrix::Zero(10, input.rows());
+    //SharedStorage SharedTarget = std::make_shared<Storage>(output);
+    //Matrix x;
+    //while (iter < total) {
+        //unsigned int start_position = iter * 10;
+        //vector<int> samples = predict_sample(iter, total);
+        //get_new_predict_sample(samples, input, x);
+        //unsigned int len = samples.size() * 10;
+        //SharedStorage inp = std::make_shared<Storage>(x);
+        //vector<SharedStorage> vals = allocate_forward(x.cols());
+        //vals[0] = inp;
+        //forward(vals, "predict");
+        //SharedTarget->update_gpu_data(vals.back()->gpu_pointer_const(),
+                                      //start_position, len);
+    //}
+    //std::cout << "leaving predict\n";
+    //return SharedTarget->return_data_const();
+    //// return output;
+//}

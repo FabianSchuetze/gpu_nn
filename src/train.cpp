@@ -139,6 +139,9 @@ void NeuralNetwork::producer() {
 
 void NeuralNetwork::validate(std::chrono::milliseconds diff) {
     Matrix predictions = predict(train_args->x_val());
+    //Matrix output = Matrix::Zero(10, train_args->x_val().rows());
+    //SharedStorage SharedPred = std::make_shared<Storage>(output);
+    //predict(train_args->x_val(), SharedPred);
     SharedStorage pred = std::make_shared<Storage>(predictions);
     SharedStorage SharedTarget =
         std::make_shared<Storage>(train_args->y_val().transpose());
@@ -158,6 +161,8 @@ void NeuralNetwork::consumer(std::shared_ptr<GradientDescent> sgd) {
     const std::string type("train");
     std::chrono::milliseconds diff;
     while (train_args->current_epoch() < train_args->epochs()) {
+        //std::cout << "the size is:" << train_args->data_queue.size()
+                  //<< std::endl;
         std::shared_ptr<std::pair<SharedStorage, SharedStorage>> out =
             train_args->data_queue.wait_and_pop();
         vals[0] = out->first;

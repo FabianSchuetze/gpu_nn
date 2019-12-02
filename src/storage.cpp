@@ -58,9 +58,20 @@ void Storage::update_gpu_data(const dtype* src) {
     recent_head = "GPU";
 }
 
+void Storage::update_gpu_data(const dtype* src,
+                              const unsigned int dest_position,
+                              const unsigned int length) {
+    //std::cout << "copy device to device";
+    // dtype * dest = _gpu_pointer + dest_position;
+    MY_CHECK(cudaMemcpy(&_gpu_pointer[dest_position], src,
+                        length * sizeof(dtype), cudaMemcpyDeviceToDevice));
+    MY_CHECK(cudaDeviceSynchronize());
+    recent_head = "GPU";
+}
+
 void Storage::sync_to_cpu() {
     if (recent_head == "GPU") {
-        // std::cout << "copying to CPU\n";
+        std::cout << "copying to CPU\n";
         unsigned int nBytes = _data.rows() * _data.cols() * sizeof(dtype);
         MY_CHECK(cudaMemcpy(_cpu_pointer, _gpu_pointer, nBytes,
                             cudaMemcpyDeviceToHost));

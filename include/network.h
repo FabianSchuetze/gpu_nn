@@ -7,10 +7,11 @@
 #include "gradient_descent/gradient_descent.h"
 #include "layer/layer.h"
 #include "loss/loss.h"
+#include "threadsafe_queue.hpp"
 #include "trainArgs.h"
 class NeuralNetwork {
    public:
-       // I NEED TO THINK ABOUT THE MOVE CONSTCUTOR
+    // I NEED TO THINK ABOUT THE MOVE CONSTCUTOR
     NeuralNetwork(std::vector<Layer*>, std::shared_ptr<Loss>);
     NeuralNetwork(std::vector<Layer*>, std::shared_ptr<Loss>,
                   const std::string&);
@@ -22,6 +23,7 @@ class NeuralNetwork {
     //@brief Returns a prediction from the neural network, calling this
     // function allocates shared storage;
     Matrix predict(const Matrix&);
+    void predict(const Matrix&, SharedStorage&);
     //@brief Returns a prediction from the neural network, calling this
     // function presumes that the SharedStorage is appropriate for all the
     // layers
@@ -41,10 +43,10 @@ class NeuralNetwork {
     void random_numbers(std::vector<int>&, std::mt19937&);
 
    private:
-    typedef void (NeuralNetwork::*update_func)(
-        std::shared_ptr<GradientDescent>, int);
-    typedef void (NeuralNetwork::*forward_func)(std::vector<SharedStorage>&, 
-            const std::string&);
+    typedef void (NeuralNetwork::*update_func)(std::shared_ptr<GradientDescent>,
+                                               int);
+    typedef void (NeuralNetwork::*forward_func)(std::vector<SharedStorage>&,
+                                                const std::string&);
     typedef void (NeuralNetwork::*backward_func)(
         std::vector<SharedStorage>&, const std::vector<SharedStorage>&);
     NeuralNetwork::forward_func fun_forward;
@@ -67,6 +69,11 @@ class NeuralNetwork {
     void consumer(std::shared_ptr<GradientDescent>);
     void producer();
     std::vector<int> predict_sample(int&, int);
-    void get_new_predict_sample(const std::vector<int>&, const Matrix&, Matrix&);
+    void get_new_predict_sample(const std::vector<int>&, const Matrix&,
+                                Matrix&);
+    void consumer_predict(SharedStorage&,
+                          threadsafe_queue<std::vector<SharedStorage>>*);
+    void producer_predict(const Matrix&,
+                          threadsafe_queue<std::vector<SharedStorage>>*);
 };
 #endif
