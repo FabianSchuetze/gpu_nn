@@ -48,27 +48,41 @@ int main(int argc, char** argv) {
     Matrix test = data.get_x_train();
     srand((unsigned int)time(0));
     Layer* l1 = new Input(data.get_x_train().cols());
-    //Layer* l2 = new Dense(200, 3 * 32 * 32);
-    Layer* l2 = new Im2ColLayer(FilterShape(3, 3), Pad(1), Stride(1),
+    Layer* imcol1 = new Im2ColLayer(FilterShape(5, 5), Pad(2), Stride(1),
                                 ImageShape(32, 32), Channels(3));
-    Layer* l3 = new Convolution(FilterShape(3, 3), Pad(1), Stride(1),
-                                Filters(32), ImageShape(32, 32), Channels(3));
-    Layer* l4 = new Relu;
-    Layer* l5 = new Im2ColLayer(FilterShape(3, 3), Pad(1), Stride(1),
-                                ImageShape(32, 32), Channels(32));
-    Layer* l6 = new Convolution(FilterShape(3, 3), Pad(1), Stride(1),
-                                Filters(32), ImageShape(32, 32), Channels(32));
-    Layer* l7 = new Relu;
-    Layer *p1 = new Pooling(Window(2), Stride(2), ImageShape(32, 32), 
-                            Channels(32));
-    Layer* l8 = new Dense(10, 16 * 16 * 32);
-    Layer* l9 = new Softmax;
+    Layer* conv1 = new Convolution(FilterShape(5, 5), Pad(2), Stride(1),
+                                Filters(96), ImageShape(32, 32), Channels(3));
+    Layer* relu1 = new Relu;
+    Layer* pool1 = new Pooling(Window(4) , Stride(2), ImageShape(32, 32),
+                               Channels(96));
+    Layer* imcol2 = new Im2ColLayer(FilterShape(5, 5), Pad(2), Stride(1),
+                                ImageShape(15, 15), Channels(96));
+    Layer* conv2 = new Convolution(FilterShape(5, 5), Pad(2), Stride(1),
+                                Filters(128), ImageShape(15, 15), Channels(96));
+    Layer* relu2 = new Relu;
+    Layer* pool2 = new Pooling(Window(3) , Stride(2), ImageShape(15, 15),
+                               Channels(128));
+    Layer* imcol3 = new Im2ColLayer(FilterShape(5, 5), Pad(2), Stride(1),
+                                ImageShape(7, 7), Channels(128));
+    Layer* conv3 = new Convolution(FilterShape(5, 5), Pad(2), Stride(1),
+                                Filters(256), ImageShape(7, 7), Channels(128));
+    Layer* relu3 = new Relu;
+    Layer* pool3 = new Pooling(Window(3) , Stride(2), ImageShape(7, 7),
+                               Channels(256));
+    Layer* d1 = new Dense(2048, 3 * 3 * 256);
+    Layer* relu4 = new Relu;
+    Layer* d2 = new Dense(2048, 2048);
+    Layer* relu5 = new Relu;
+    Layer* d3 = new Dense(10, 2048);
+    Layer* s1 = new Softmax;
     std::shared_ptr<Loss> loss =
         std::make_shared<CrossEntropy>(CrossEntropy("GPU"));
-    NeuralNetwork n1({l1, l2, l3, l4, l5, l6, l7, p1, l8, l9}, loss, "GPU");
+    NeuralNetwork n1({l1, imcol1, conv1, relu1, pool1, imcol2, conv2, relu2,
+           pool2, relu3, imcol3, conv3, relu3, pool3, d1, relu4,d2, relu5,
+             d3, s1}, loss, "GPU");
     std::shared_ptr<GradientDescent> sgd =
-        std::make_shared<StochasticGradientDescent>(0.001);
-    n1.train(data.get_x_train(), data.get_y_train(), sgd, Epochs(5),
+        std::make_shared<StochasticGradientDescent>(0.0005);
+    n1.train(data.get_x_train(), data.get_y_train(), sgd, Epochs(10),
              Patience(10), BatchSize(32));
     print_Matrix_to_stdout2(data.get_x_test(), 
             "/home/fabian/Documents/work/gpu_nn/debug/x_test.txt");
