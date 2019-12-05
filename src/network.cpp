@@ -6,19 +6,19 @@
 #include "../include/loss/cross_entropy.h"
 using std::vector;
 
-//void print_Matrix_to_stdout2(const Matrix& val, std::string loc) {
-    //int rows(val.rows()), cols(val.cols());
-    //std::ofstream myfile(loc);
-    //myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
-    //myfile << std::fixed;
-    //myfile << std::setprecision(2);
-    //for (int row = 0; row < rows; ++row) {
-        //myfile << val(row, 0);
-        //for (int col = 1; col < cols; ++col) {
-            //myfile << ", " << val(row, col);
-        //}
-        //myfile << std::endl;
-    //}
+// void print_Matrix_to_stdout2(const Matrix& val, std::string loc) {
+// int rows(val.rows()), cols(val.cols());
+// std::ofstream myfile(loc);
+// myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
+// myfile << std::fixed;
+// myfile << std::setprecision(2);
+// for (int row = 0; row < rows; ++row) {
+// myfile << val(row, 0);
+// for (int col = 1; col < cols; ++col) {
+// myfile << ", " << val(row, col);
+//}
+// myfile << std::endl;
+//}
 //}
 NeuralNetwork::NeuralNetwork(vector<Layer*> _layers,
                              std::shared_ptr<Loss> _loss)
@@ -52,7 +52,8 @@ void NeuralNetwork::allocate_storage(int obs, int& out_dim,
             std::stringstream ss;
             ss << "Dimension do not fit, in:\n"
                << __PRETTY_FUNCTION__ << "\n Previous output:" << out_dim
-               << " expected input " << input_dim << "\ncalled from "
+               << " expected input " << input_dim << "\ncalled with layer "
+               << layer->name() << " from\n"
                << __FILE__ << " at " << __LINE__;
             throw std::invalid_argument(ss.str());
         }
@@ -168,7 +169,7 @@ void NeuralNetwork::consumer_predict(
     int iter = 0;
     int total = target->get_cols();
     while (iter < total) {
-        //std::cout << "consumer size: " << pred_queue->size() << std::endl;
+        // std::cout << "consumer size: " << pred_queue->size() << std::endl;
         unsigned int start_position = iter * 10;
         std::shared_ptr<vector<SharedStorage>> out = pred_queue->wait_and_pop();
         forward(*out, "predict");
@@ -195,26 +196,26 @@ Matrix NeuralNetwork::predict(const Matrix& input) {
     return SharedTarget->return_data_const().transpose();
 }
 
-//Matrix NeuralNetwork::predict(const Matrix& input) {
-    //std::cout << "inside predict\n";
-    //int iter = 0;
-    //const int total = input.rows();
-    //Matrix output = Matrix::Zero(10, input.rows());
-    //SharedStorage SharedTarget = std::make_shared<Storage>(output);
-    //Matrix x;
-    //while (iter < total) {
-        //unsigned int start_position = iter * 10;
-        //vector<int> samples = predict_sample(iter, total);
-        //get_new_predict_sample(samples, input, x);
-        //unsigned int len = samples.size() * 10;
-        //SharedStorage inp = std::make_shared<Storage>(x);
-        //vector<SharedStorage> vals = allocate_forward(x.cols());
-        //vals[0] = inp;
-        //forward(vals, "predict");
-        //SharedTarget->update_gpu_data(vals.back()->gpu_pointer_const(),
-                                      //start_position, len);
-    //}
-    //std::cout << "leaving predict\n";
-    //return SharedTarget->return_data_const();
-    //// return output;
+// Matrix NeuralNetwork::predict(const Matrix& input) {
+// std::cout << "inside predict\n";
+// int iter = 0;
+// const int total = input.rows();
+// Matrix output = Matrix::Zero(10, input.rows());
+// SharedStorage SharedTarget = std::make_shared<Storage>(output);
+// Matrix x;
+// while (iter < total) {
+// unsigned int start_position = iter * 10;
+// vector<int> samples = predict_sample(iter, total);
+// get_new_predict_sample(samples, input, x);
+// unsigned int len = samples.size() * 10;
+// SharedStorage inp = std::make_shared<Storage>(x);
+// vector<SharedStorage> vals = allocate_forward(x.cols());
+// vals[0] = inp;
+// forward(vals, "predict");
+// SharedTarget->update_gpu_data(vals.back()->gpu_pointer_const(),
+// start_position, len);
+//}
+// std::cout << "leaving predict\n";
+// return SharedTarget->return_data_const();
+//// return output;
 //}

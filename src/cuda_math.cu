@@ -2,6 +2,7 @@
 #include <sys/time.h>
 #include "../include/common.h"
 #include "../include/cuda_math.h"
+#include <float.h>
 double cpuSecond() {
     struct timeval tp;
     gettimeofday(&tp, NULL);
@@ -354,6 +355,40 @@ __global__ void MaxPoolBackward(const int nthreads, const dtype* const top_diff,
     }
 }
 
+__global__ void MaxPoolForward(int nthreads, const dtype* bottom_data, int num,
+                               int channels, int height, int width,
+                               int out_height, int out_width, int window,
+                               int stride, dtype* top_data,
+                               dtype* mask) {
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if (index < nthreads) {
+        const int pw = index % out_width;
+        const int ph = (index / out_width) % out_height;
+        const int c = (index / out_width / out_height) % channels;
+        const int n = index / out_width / out_height / channels;
+        int hstart = ph * stride;
+        int wstart = pw * stride;
+        const int hend = min(hstart + window, height);
+        const int wend = min(wstart + window, width);
+        hstart = max(hstart, 0);
+        wstart = max(wstart, 0);
+        dtype maxval = -FLT_MAX;
+        int maxidx = -1;
+        const dtype* bottom_slice =
+            bottom_data + (n * channels + c) * height * width;
+        for (int h = hstart; h < hend; ++h) {
+            for (int w = wstart; w < wend; ++w) {
+                if (bottom_slice[h * width + w] > maxval) {
+                    maxidx = h * width + w;
+                    maxval = bottom_slice[maxidx];
+                }
+            }
+        }
+        top_data[index] = maxval;
+        mask[index] = maxidx;
+    }
+}
+
 __global__ void CudaPooling(float const* inp, int window, int stride, int rows,
                             int cols, int channels, int batches, float* out,
                             float* mask) {
@@ -672,18 +707,41 @@ void cuda_masking(int rows, int cols, const double prob, double* d_A) {
     MY_CHECK(cudaPeekAtLastError());
 }
 
+//void pooling_gpu(const float* bottom_data, int window, int stride, int rows,
+                 //int cols, int channels, int batches, float* top_data,
+                 //float* mask) {
+    //if (((rows - window) % stride) or ((cols - window) % stride)) {
+        //throw std::invalid_argument("Doesnt match");
+    //}
+    //dim3 block(16, 16, 4);
+    //dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y,
+              //(channels + block.z - 1) / block.z);
+    //CudaPooling<<<grid, block>>>(bottom_data, window, stride, rows, cols,
+                                 //channels, batches, top_data, mask);
+    //// MY_CHECK(cudaDeviceSynchronize());
+    //MY_CHECK(cudaPeekAtLastError());
+//}
+
 void pooling_gpu(const float* bottom_data, int window, int stride, int rows,
                  int cols, int channels, int batches, float* top_data,
                  float* mask) {
     if (((rows - window) % stride) or ((cols - window) % stride)) {
         throw std::invalid_argument("Doesnt match");
     }
-    dim3 block(16, 16, 4);
-    dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y,
-              (channels + block.z - 1) / block.z);
-    CudaPooling<<<grid, block>>>(bottom_data, window, stride, rows, cols,
-                                 channels, batches, top_data, mask);
-    MY_CHECK(cudaDeviceSynchronize());
+    int out_height = (rows - window) / stride + 1;
+    int out_width = (cols - window) / stride + 1;
+    dim3 block(512);
+    int eles = out_height * out_width * channels * batches;
+    dim3 grid((eles + block.x - 1) / block.x);
+    MaxPoolForward<<<grid, block>>>(eles, bottom_data, batches, channels,
+                                    rows, cols, out_height, out_width, window,
+                                    stride, top_data, mask);
+    // MY_CHECK(cudaDeviceSynchronize());
+//__global__ void MaxPoolForward(int nthreads, const dtype* bottom_data, int num,
+                               //int channels, int height, int width,
+                               //int out_height, int out_width, int window,
+                               //int stride, int pad, dtype* top_data,
+                               //dtype* mask) {
     MY_CHECK(cudaPeekAtLastError());
 }
 

@@ -28,6 +28,9 @@ set(${LIBRARY_TARGET_NAME}_SRC
     src/layer/convolution.cpp
     src/layer/pooling.cpp
     src/layer/im2col_layer.cpp
+    src/utils/standard_normalization.cpp
+    src/utils/zca_scaler.cpp
+    src/utils/global_contrast_normalization.cpp
 )
 if (UNIX)
   add_library(${LIBRARY_TARGET_NAME} SHARED ${${LIBRARY_TARGET_NAME}_SRC})
@@ -38,7 +41,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3 -fPIC\
     -lcudnn -lcurand -L /usr/lib/cuda/lib64 -lcudart  -lcublas -lblas\
     -Wall -std=c++17 -Wno-error=unused-command-line-argument")
 set(${LIBRARY_TARGET_NAME}_TEST
+    test/normalization.cpp
     test/cifar10.cpp
+    #test/mnist.cpp
     #test/im2col_layer.cpp
     #test/convolution.cpp
     #test/softmax.cpp
