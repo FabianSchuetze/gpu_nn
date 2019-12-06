@@ -9,16 +9,19 @@ int main(int argc, char** argv) {
     Mnist data = Mnist();
     srand((unsigned int)time(0));
     Layer* l1 = new Input(data.get_x_train().cols());
-    Layer* l2 = new Dense(100, data.get_x_train().cols());
-    Layer* l3 = new Relu;
-    Layer* l4 = new Dropout(0.5);
-    Layer* l5 = new Dense(10, 100);
-    Layer* l6 = new Softmax;
+    Layer* d1 = new Dense(1024, data.get_x_train().cols());
+    Layer* r1 = new Relu;
+    Layer* drop1 = new Dropout(0.5);
+    Layer* d2 = new Dense(1024, 1024);
+    Layer* r2 = new Relu;
+    Layer* drop2 = new Dropout(0.5);
+    Layer* d3 = new Dense(10, 1024);
+    Layer* s1 = new Softmax;
     std::shared_ptr<Loss> loss = std::make_shared<CrossEntropy>(CrossEntropy(
                 argv[1]));
-    NeuralNetwork n1({l1, l2, l3, l4, l5, l6}, loss, argv[1]);
+    NeuralNetwork n1({l1, d1, r1, drop1, d2, r2, drop2, d3, s1}, loss, argv[1]);
     std::shared_ptr<GradientDescent> sgd =
-        std::make_shared<StochasticGradientDescent>(0.001);
+        std::make_shared<Momentum>(0.001, 0.75);
     if (argc == 5) {
         Epochs epoch(strtol(argv[2], NULL, 10));
         Patience patience(strtol(argv[3], NULL, 10));
@@ -28,10 +31,10 @@ int main(int argc, char** argv) {
     } else
         n1.train(data.get_x_train(), data.get_y_train(), sgd, Epochs(10),
                  Patience(10), BatchSize(32));
-    delete l1;
-    delete l2;
-    delete l3;
-    delete l4;
-    delete l5;
-    delete l6;
+    //delete l1;
+    //delete l2;
+    //delete l3;
+    //delete l4;
+    //delete l5;
+    //delete l6;
 }
