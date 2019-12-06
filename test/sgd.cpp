@@ -16,6 +16,22 @@ double cpuSecond() {
     return ((double)tp.tv_sec + (double)tp.tv_usec * 1e-6);
 }
 
+std::vector<std::vector<SharedStorage>> prepare_helpers(
+    std::initializer_list<Layer*> layers) {
+    std::vector<std::vector<SharedStorage>> helpers;
+    for (Layer* layer : layers) {
+        std::vector<SharedStorage> helper;
+        for (SharedStorage store : layer->return_gradients()) {
+            int rows = store->get_rows();
+            int cols = store->get_cols();
+            Matrix tmp = Matrix::Zero(rows, cols);
+            helper.push_back(std::make_shared<Storage>(tmp));
+        }
+        helpers.push_back(helper);
+    }
+    return helpers;
+}
+
 TEST_CASE("NeuralNetwork backward cpu", "[backward cpu]") {
     srand((unsigned int)time(0));
     Layer* l1;
@@ -66,9 +82,10 @@ TEST_CASE("NeuralNetwork backward cpu", "[backward cpu]") {
     loss->grad_loss_cpu(grad_in, vals[vals.size() - 1], SharedTarget,
                         SharedTarget);
     n1.backwards(gradients, vals);
+    std::vector<std::vector<SharedStorage>> helpers = prepare_helpers({l2, l4});
     Matrix before_weight = l2->return_parameters()[0]->return_data_const();
     Matrix before_bias = l2->return_parameters()[1]->return_data_const();
-    n1.update_weights(sgd, obs);
+    n1.update_weights(sgd, helpers, obs);
     Matrix after_weight = l2->return_parameters()[0]->return_data_const();
     Matrix after_bias = l2->return_parameters()[1]->return_data_const();
     Matrix WeightDiff = before_weight - after_weight;
@@ -133,7 +150,8 @@ TEST_CASE("NeuralNetwork backward gpu", "[backward gpu]") {
     n1.backwards(gradients, vals);
     Matrix before_weight = l2->return_parameters()[0]->return_data_const();
     Matrix before_bias = l2->return_parameters()[1]->return_data_const();
-    n1.update_weights(sgd, obs);
+    std::vector<std::vector<SharedStorage>> helpers = prepare_helpers({l2, l4});
+    n1.update_weights(sgd, helpers, obs);
     Matrix after_weight = l2->return_parameters()[0]->return_data_const();
     Matrix after_bias = l2->return_parameters()[1]->return_data_const();
     Matrix WeightDiff = before_weight - after_weight;
@@ -199,6 +217,8 @@ TEST_CASE("NeuralNetwork equivalance", "[equivalance]") {
     NeuralNetwork n_gpu(vec_gpu, loss, "GPU");
     Matrix in = Matrix::Random(obs, input_dimension);
     SharedStorage inp = std::make_shared<Storage>(in);
+    std::vector<std::vector<SharedStorage>> helpers_cpu = prepare_helpers({l2, l4});
+    std::vector<std::vector<SharedStorage>> helpers_gpu = prepare_helpers({l2, l4});
      //CPU CODE
     double cpuStart = cpuSecond();
     vector<SharedStorage> vals_cpu = n_cpu.allocate_forward(in.rows());
@@ -209,7 +229,7 @@ TEST_CASE("NeuralNetwork equivalance", "[equivalance]") {
     loss->grad_loss_cpu(grad_in, vals_cpu[vals_cpu.size() - 1], SharedTarget,
                         SharedTarget);
     n_cpu.backwards(grad_cpu, vals_cpu);
-    n_cpu.update_weights(sgd, obs);
+    n_cpu.update_weights(sgd,  helpers_cpu, obs);
     Matrix after_weight = l2->return_parameters()[0]->return_data_const();
     double cpuEnd = cpuSecond() - cpuStart;
      //GPU PART
@@ -222,7 +242,7 @@ TEST_CASE("NeuralNetwork equivalance", "[equivalance]") {
     loss->grad_loss_gpu(grad_in_gpu, vals_gpu[vals_gpu.size() - 1],
                         SharedTarget, SharedTarget);
     n_gpu.backwards(grad_gpu, vals_gpu);
-    n_gpu.update_weights(sgd, obs);
+    n_gpu.update_weights(sgd, helpers_gpu, obs);
     double gpuEnd = cpuSecond() - gpuStart;
     Matrix diff = l2->return_parameters()[0]->return_data_const() -
                   l2_gpu->return_parameters()[0]->return_data_const();

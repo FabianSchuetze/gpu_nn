@@ -43,20 +43,19 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g  -O3 -fPIC\
     -Wall -std=c++17 -Wno-error=unused-command-line-argument")
 set(${LIBRARY_TARGET_NAME}_TEST
     #test/normalization.cpp
-    #test/cifar10.cpp
-    test/mnist.cpp
-    test/im2col_layer.cpp
-    test/convolution.cpp
-    test/softmax.cpp
-    test/dense.cpp
-    test/cross_entropy.cpp
-    test/forward.cpp
-    test/backward.cpp
-    test/sgd.cpp
-    test/dropout.cpp
+    test/cifar10.cpp
     #test/mnist.cpp
-    test/pooling.cpp
-    test/momentum.cpp
+    #test/im2col_layer.cpp
+    #test/convolution.cpp
+    #test/softmax.cpp
+    #test/dense.cpp
+    #test/cross_entropy.cpp
+    test/forward.cpp
+    #test/backward.cpp
+    #test/sgd.cpp
+    #test/dropout.cpp
+    #test/pooling.cpp
+    #test/momentum.cpp
 )
 
 enable_testing()

@@ -35,16 +35,21 @@ if __name__ == "__main__":
     x_train, x_test, y_train, y_test = prepare_data()
     KERAS_SGD = keras.optimizers.SGD(0.001)
     model = keras.Sequential()
-    model.add(Conv2D(32, (3, 3), strides=(1, 1), use_bias=False,
+    model.add(Conv2D(96, (5, 5), strides=(1, 1), use_bias=False,
               padding='same', input_shape=x_train.shape[1:]))
     model.add(Activation('relu'))
-    model.add(Conv2D(32, (3, 3), strides=(1, 1), use_bias=False,
-              padding='same'))
-    model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    # model.add(Conv2D(32, (3, 3)))
+    model.add(MaxPooling2D(pool_size=(4, 4), strides=2))
+    # model.add(Conv2D(96, (5, 5), strides=(1, 1), use_bias=False,
+              # padding='same'))
+    # model.add(Activation('relu'))
+    # model.add(MaxPooling2D(pool_size=(3, 3), strides=2))
+    # model.add(Conv2D(256, (5, 5), strides=(1, 1), use_bias=False,
+              # padding='same'))
+    # model.add(Activation('relu'))
+    # model.add(MaxPooling2D(pool_size=(3, 3), strides=2))
     # model.add(Activation('relu'))
     model.add(Flatten())
+    model.add(Dense(2048, activation='relu'))
     model.add(Dense(10, activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer=KERAS_SGD)
     early = EarlyStopping(monitor='val_loss', patience=20, verbose=1)

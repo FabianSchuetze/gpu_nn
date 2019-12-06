@@ -23,7 +23,7 @@ trainArgs::trainArgs(const Matrix& features, const Matrix& target,
       _batch_size(__batch_size.get()),
       _epochs(__epochs.get()),
       _patience(__patience.get()) {
-    train_test_split(features, target, 0.2);
+    train_test_split(features, target, 0.1);
     _y_val_shared = std::make_shared<Storage>(_y_val.transpose());
     create_optimizers(sgd, layers);
 };

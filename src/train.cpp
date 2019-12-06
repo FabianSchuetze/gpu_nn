@@ -147,13 +147,9 @@ void NeuralNetwork::producer() {
 }
 
 void NeuralNetwork::validate(std::chrono::milliseconds diff) {
-    // Matrix predictions = predict(train_args->x_val());
     Matrix output = Matrix::Zero(10, train_args->x_val().rows());
     SharedStorage SharedPred = std::make_shared<Storage>(output);
     predict(train_args->x_val(), SharedPred);
-    // SharedStorage pred = std::make_shared<Storage>(predictions);
-    // SharedStorage SharedTarget =
-    // std::make_shared<Storage>(train_args->y_val().transpose());
     dtype total_loss = loss->loss(SharedPred, train_args->y_val_shared());
     size_t obs = train_args->x_val().rows();
     std::cout << "after iter " << train_args->current_epoch() << "the loss is "

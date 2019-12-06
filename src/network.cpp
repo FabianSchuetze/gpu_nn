@@ -135,7 +135,7 @@ void NeuralNetwork::get_new_predict_sample(const vector<int>& samples,
 }
 
 vector<int> NeuralNetwork::predict_sample(int& iter, int total) {
-    int at_least_remaining = std::min(train_args->batch_size(), total - iter);
+    int at_least_remaining = std::min(32, total - iter);
     vector<int> samples(at_least_remaining);
     for (size_t i = 0; i < samples.size(); i++) samples[i] = iter++;
     return samples;
@@ -169,13 +169,12 @@ void NeuralNetwork::consumer_predict(
     int iter = 0;
     int total = target->get_cols();
     while (iter < total) {
-        // std::cout << "consumer size: " << pred_queue->size() << std::endl;
-        unsigned int start_position = iter * 10;
         std::shared_ptr<vector<SharedStorage>> out = pred_queue->wait_and_pop();
+        unsigned int start_position = iter * out->back()->get_rows();
         forward(*out, "predict");
         unsigned int obs = (*out)[0]->get_cols();
         target->update_gpu_data(out->back()->gpu_pointer_const(),
-                                start_position, obs * 10);
+                                start_position, obs * out->back()->get_rows());
         iter += obs;
     }
 }
@@ -190,6 +189,8 @@ void NeuralNetwork::predict(const Matrix& input, SharedStorage& SharedTarget) {
 }
 
 Matrix NeuralNetwork::predict(const Matrix& input) {
+    // THIS IS A HUGE BUG ! IT MUST BE DEPENDTENT ON THE TARGET!!! I NEED TO
+    // FIX THE LAYERS BUSINESS!!!
     Matrix output = Matrix::Zero(10, input.rows());
     SharedStorage SharedTarget = std::make_shared<Storage>(output);
     predict(input, SharedTarget);

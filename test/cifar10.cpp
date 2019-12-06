@@ -48,17 +48,14 @@ Matrix transform_data(const Matrix& input) {
     ZCAWhitening zca;
     Matrix norm = gcn.transform(input);
     Matrix norm2 = scaler.transform(norm);
-    zca.fit(norm2);
-    Matrix white = zca.transform(norm);
-    return white;
+    return norm2;
+    //zca.fit(norm2);
+    //Matrix white = zca.transform(norm2);
+    //return white;
 }
 
 int main(int argc, char** argv) {
     Cifar10 data = Cifar10();
-    // print_Matrix_to_stdout2(data.get_x_train(),
-    //"/home/fabian/Documents/work/gpu_nn/debug/x_train_org.txt");
-    // print_Matrix_to_stdout2(res,
-    //"/home/fabian/Documents/work/gpu_nn/debug/x_train.txt");
     srand((unsigned int)time(0));
     Layer* l1 = new Input(data.get_x_train().cols());
     Layer* imcol1 = new Im2ColLayer(FilterShape(5, 5), Pad(2), Stride(1),
@@ -87,33 +84,21 @@ int main(int argc, char** argv) {
         new Pooling(Window(3), Stride(2), ImageShape(7, 7), Channels(256));
     Layer* d1 = new Dense(2048, 3 * 3 * 256);
     Layer* relu4 = new Relu;
-    Layer* d2 = new Dense(2048, 2048);
-    Layer* relu5 = new Relu;
+    //Layer* d2 = new Dense(2048, 2048);
+    //Layer* relu5 = new Relu;
     Layer* d3 = new Dense(10, 2048);
     Layer* s1 = new Softmax;
     std::shared_ptr<Loss> loss =
         std::make_shared<CrossEntropy>(CrossEntropy("GPU"));
     NeuralNetwork n1({l1,    imcol1, conv1, relu1,  pool1, imcol2, conv2,
                       relu2, pool2,  relu3, imcol3, conv3, relu3,  pool3,
-                      d1,    relu4,  d2,    relu5,  d3,    s1},
+                      d1,    relu4,  d3,    s1},
                      loss, "GPU");
     std::shared_ptr<GradientDescent> sgd =
-        std::make_shared<StochasticGradientDescent>(0.0005);
-    transform_data(data.get_x_train());
+        std::make_shared<Momentum>(0.001, 0.9);
+    //transform_data(data.get_x_train());
     n1.train(transform_data(data.get_x_train()), data.get_y_train(), sgd,
              Epochs(10), Patience(10), BatchSize(32));
-    // print_Matrix_to_stdout2(GCC(data.get_x_test()),
-    //"/home/fabian/Documents/work/gpu_nn/debug/x_test.txt");
-    // print_Matrix_to_stdout2(GCC(data.get_x_train()),
-    //"/home/fabian/Documents/work/gpu_nn/debug/x_train.txt");
-    // Matrix predictions = n1.predict(GCC(data.get_x_test()));
-    // print_Matrix_to_stdout2(predictions,
-    //"/home/fabian/Documents/work/gpu_nn/debug/predictions.txt");
-    // n_missclassified(predictions, data.get_y_test());
-    // delete l1;
-    // delete l2;
-    // delete l3;
-    // delete l4;
-    // delete l5;
-    // delete l6;
+     Matrix predictions = n1.predict(transform_data(data.get_x_test()));
+     n_missclassified(predictions, data.get_y_test());
 }
