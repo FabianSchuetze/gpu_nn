@@ -3,8 +3,8 @@
 #define cuda_math_h
 #include "cublas_v2.h"
 //#include <curand.h>
-#include <curand_kernel.h>
 #include <curand.h>
+#include <curand_kernel.h>
 void my_cuda_Dgemm(cublasHandle_t, cublasOperation_t, cublasOperation_t, int M,
                    int N, int K, double* alpha, const double*& d_A, int,
                    const double*& d_B, int, double* beta, double*& d_C, int);
@@ -41,22 +41,24 @@ void cross_entropy_gradient(int, int, const double*, const double*, double*);
 void cross_entropy_gradient(int, int, const float*, const float*, float*);
 void matrix_addition_inplace(int, int, const float*, float*, const float);
 void matrix_addition_inplace(int, int, const double*, double*, const float);
-//void dropout(int, int, const float, const float*, float*);
-//void dropout(int, int, const double, const double*, double*);
+void matrix_addition(int, int, const float*, const float*, float*, const float,
+                     const float);
+// void dropout(int, int, const float, const float*, float*);
+// void dropout(int, int, const double, const double*, double*);
 void cuda_init(int, int, curandState*, int);
 void cuda_masking(int, int, float, float*);
 void cuda_masking(int, int, double, double*);
 void pooling_gpu(const float* const bottom_data, const int window,
                  const int stride, int rows, int cols, const int channels,
                  int batches, float* top_data, float* mask);
-//void pooling_backward_gpu_my(const float* bottom_data, const float* mask,
-                           //const int window, const int stride, int rows,
-                           //int cols, const int channels, const int batches,
-                           //float* dest);
+// void pooling_backward_gpu_my(const float* bottom_data, const float* mask,
+// const int window, const int stride, int rows,
+// int cols, const int channels, const int batches,
+// float* dest);
 void pooling_backward_gpu(const float* bottom_data, const float* mask,
-                           const int window, const int stride, int rows,
-                           int cols, const int channels, const int batches,
-                           float* dest);
+                          const int window, const int stride, int rows,
+                          int cols, const int channels, const int batches,
+                          float* dest);
 void im2col_gpu(const float* data_im, int channels, int height, const int width,
                 int kernel_h, const int kernel_w, int pad, int stride,
                 float* data_col);

@@ -1,12 +1,15 @@
 #include "../include/trainArgs.h"
-#include "../include/network.h"
 #include <memory>
+#include "../include/network.h"
 using Eigen::all;
 using std::make_shared;
 using std::vector;
 
-trainArgs::trainArgs(const Matrix& features, const Matrix& target, 
-        Epochs __epochs, Patience __patience, BatchSize __batch_size)
+trainArgs::trainArgs(const Matrix& features, const Matrix& target,
+                     Epochs __epochs, Patience __patience,
+                     BatchSize __batch_size,
+                     std::shared_ptr<GradientDescent>& sgd,
+                     std::vector<Layer*>& layers)
     : _x_train(),
       _x_val(),
       _y_train(),
@@ -22,7 +25,25 @@ trainArgs::trainArgs(const Matrix& features, const Matrix& target,
       _patience(__patience.get()) {
     train_test_split(features, target, 0.2);
     _y_val_shared = std::make_shared<Storage>(_y_val.transpose());
+    create_optimizers(sgd, layers);
 };
+
+void trainArgs::create_optimizers(const std::shared_ptr<GradientDescent>& sgd,
+                                  const std::vector<Layer*>& layers) {
+    if (sgd->name() == "Momentum")
+        for (Layer* layer : layers) {
+            if (layer->n_paras() > 0) {
+                std::vector<SharedStorage> helper;
+                for (SharedStorage store : layer->return_gradients()) {
+                    int rows = store->get_rows();
+                    int cols = store->get_cols();
+                    Matrix tmp = Matrix::Zero(rows, cols);
+                    helper.push_back(std::make_shared<Storage>(tmp));
+                }
+                _optimizer.push_back(helper);
+            }
+        }
+}
 
 void trainArgs::train_test_split(const Matrix& features, const Matrix& target,
                                  dtype validation_fraction) {

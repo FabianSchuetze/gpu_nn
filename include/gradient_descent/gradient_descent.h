@@ -11,13 +11,16 @@ class GradientDescent {
     typedef std::shared_ptr<Storage> SharedStorage;
     typedef std::vector<SharedStorage> VecSharedStorage;
     dtype learing_rate;
+    std::string _name;
 
    public:
-    GradientDescent(dtype);
+    explicit GradientDescent(dtype);
+    GradientDescent(dtype, std::string);
     virtual ~GradientDescent() {};
     virtual void weight_update_cpu(const VecSharedStorage&,
-                                   VecSharedStorage&, int);
+                                   VecSharedStorage&, int, VecSharedStorage&);
     virtual void weight_update_gpu(const VecSharedStorage&,
-                                   VecSharedStorage&, int);
+                                   VecSharedStorage&, int, VecSharedStorage&);
+    virtual const std::string& name() {return _name;}
 };
 #endif

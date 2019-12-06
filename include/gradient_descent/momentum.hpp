@@ -1,16 +1,19 @@
 #pragma once
-#ifndef stochastic_gradient_descent_h
-#define stochastic_gradient_descent_h
+#ifndef momentum_h
+#define momentum_h
 #include <memory>
 #include <vector>
 #include "gradient_descent.h"
-class StochasticGradientDescent : public GradientDescent {
+class Momentum : public GradientDescent {
    public:
-    StochasticGradientDescent(dtype);
-    virtual ~StochasticGradientDescent();
+    Momentum(dtype, dtype);
+    virtual ~Momentum();
     void weight_update_cpu(const VecSharedStorage&, VecSharedStorage&,
                            int, VecSharedStorage&) override;
     void weight_update_gpu(const VecSharedStorage&, VecSharedStorage&,
                            int, VecSharedStorage&) override;
+   private:
+    void initialize_gradients(const VecSharedStorage&, VecSharedStorage&);
+    dtype _momentum;
 };
 #endif

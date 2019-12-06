@@ -11,6 +11,7 @@
 #include "trainArgs.h"
 class NeuralNetwork {
    public:
+    typedef std::vector<std::shared_ptr<Storage>> VecSharedStorage;
     // I NEED TO THINK ABOUT THE MOVE CONSTCUTOR
     NeuralNetwork(std::vector<Layer*>, std::shared_ptr<Loss>);
     NeuralNetwork(std::vector<Layer*>, std::shared_ptr<Loss>,
@@ -35,7 +36,8 @@ class NeuralNetwork {
     std::vector<SharedStorage> allocate_backward(int);
     void forward(std::vector<SharedStorage>&, const std::string&);
     void fill_hiddens(std::vector<SharedStorage>&, const Matrix&);
-    void update_weights(std::shared_ptr<GradientDescent>, int);
+    void update_weights(std::shared_ptr<GradientDescent>,
+                        std::vector<VecSharedStorage>&, int);
     void train(std::shared_ptr<GradientDescent>);
     void train(const Matrix&, const Matrix&, std::shared_ptr<GradientDescent>,
                Epochs, Patience, BatchSize);
@@ -44,7 +46,7 @@ class NeuralNetwork {
 
    private:
     typedef void (NeuralNetwork::*update_func)(std::shared_ptr<GradientDescent>,
-                                               int);
+            std::vector<VecSharedStorage>&, int);
     typedef void (NeuralNetwork::*forward_func)(std::vector<SharedStorage>&,
                                                 const std::string&);
     typedef void (NeuralNetwork::*backward_func)(
@@ -56,8 +58,10 @@ class NeuralNetwork {
     std::shared_ptr<Loss> loss;
     std::unique_ptr<trainArgs> train_args;
     void create_loss(const std::string& s);
-    void update_weights_cpu(std::shared_ptr<GradientDescent>, int);
-    void update_weights_gpu(std::shared_ptr<GradientDescent>, int);
+    void update_weights_cpu(std::shared_ptr<GradientDescent>,
+                            std::vector<VecSharedStorage>&, int);
+    void update_weights_gpu(std::shared_ptr<GradientDescent>,
+                            std::vector<VecSharedStorage>&, int);
     void forward_gpu(std::vector<SharedStorage>&, const std::string&);
     void forward_cpu(std::vector<SharedStorage>&, const std::string&);
     void backward_cpu(std::vector<SharedStorage>&,

@@ -15,5 +15,6 @@
 #include "loss/loss.h"
 #include "gradient_descent/gradient_descent.h"
 #include "gradient_descent/sgd.h"
+#include "gradient_descent/momentum.hpp"
 
 #endif

@@ -6,13 +6,13 @@
 #include "../../include/storage.h"
 
 StochasticGradientDescent::StochasticGradientDescent(dtype _learning_rate)
-    : GradientDescent(_learning_rate){};
+    : GradientDescent(_learning_rate, "SGD"){};
 
 StochasticGradientDescent::~StochasticGradientDescent() { ; };
 
 void StochasticGradientDescent::weight_update_cpu(
     const VecSharedStorage& gradients, VecSharedStorage& parameters,
-    int batch_size) {
+    int batch_size, VecSharedStorage&) {
     dtype effective_learing_rate = learing_rate / batch_size;
     for (size_t i = 0; i < parameters.size(); ++i) {
         Matrix new_weight =
@@ -24,7 +24,7 @@ void StochasticGradientDescent::weight_update_cpu(
 
 void StochasticGradientDescent::weight_update_gpu(
     const VecSharedStorage& gradients, VecSharedStorage& parameters,
-    int batch_size) {
+    int batch_size, VecSharedStorage&) {
     dtype effective_learing_rate = learing_rate / batch_size;
     for (size_t i = 0; i < parameters.size(); ++i) {
         SharedStorage& para = parameters[i];

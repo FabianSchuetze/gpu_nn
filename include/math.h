@@ -28,6 +28,8 @@ void my_cross_entropy_loss(dtype&, const SharedStorage&, const SharedStorage&);
 void my_cross_entropy_gradient(SharedStorage&, const SharedStorage&,
                                const SharedStorage);
 void my_Matrix_addition_inplace(const SharedStorage&, SharedStorage&, dtype);
+void my_Matrix_addition(const SharedStorage&, const SharedStorage&,
+                        SharedStorage&, dtype, dtype);
 void my_cuda_masking(dtype, SharedStorage&);
 void pooling_cpu(const float* src, int window, int stride, int rows, int cols,
                  int channels, int n_batches, float* dest, float* mask);

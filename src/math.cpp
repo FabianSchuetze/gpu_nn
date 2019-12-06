@@ -138,6 +138,16 @@ void my_Matrix_addition_inplace(const SharedStorage& gradient,
     matrix_addition_inplace(rows, cols, d_A, d_B, alpha);
 }
 
+void my_Matrix_addition(const SharedStorage& A, const SharedStorage& B,
+                        SharedStorage& C, dtype alpha_A, dtype alpha_B) {
+    int cols = C->get_cols();
+    int rows = C->get_rows();
+    const dtype* d_A = A->gpu_pointer_const();
+    const dtype* d_B = B->gpu_pointer_const();
+    dtype* d_C = C->gpu_pointer();
+    matrix_addition(rows, cols, d_A, d_B, d_C, alpha_A, alpha_B);
+}
+
 void my_mult_elementwise(const SharedStorage& A, const SharedStorage& B,
                          SharedStorage& C) {
     int rows = A->get_rows();
