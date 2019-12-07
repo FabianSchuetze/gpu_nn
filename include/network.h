@@ -41,7 +41,7 @@ class NeuralNetwork {
     void train(std::shared_ptr<GradientDescent>);
     void train(const Matrix&, const Matrix&, std::shared_ptr<GradientDescent>,
                Epochs, Patience, BatchSize);
-    void validate(std::chrono::milliseconds);
+    dtype validate(std::chrono::milliseconds);
     void random_numbers(std::vector<int>&, std::mt19937&);
 
    private:
@@ -79,5 +79,7 @@ class NeuralNetwork {
                           threadsafe_queue<std::vector<SharedStorage>>*);
     void producer_predict(const Matrix&,
                           threadsafe_queue<std::vector<SharedStorage>>*);
+    void update_bkp(dtype curr);
+    void restore();
 };
 #endif

@@ -14,11 +14,11 @@ trainArgs::trainArgs(const Matrix& features, const Matrix& target,
       _x_val(),
       _y_train(),
       _y_val(),
-      //_iter_since_update(0),
+      _iter_since_update(0),
       _total_iter(0),
       _current_epoch(0),
       //_not_improved(0),
-      //_best_error(std::numeric_limits<double>::infinity()),
+      _best_error(std::numeric_limits<double>::infinity()),
       //_current_error(0),
       _batch_size(__batch_size.get()),
       _epochs(__epochs.get()),
@@ -26,7 +26,19 @@ trainArgs::trainArgs(const Matrix& features, const Matrix& target,
     train_test_split(features, target, 0.1);
     _y_val_shared = std::make_shared<Storage>(_y_val.transpose());
     create_optimizers(sgd, layers);
+    create_backup(layers);
 };
+
+void trainArgs::create_backup(const std::vector<Layer*>& layers) {
+    for (Layer* layer : layers) {
+        if (layer->n_paras() > 0) {
+            for (SharedStorage store : layer->return_parameters()) {
+                Matrix tmp = store->copy_data();
+                _param_bkp.push_back(std::make_shared<Storage>(tmp));
+            }
+        }
+    }
+}
 
 void trainArgs::create_optimizers(const std::shared_ptr<GradientDescent>& sgd,
                                   const std::vector<Layer*>& layers) {

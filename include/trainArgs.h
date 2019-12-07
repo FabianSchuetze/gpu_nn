@@ -16,18 +16,19 @@ class trainArgs {
     trainArgs() = default;
     trainArgs(const Matrix&, const Matrix&, Epochs, Patience, BatchSize,
               std::shared_ptr<GradientDescent>&, std::vector<Layer*>&);
-    // int iter_since_update() { return _iter_since_update; }
-    // void reset_iter_since_update() { _iter_since_update = 0; }
+    int iter_since_update() { return _iter_since_update; }
+    void reset_iter_since_update() { _iter_since_update = 0; }
     void reset_total_iter() { _total_iter = 0; }
     int total_iter() { return _total_iter; }
     void advance_total_iter() { _total_iter += _batch_size; };
+    void advance_iter_since_update() { _iter_since_update++;};
     int max_total_iter() { return _x_train.rows(); }
     int epochs() { return _epochs; }
     int current_epoch() { return _current_epoch; }
     void advance_epoch() { _current_epoch++; }
     int patience() { return _patience; }
     int batch_size() { return _batch_size; }
-    // dtype best_erorr() { return _best_error; }
+    dtype& best_error() { return _best_error; }
     const Matrix& x_train() { return _x_train; }
     const Matrix& y_train() { return _y_train; }
     const Matrix& x_val() { return _x_val; }
@@ -35,6 +36,7 @@ class trainArgs {
     const SharedStorage& y_val_shared() { return _y_val_shared; }
     std::vector<std::vector<SharedStorage>>& optimizer() { return _optimizer; }
     threadsafe_queue<std::pair<SharedStorage, SharedStorage>> data_queue;
+    const std::vector<SharedStorage>& backup() {return _param_bkp;};
 
    private:
     Matrix _x_train;
@@ -43,18 +45,20 @@ class trainArgs {
     Matrix _y_val;
     SharedStorage _y_val_shared;
     std::vector<std::vector<SharedStorage>> _optimizer;
+    std::vector<SharedStorage> _param_bkp;
 
-    // int _iter_since_update;
+     int _iter_since_update;
     int _total_iter;
     int _current_epoch;
     // int _not_improved;
-    // dtype _best_error;
-    // dtype _current_error;
+     dtype _best_error;
+     //dtype _current_error;
     int _batch_size;
     int _epochs;
     int _patience;
     void train_test_split(const Matrix&, const Matrix&, dtype);
     void create_optimizers(const std::shared_ptr<GradientDescent>&,
                            const std::vector<Layer*>&);
+    void create_backup(const std::vector<Layer*>&);
 };
 #endif

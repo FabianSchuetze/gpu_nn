@@ -67,7 +67,7 @@ void NeuralNetwork::update_weights(std::shared_ptr<GradientDescent> opt,
 void NeuralNetwork::update_weights_cpu(std::shared_ptr<GradientDescent> opt,
                                        vector<VecSharedStorage>& helpers,
                                        int batch_size) {
-    //int i = helpers.size() - 1;
+    // int i = helpers.size() - 1;
     int i = 0;
     for (Layer* layer : layers) {
         if (layer->n_paras() > 0) {
@@ -110,6 +110,29 @@ void NeuralNetwork::get_new_sample(const vector<int>& samples, Matrix& x_train,
     y_train = train_args->y_train()(samples, all).transpose();
 }
 
+void NeuralNetwork::restore() {
+    int i = 0;
+    for (Layer* layer : layers) {
+        for (SharedStorage param : layer->return_parameters()) {
+            param->update_cpu_data(
+                train_args->backup()[i++]->return_data_const());
+        }
+    }
+    train_args->advance_iter_since_update();
+}
+
+void NeuralNetwork::update_bkp(dtype curr) {
+    int i = 0;
+    for (Layer* layer : layers) {
+        for (SharedStorage param : layer->return_parameters()) {
+            train_args->backup()[i++]->update_cpu_data(
+                    param->copy_data());
+        }
+    }
+    train_args->reset_iter_since_update();
+    train_args->best_error() = curr;
+}
+
 // I need to instantiate a vector of shared pointers to SGD one for each layer
 // use this as part of train args!!!
 void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
@@ -146,7 +169,7 @@ void NeuralNetwork::producer() {
     }
 }
 
-void NeuralNetwork::validate(std::chrono::milliseconds diff) {
+dtype NeuralNetwork::validate(std::chrono::milliseconds diff) {
     Matrix output = Matrix::Zero(10, train_args->x_val().rows());
     SharedStorage SharedPred = std::make_shared<Storage>(output);
     predict(train_args->x_val(), SharedPred);
@@ -157,6 +180,7 @@ void NeuralNetwork::validate(std::chrono::milliseconds diff) {
               << std::endl;
     train_args->advance_epoch();
     train_args->reset_total_iter();
+    return total_loss;
 }
 
 void NeuralNetwork::consumer(std::shared_ptr<GradientDescent> sgd) {
@@ -165,6 +189,7 @@ void NeuralNetwork::consumer(std::shared_ptr<GradientDescent> sgd) {
     auto begin = std::chrono::system_clock::now();
     const std::string type("train");
     std::chrono::milliseconds diff;
+    dtype val_loss(0.);
     while (train_args->current_epoch() < train_args->epochs()) {
         // std::cout << "the size is:" << train_args->data_queue.size()
         //<< std::endl;
@@ -174,12 +199,16 @@ void NeuralNetwork::consumer(std::shared_ptr<GradientDescent> sgd) {
         forward(vals, type);
         loss->grad_loss(grads.back(), vals.back(), out->second, out->second);
         backwards(grads, vals);
-        update_weights(sgd,  train_args->optimizer(), train_args->batch_size());
+        update_weights(sgd, train_args->optimizer(), train_args->batch_size());
         train_args->advance_total_iter();
         if (train_args->total_iter() > train_args->max_total_iter()) {
             diff = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::system_clock::now() - begin);
-            validate(diff);
+            val_loss = validate(diff);
+            if (val_loss < train_args->best_error())
+                update_bkp(val_loss);
+            else 
+                restore();
             begin = std::chrono::system_clock::now();
         }
     }

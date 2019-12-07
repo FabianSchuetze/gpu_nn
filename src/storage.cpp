@@ -118,6 +118,11 @@ const Matrix& Storage::return_data_const() {
     return _data;
 }
 
+Matrix Storage::copy_data() {
+    sync_to_cpu();
+    return _data;
+}
+
 Matrix& Storage::return_data() {
     sync_to_cpu();
     recent_head = "CPU";

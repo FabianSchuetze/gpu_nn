@@ -23,6 +23,7 @@ class Storage {
     int get_cols() { return _data.cols(); }
     Matrix& return_data();
     const Matrix& return_data_const();
+    Matrix copy_data();
     bool is_set();
 
    private:
