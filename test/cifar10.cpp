@@ -61,32 +61,33 @@ int main(int argc, char** argv) {
     Layer* imcol1 = new Im2ColLayer(FilterShape(5, 5), Pad(2), Stride(1),
                                     ImageShape(32, 32), Channels(3));
     Layer* conv1 =
-        new Convolution(FilterShape(5, 5), Pad(2), Stride(1), Filters(96),
+        new Convolution(FilterShape(5, 5), Pad(2), Stride(1), Filters(32),
                         ImageShape(32, 32), Channels(3));
     Layer* relu1 = new Relu;
     Layer* pool1 =
-        new Pooling(Window(4), Stride(2), ImageShape(32, 32), Channels(96));
+        new Pooling(Window(2), Stride(2), ImageShape(32, 32), Channels(32));
+    // Stide < Window: Overlapping pooling, as in AlexNet
     Layer* imcol2 = new Im2ColLayer(FilterShape(5, 5), Pad(2), Stride(1),
-                                    ImageShape(15, 15), Channels(96));
+                                    ImageShape(16, 16), Channels(32));
     Layer* conv2 =
-        new Convolution(FilterShape(5, 5), Pad(2), Stride(1), Filters(128),
-                        ImageShape(15, 15), Channels(96));
+        new Convolution(FilterShape(5, 5), Pad(2), Stride(1), Filters(32),
+                        ImageShape(16, 16), Channels(32));
     Layer* relu2 = new Relu;
     Layer* pool2 =
-        new Pooling(Window(3), Stride(2), ImageShape(15, 15), Channels(128));
+        new Pooling(Window(2), Stride(2), ImageShape(16, 16), Channels(32));
     Layer* imcol3 = new Im2ColLayer(FilterShape(5, 5), Pad(2), Stride(1),
-                                    ImageShape(7, 7), Channels(128));
+                                    ImageShape(8, 8), Channels(32));
     Layer* conv3 =
-        new Convolution(FilterShape(5, 5), Pad(2), Stride(1), Filters(256),
-                        ImageShape(7, 7), Channels(128));
+        new Convolution(FilterShape(5, 5), Pad(2), Stride(1), Filters(64),
+                        ImageShape(8, 8), Channels(32));
     Layer* relu3 = new Relu;
     Layer* pool3 =
-        new Pooling(Window(3), Stride(2), ImageShape(7, 7), Channels(256));
-    Layer* d1 = new Dense(2048, 3 * 3 * 256);
+        new Pooling(Window(2), Stride(2), ImageShape(8, 8), Channels(64));
+    Layer* d1 = new Dense(64, 4 * 4 * 64);
     Layer* relu4 = new Relu;
     //Layer* d2 = new Dense(2048, 2048);
     //Layer* relu5 = new Relu;
-    Layer* d3 = new Dense(10, 2048);
+    Layer* d3 = new Dense(10, 64);
     Layer* s1 = new Softmax;
     std::shared_ptr<Loss> loss =
         std::make_shared<CrossEntropy>(CrossEntropy("GPU"));
@@ -95,10 +96,11 @@ int main(int argc, char** argv) {
                       d1,    relu4,  d3,    s1},
                      loss, "GPU");
     std::shared_ptr<GradientDescent> sgd =
-        std::make_shared<Momentum>(0.001, 0.9);
+        std::make_shared<Momentum>(LearningRate(0.001), MomentumRate(0.90),
+                                   WeightDecay(0.004));
     //transform_data(data.get_x_train());
     n1.train(transform_data(data.get_x_train()), data.get_y_train(), sgd,
-             Epochs(10), Patience(10), BatchSize(32));
+             Epochs(20), Patience(10), BatchSize(32));
      Matrix predictions = n1.predict(transform_data(data.get_x_test()));
      n_missclassified(predictions, data.get_y_test());
 }

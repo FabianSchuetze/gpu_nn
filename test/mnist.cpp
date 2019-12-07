@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
                 argv[1]));
     NeuralNetwork n1({l1, d1, r1, drop1, d2, r2, drop2, d3, s1}, loss, argv[1]);
     std::shared_ptr<GradientDescent> sgd =
-        std::make_shared<Momentum>(0.001, 0.75);
+        std::make_shared<Momentum>(LearningRate(0.001), MomentumRate(0.75));
     if (argc == 5) {
         Epochs epoch(strtol(argv[2], NULL, 10));
         Patience patience(strtol(argv[3], NULL, 10));

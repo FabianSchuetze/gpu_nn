@@ -37,6 +37,12 @@ class NamedPair {
     std::pair<T, T> value_;
 };
 
+struct MomentumRateParameter {};
+using MomentumRate = NamedType<dtype, MomentumRateParameter>;
+struct LearningRateParameter {};
+using LearningRate = NamedType<dtype, LearningRateParameter>;
+struct WeightDecayParameter {};
+using WeightDecay = NamedType<dtype, WeightDecayParameter>;
 struct EpochParamter {};
 using Epochs = NamedType<int, EpochParamter>;
 struct PatienceParamter {};

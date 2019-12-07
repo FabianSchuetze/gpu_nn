@@ -1,5 +1,7 @@
 #include "../../include/layer/convolution.h"
 #include <cblas.h>
+//#include "/usr/lib/x86_64-linux-gnu/cblas_atlas.h>
+//c
 #include <iostream>
 #include "../../include/cuda_math.h"
 #include "../../include/math.h"

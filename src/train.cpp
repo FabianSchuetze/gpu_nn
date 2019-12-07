@@ -205,11 +205,11 @@ void NeuralNetwork::consumer(std::shared_ptr<GradientDescent> sgd) {
             diff = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::system_clock::now() - begin);
             val_loss = validate(diff);
-            if (val_loss < train_args->best_error())
-                update_bkp(val_loss);
-            else 
-                restore();
             begin = std::chrono::system_clock::now();
+            //if (val_loss < train_args->best_error())
+                //update_bkp(val_loss);
+            //else 
+                //restore();
         }
     }
 }

@@ -5,19 +5,22 @@
 #include "../../include/math.h"
 #include "../../include/storage.h"
 
-StochasticGradientDescent::StochasticGradientDescent(dtype _learning_rate)
-    : GradientDescent(_learning_rate, "SGD"){};
+StochasticGradientDescent::StochasticGradientDescent(
+    LearningRate _learning_rate, WeightDecay _weight_decay)
+    : GradientDescent(_learning_rate, "SGD", _weight_decay){};
 
 StochasticGradientDescent::~StochasticGradientDescent() { ; };
 
 void StochasticGradientDescent::weight_update_cpu(
     const VecSharedStorage& gradients, VecSharedStorage& parameters,
     int batch_size, VecSharedStorage&) {
-    dtype effective_learing_rate = learing_rate / batch_size;
+    // dtype effective_learing_rate = learing_rate.get() / batch_size;
     for (size_t i = 0; i < parameters.size(); ++i) {
-        Matrix new_weight =
-            parameters[i]->return_data_const() -
-            effective_learing_rate * gradients[i]->return_data_const();
+        const Matrix& curr = parameters[i]->return_data_const();
+        Matrix new_weight = curr -
+                            learing_rate.get() / batch_size *
+                                gradients[i]->return_data_const() -
+                            weight_decay.get() * learing_rate.get() * curr;
         parameters[i]->update_cpu_data(new_weight);
     }
 }
@@ -25,11 +28,12 @@ void StochasticGradientDescent::weight_update_cpu(
 void StochasticGradientDescent::weight_update_gpu(
     const VecSharedStorage& gradients, VecSharedStorage& parameters,
     int batch_size, VecSharedStorage&) {
-    dtype effective_learing_rate = learing_rate / batch_size;
+    // dtype effective_learing_rate = learing_rate.get() / batch_size;
     for (size_t i = 0; i < parameters.size(); ++i) {
         SharedStorage& para = parameters[i];
         const SharedStorage& grad = gradients[i];
-        dtype alpha = -1 * effective_learing_rate;
-        my_Matrix_addition_inplace(grad, para, alpha);
+        dtype alpha_B = -1 * learing_rate.get() / batch_size;
+        dtype alpha_A = -1 * learing_rate.get() * weight_decay.get();
+        my_Matrix_addition(para, grad, para, alpha_A, alpha_B);
     }
 }

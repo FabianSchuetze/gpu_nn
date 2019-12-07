@@ -6,7 +6,7 @@
 #include "gradient_descent.h"
 class StochasticGradientDescent : public GradientDescent {
    public:
-    StochasticGradientDescent(dtype);
+    StochasticGradientDescent(LearningRate, WeightDecay = WeightDecay(0.));
     virtual ~StochasticGradientDescent();
     void weight_update_cpu(const VecSharedStorage&, VecSharedStorage&,
                            int, VecSharedStorage&) override;
