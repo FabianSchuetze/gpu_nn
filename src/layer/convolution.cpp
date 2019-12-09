@@ -3,6 +3,8 @@
 //#include "/usr/lib/x86_64-linux-gnu/cblas_atlas.h>
 //c
 #include <iostream>
+#include <memory>
+#include <random>
 #include "../../include/cuda_math.h"
 #include "../../include/math.h"
 
@@ -19,9 +21,10 @@ Convolution::Convolution(FilterShape filtershape, Pad pad, Stride stride,
       _channels(channels) {
     cublasStatus_t stat = cublasCreate(&_handle);
     CHECK_CUBLAS(stat);
-    initialize_weight();
-    initialize_grad();
     output_shape();
+    initialize_weight();
+    initialize_bias();
+    initialize_grad();
 }
 Convolution::~Convolution() { CHECK_CUBLAS(cublasDestroy(_handle)); };
 
@@ -45,7 +48,12 @@ void Convolution::initialize_grad() {
     int cols = _filters.get();
     int rows = _channels.get() * _kernel.first() * _kernel.second();
     Matrix tmp = Matrix(rows, cols).setZero();
+    int bias_rows = _filters.get() * _out.first() * _out.second();
+    Matrix bias_tmp = Matrix(bias_rows, 1).setZero();
+    Matrix assistance = Matrix(32, 1);
     gradients.push_back(std::make_shared<Storage>(tmp));
+    gradients.push_back(std::make_shared<Storage>(bias_tmp));
+    assistance_parameters.push_back(std::make_shared<Storage>(assistance));
 }
 
 void Convolution::initialize_weight() {
@@ -56,6 +64,12 @@ void Convolution::initialize_weight() {
     dtype glorot_scale = std::sqrt(6.) / std::sqrt(rows + cols);
     tmp *= glorot_scale;
     parameters.push_back(std::make_shared<Storage>(tmp));
+}
+
+void Convolution::initialize_bias() {
+    int rows = _filters.get() * _out.first() * _out.second();
+    Matrix mat = Matrix(rows, 1).setZero();
+    parameters.push_back(std::make_shared<Storage>(mat));
 }
 
 int Convolution::n_batches(const SharedStorage& in) {
@@ -106,6 +120,7 @@ void Convolution::forward_gpu(const SharedStorage& in, SharedStorage& out,
                       M, wp, K, &beta, outp, M);
         advance_pointers_forward(inpp, outp);
     }
+    my_add_vec_to_mat_colwise(out, parameters[1], 1.0f);
 }
 
 void Convolution::forward_cpu(const SharedStorage& in, SharedStorage& out,
@@ -151,10 +166,18 @@ void Convolution::check_size_backwards(const SharedStorage& values,
     }
 }
 
+void Convolution::resize_assistance(const SharedStorage& in) {
+    if (in->get_cols() != assistance_parameters[0]->get_rows()) {
+        Matrix ones = Matrix::Ones(in->get_cols(), 1);
+        assistance_parameters[0] = std::make_shared<Storage>(ones);
+    }
+}
+
 void Convolution::backward_gpu(const SharedStorage& values,
                                const SharedStorage& gradient_in,
                                SharedStorage& gradient_out) {
     check_size_backwards(values, gradient_out);
+    resize_assistance(gradient_in);
     int M, N, K;
     backwards_weight_grad_para(M, N, K);
     const float* valp = values->gpu_pointer_const();
@@ -165,6 +188,8 @@ void Convolution::backward_gpu(const SharedStorage& values,
     float beta = 0.0f;
     float alpha = 1.0f;
     float* alphap = &alpha;
+    my_Dgemv(_handle, CUBLAS_OP_N, gradient_in, assistance_parameters[0],
+             gradients[1], 1, 0);
     for (int n = 0; n < gradient_in->get_cols(); ++n) {
         my_cuda_Dgemm(_handle, CUBLAS_OP_T, CUBLAS_OP_N, M, N, K, alphap,
                     valp, K, grad_inp, K, &beta, weight_gradp, M);

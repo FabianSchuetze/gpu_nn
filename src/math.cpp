@@ -1,6 +1,7 @@
 #include "../include/math.h"
 #include <iostream>
 #include <memory>
+#include <stdexcept>
 #include "../include/common.h"
 #include "../include/cuda_math.h"
 void my_Dgemm(cublasHandle_t handle, cublasOperation_t transA,
@@ -57,6 +58,9 @@ void my_add_vec_to_mat_colwise(SharedStorage& A, const SharedStorage& B,
     int cols = A->get_cols();
     dtype* d_A = A->gpu_pointer();
     const dtype* d_B = B->gpu_pointer_const();
+    if (rows != B->get_rows()) {
+        throw std::runtime_error("Invalid size in addtion");
+    }
     add_vec_to_mat_colwise(rows, cols, d_A, d_B, alpha);
     // cudaDeviceSyncronize();
 }
@@ -298,4 +302,3 @@ void pooling_backward_cpu(const float* src, const float* mask, int window,
         }
     }
 }
-
