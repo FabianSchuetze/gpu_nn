@@ -47,31 +47,29 @@ Matrix transform_data(const Matrix& input) {
     StandardNormalization scaler;
     ZCAWhitening zca;
     Matrix norm = gcn.transform(input);
-    Matrix norm2 = scaler.transform(norm);
+    Matrix norm2 = scaler.transform(input);
     return norm2;
-    //zca.fit(norm2);
-    //Matrix white = zca.transform(norm2);
-    //return white;
+    // zca.fit(norm2);
+    // Matrix white = zca.transform(norm2);
+    // return white;
 }
 
 int main(int argc, char** argv) {
     Cifar10 data = Cifar10();
-    srand((unsigned int)time(0));
     Layer* l1 = new Input(data.get_x_train().cols());
     Layer* imcol1 = new Im2ColLayer(FilterShape(5, 5), Pad(2), Stride(1),
                                     ImageShape(32, 32), Channels(3));
-    Layer* conv1 =
-        new Convolution(FilterShape(5, 5), Pad(2), Stride(1), Filters(32),
-                        ImageShape(32, 32), Channels(3));
+    Layer* conv1 = new Convolution(FilterShape(5, 5), Pad(2), Stride(1),
+                                   Filters(32), ImageShape(32, 32), Channels(3),
+                                   new Normal(0., 0.0001));
     Layer* relu1 = new Relu;
     Layer* pool1 =
         new Pooling(Window(2), Stride(2), ImageShape(32, 32), Channels(32));
-    // Stide < Window: Overlapping pooling, as in AlexNet
     Layer* imcol2 = new Im2ColLayer(FilterShape(5, 5), Pad(2), Stride(1),
                                     ImageShape(16, 16), Channels(32));
     Layer* conv2 =
         new Convolution(FilterShape(5, 5), Pad(2), Stride(1), Filters(32),
-                        ImageShape(16, 16), Channels(32));
+                        ImageShape(16, 16), Channels(32), new Normal(0, 0.01));
     Layer* relu2 = new Relu;
     Layer* pool2 =
         new Pooling(Window(2), Stride(2), ImageShape(16, 16), Channels(32));
@@ -79,28 +77,23 @@ int main(int argc, char** argv) {
                                     ImageShape(8, 8), Channels(32));
     Layer* conv3 =
         new Convolution(FilterShape(5, 5), Pad(2), Stride(1), Filters(64),
-                        ImageShape(8, 8), Channels(32));
+                        ImageShape(8, 8), Channels(32), new Normal(0., 0.01));
     Layer* relu3 = new Relu;
     Layer* pool3 =
         new Pooling(Window(2), Stride(2), ImageShape(8, 8), Channels(64));
-    Layer* d1 = new Dense(64, 4 * 4 * 64);
-    Layer* relu4 = new Relu;
-    //Layer* d2 = new Dense(2048, 2048);
-    //Layer* relu5 = new Relu;
-    Layer* d3 = new Dense(10, 64);
+    Layer* d1 = new Dense(64, 4 * 4 * 64, new Normal(0, 0.1));
+    Layer* d3 = new Dense(10, 64, new Normal(0., 0.1));
     Layer* s1 = new Softmax;
     std::shared_ptr<Loss> loss =
         std::make_shared<CrossEntropy>(CrossEntropy("GPU"));
-    NeuralNetwork n1({l1,    imcol1, conv1, relu1,  pool1, imcol2, conv2,
-                      relu2, pool2,  relu3, imcol3, conv3, relu3,  pool3,
-                      d1,    relu4,  d3,    s1},
+    NeuralNetwork n1({l1, imcol1, conv1, relu1, pool1, imcol2, conv2, relu2,
+                      pool2, relu3, imcol3, conv3, relu3, pool3, d1, d3, s1},
                      loss, "GPU");
-    std::shared_ptr<GradientDescent> sgd =
-        std::make_shared<Momentum>(LearningRate(0.001), MomentumRate(0.90),
-                                   WeightDecay(0.004));
-    //transform_data(data.get_x_train());
+    std::shared_ptr<GradientDescent> sgd = std::make_shared<Momentum>(
+        LearningRate(0.001), MomentumRate(0.90), WeightDecay(0.004));
+    // transform_data(data.get_x_train());
     n1.train(transform_data(data.get_x_train()), data.get_y_train(), sgd,
-             Epochs(20), Patience(10), BatchSize(32));
-     Matrix predictions = n1.predict(transform_data(data.get_x_test()));
-     n_missclassified(predictions, data.get_y_test());
+             Epochs(30), Patience(10), BatchSize(32));
+    Matrix predictions = n1.predict(transform_data(data.get_x_test()));
+    n_missclassified(predictions, data.get_y_test());
 }

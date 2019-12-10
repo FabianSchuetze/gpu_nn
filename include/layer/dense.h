@@ -3,9 +3,10 @@
 #define dense_h
 #include "cublas_v2.h"
 #include "layer.h"
+#include "../initalization/init.hpp"
 class Dense : public Layer {
    public:
-    Dense(int, int);
+    Dense(int, int, Init*);
     virtual ~Dense() { CHECK_CUBLAS(cublasDestroy(_handle)); };
     int input_dimension() override { return _input_dimension; };
     int input_dimension() const override { return _input_dimension; };
@@ -27,7 +28,7 @@ class Dense : public Layer {
     // void clear_gradients_gpu() override;
     // int n_paras() override { return parameters.size();};
    private:
-    void initialize_weight(int, int);
+    void initialize_weight(int, int, Init*);
     void initialize_bias(int, int);
     void initialize_grad(int, int);
     // std::vector<SharedStorage> parameters;

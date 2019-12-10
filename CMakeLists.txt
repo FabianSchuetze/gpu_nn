@@ -32,26 +32,30 @@ set(${LIBRARY_TARGET_NAME}_SRC
     src/utils/zca_scaler.cpp
     src/utils/global_contrast_normalization.cpp
     src/gradient_descent/momentum.cpp
+    src/initalization/normal.cpp
+    src/initalization/glorot.cpp
 )
 if (UNIX)
   add_library(${LIBRARY_TARGET_NAME} SHARED ${${LIBRARY_TARGET_NAME}_SRC})
 endif(UNIX)
 
 # moved the CXX flags to after the cuda_add_library call
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g  -O3 -fPIC -lopenblas\
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3  -fPIC -lopenblas\
     -lcudnn -lcurand -L /usr/lib/cuda/lib64 -lcudart  -lcublas\
     -L /usr/lib/x86_64-linux-gnu -lblas\
     -Wall -std=c++17 -Wno-error=unused-command-line-argument")
 set(${LIBRARY_TARGET_NAME}_TEST
     #test/normalization.cpp
     test/cifar10.cpp
+    test/mnist_lenet.cpp
     test/mnist.cpp
+    test/inits.cpp
     #test/im2col_layer.cpp
     #test/convolution.cpp
     #test/softmax.cpp
     #test/dense.cpp
     #test/cross_entropy.cpp
-    test/forward.cpp
+    #test/forward.cpp
     #test/backward.cpp
     #test/sgd.cpp
     #test/dropout.cpp

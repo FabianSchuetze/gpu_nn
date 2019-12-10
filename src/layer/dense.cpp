@@ -30,11 +30,11 @@ typedef std::shared_ptr<Storage> SharedStorage;
     //}
 //}
 
-Dense::Dense(int rows, int cols)
+Dense::Dense(int rows, int cols, Init* init)
     : Layer("Dense"), _input_dimension(cols), _output_dimension(rows) {
     cublasStatus_t stat = cublasCreate(&_handle);
     CHECK_CUBLAS(stat);
-    initialize_weight(rows, cols);
+    initialize_weight(rows, cols, init);
     initialize_bias(rows, cols);
     initialize_grad(rows, cols);
 }
@@ -59,7 +59,7 @@ void Dense::backward_gpu(const SharedStorage& values,
                          const SharedStorage& gradient_in,
                          SharedStorage& gradient_out) {
     my_Dgemv(_handle, CUBLAS_OP_N, gradient_in, assistance_parameters[0],
-             gradients[1], 1, 0);
+             gradients[1], 2, 0);
     my_Dgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_T, gradient_in, values,
              gradients[0], 1, 0);
     my_Dgemm(_handle, CUBLAS_OP_T, CUBLAS_OP_N, parameters[0], gradient_in,
@@ -94,12 +94,13 @@ void Dense::initialize_grad(int rows, int cols) {
     assistance_parameters.push_back(std::make_shared<Storage>(ones));
 }
 
-void Dense::initialize_weight(int rows, int cols) {
-    srand((unsigned int)time(0));
-    Matrix mat = Matrix::Random(rows, cols);
-    dtype glorot_scale = std::sqrt(6.) / std::sqrt(rows + cols);
-    mat *= glorot_scale;
-    parameters.push_back(std::make_shared<Storage>(mat));
+void Dense::initialize_weight(int rows, int cols, Init* init) {
+    Matrix weights = init->weights(rows, cols);
+    //srand((unsigned int)time(0));
+    //Matrix mat = Matrix::Random(rows, cols);
+    //dtype glorot_scale = std::sqrt(6.) / std::sqrt(rows + cols);
+    //mat *= glorot_scale;
+    parameters.push_back(std::make_shared<Storage>(weights));
 }
 
 void Dense::initialize_bias(int rows, int cols) {

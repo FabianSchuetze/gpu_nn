@@ -16,5 +16,7 @@
 #include "gradient_descent/gradient_descent.h"
 #include "gradient_descent/sgd.h"
 #include "gradient_descent/momentum.hpp"
+#include "initalization/normal.hpp"
+#include "initalization/glorot.hpp"
 
 #endif

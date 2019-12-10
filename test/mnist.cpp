@@ -8,14 +8,15 @@ int main(int argc, char** argv) {
         throw std::invalid_argument("Must have one or four arguemnts");
     Mnist data = Mnist();
     srand((unsigned int)time(0));
+    Init* init = new Glorot();
     Layer* l1 = new Input(data.get_x_train().cols());
-    Layer* d1 = new Dense(1024, data.get_x_train().cols());
+    Layer* d1 = new Dense(1024, data.get_x_train().cols(), init);
     Layer* r1 = new Relu;
     Layer* drop1 = new Dropout(0.5);
-    Layer* d2 = new Dense(1024, 1024);
+    Layer* d2 = new Dense(1024, 1024, init);
     Layer* r2 = new Relu;
     Layer* drop2 = new Dropout(0.5);
-    Layer* d3 = new Dense(10, 1024);
+    Layer* d3 = new Dense(10, 1024, init);
     Layer* s1 = new Softmax;
     std::shared_ptr<Loss> loss = std::make_shared<CrossEntropy>(CrossEntropy(
                 argv[1]));

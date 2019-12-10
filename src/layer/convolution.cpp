@@ -10,7 +10,7 @@
 
 Convolution::Convolution(FilterShape filtershape, Pad pad, Stride stride,
                          Filters filters, ImageShape imageshape,
-                         Channels channels)
+                         Channels channels, Init* init)
     : Layer("Convolution"),
       _kernel(filtershape),
       _pad(pad),
@@ -22,7 +22,7 @@ Convolution::Convolution(FilterShape filtershape, Pad pad, Stride stride,
     cublasStatus_t stat = cublasCreate(&_handle);
     CHECK_CUBLAS(stat);
     output_shape();
-    initialize_weight();
+    initialize_weight(init);
     initialize_bias();
     initialize_grad();
 }
@@ -56,14 +56,11 @@ void Convolution::initialize_grad() {
     assistance_parameters.push_back(std::make_shared<Storage>(assistance));
 }
 
-void Convolution::initialize_weight() {
-    srand((unsigned int)time(0));
+void Convolution::initialize_weight(Init* init) {
     int cols = _filters.get();
     int rows = _channels.get() * _kernel.first() * _kernel.second();
-    Matrix tmp = Matrix::Random(rows, cols);
-    dtype glorot_scale = std::sqrt(6.) / std::sqrt(rows + cols);
-    tmp *= glorot_scale;
-    parameters.push_back(std::make_shared<Storage>(tmp));
+    Matrix weights = init->weights(rows, cols);
+    parameters.push_back(std::make_shared<Storage>(weights));
 }
 
 void Convolution::initialize_bias() {
@@ -189,7 +186,7 @@ void Convolution::backward_gpu(const SharedStorage& values,
     float alpha = 1.0f;
     float* alphap = &alpha;
     my_Dgemv(_handle, CUBLAS_OP_N, gradient_in, assistance_parameters[0],
-             gradients[1], 1, 0);
+             gradients[1], 2, 0);
     for (int n = 0; n < gradient_in->get_cols(); ++n) {
         my_cuda_Dgemm(_handle, CUBLAS_OP_T, CUBLAS_OP_N, M, N, K, alphap,
                     valp, K, grad_inp, K, &beta, weight_gradp, M);

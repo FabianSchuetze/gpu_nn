@@ -5,11 +5,13 @@
 #include "../common.h"
 #include "layer.h"
 #include "cublas_v2.h"
+#include "../initalization/init.hpp"
 class Convolution : public Layer {
    public:
     int output_dimension() override;
     int output_dimension() const override;
-    Convolution(FilterShape, Pad, Stride, Filters, ImageShape, Channels);
+    Convolution(FilterShape, Pad, Stride, Filters, ImageShape, Channels,
+                Init*);
     virtual ~Convolution();
     void forward_gpu(const SharedStorage&, SharedStorage&,
                      const std::string&) override;
@@ -28,9 +30,11 @@ class Convolution : public Layer {
     ImageShape _inp, _out;
     Channels _channels;
     cublasHandle_t _handle;
+    std::vector<SharedStorage> assistance_parameters;
 
-    void initialize_weight();
+    void initialize_weight(Init*);
     void initialize_grad();
+    void initialize_bias();
     void initialize_kernel();
     void check_size(const SharedStorage&);
     void check_size_backwards(const SharedStorage&, const SharedStorage&);
@@ -40,5 +44,6 @@ class Convolution : public Layer {
     void advance_pointers_backward(const float*&, const float*&, float*&);
     void backwards_weight_grad_para(int&, int&, int&);
     void backwards_out_grad_para(int&, int&, int&);
+    void resize_assistance(const SharedStorage&);
 };
 #endif

@@ -54,7 +54,7 @@ Matrix Cifar10::features(const std::vector<std::vector<uint8_t>>& inp) {
     std::vector<dtype> tmp = read(inp);
     Matrix tmp2            = Eigen::Map<Matrix>(tmp.data(), 3072, size);
     Matrix tmp3            = tmp2.transpose();
-    tmp3                   = (tmp3.array() / 255).matrix();
+    tmp3                   = (tmp3.array()).matrix();
     return tmp3;
 }
 
