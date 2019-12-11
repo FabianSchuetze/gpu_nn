@@ -16,12 +16,6 @@ Pooling::Pooling(Window window, Stride stride, ImageShape imageshape,
     output_shape();
 }
 
-double cpuSecond() {
-    struct timeval tp;
-    gettimeofday(&tp, NULL);
-    return ((double)tp.tv_sec + (double)tp.tv_usec * 1e-6);
-}
-
 void Pooling::output_shape() {
     int out_height = (_inp.first()- _window.get()) / _stride.get() + 1;
     int out_width = (_inp.second() - _window.get()) / _stride.get() + 1;
@@ -31,6 +25,7 @@ void Pooling::output_shape() {
 int Pooling::output_dimension() {
     return _out.first() * _out.second() * _channels.get();
 }
+
 int Pooling::output_dimension() const {
     return _out.first() * _out.second() * _channels.get();
 }
@@ -73,6 +68,7 @@ void Pooling::forward_cpu(const std::shared_ptr<Storage>& in,
                 _inp.first(), _inp.second(), _channels.get(), batch_size,
                 out->cpu_pointer(), mask->cpu_pointer());
 }
+
 void Pooling::backward_gpu(const SharedStorage&,
                            const SharedStorage& gradient_in,
                            SharedStorage& gradient_out) {

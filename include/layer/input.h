@@ -18,12 +18,6 @@ class Input : public Layer {
                       SharedStorage&) override;
     void backward_cpu(const SharedStorage&, const SharedStorage&,
                       SharedStorage&) override;
-    //VecSharedStorage return_parameters() override { return parameters; };
-    //VecSharedStorage return_gradients() override { return gradients; };
-    //VecSharedStorage return_parameters() const override { return parameters; };
-    //VecSharedStorage return_gradients() const override { return gradients; };
-    //void clear_gradients_cpu() override;
-    //void clear_gradients_gpu() override;
 
    private:
     int _output_dimension;

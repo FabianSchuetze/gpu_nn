@@ -730,21 +730,6 @@ void cuda_masking(int rows, int cols, const double prob, double* d_A) {
     MY_CHECK(cudaPeekAtLastError());
 }
 
-//void pooling_gpu(const float* bottom_data, int window, int stride, int rows,
-                 //int cols, int channels, int batches, float* top_data,
-                 //float* mask) {
-    //if (((rows - window) % stride) or ((cols - window) % stride)) {
-        //throw std::invalid_argument("Doesnt match");
-    //}
-    //dim3 block(16, 16, 4);
-    //dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y,
-              //(channels + block.z - 1) / block.z);
-    //CudaPooling<<<grid, block>>>(bottom_data, window, stride, rows, cols,
-                                 //channels, batches, top_data, mask);
-    //// MY_CHECK(cudaDeviceSynchronize());
-    //MY_CHECK(cudaPeekAtLastError());
-//}
-
 void pooling_gpu(const float* bottom_data, int window, int stride, int rows,
                  int cols, int channels, int batches, float* top_data,
                  float* mask) {
