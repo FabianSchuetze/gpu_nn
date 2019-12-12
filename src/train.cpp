@@ -3,6 +3,7 @@
 #include <iostream>
 #include <iterator>
 #include <memory>
+#include <numeric>
 #include <random>
 #include <stdexcept>
 #include <thread>
@@ -96,6 +97,25 @@ void NeuralNetwork::update_weights_gpu(std::shared_ptr<GradientDescent>& opt,
     }
 }
 
+void NeuralNetwork::prepare_subset(const vector<int>& pop, vector<int>& subset,
+                                   int& start, const int& n_samples) {
+    int i = 0;
+    while (start + i < start + n_samples) {
+        subset[i] = pop[start + i];
+        i++;
+    }
+    start += n_samples;
+}
+
+void NeuralNetwork::maybe_shuffle(vector<int>& pop, int& start, const int& end,
+                                  const int& step, std::mt19937& gen) {
+    if (start + step >= end) {
+        std::cout << "shuffling" << std::endl;
+        std::shuffle(pop.begin(), pop.end(), gen);
+        start = 0;
+    }
+}
+
 void NeuralNetwork::random_numbers(vector<int>& samples, std::mt19937& gen) {
     if (!train_args) throw std::runtime_error("Train args is not set");
     std::uniform_int_distribution<> uniform(0,
@@ -156,10 +176,19 @@ void NeuralNetwork::producer() {
     gen.seed(0);
     Matrix x_train, y_train;
     vector<int> samples(train_args->batch_size());
+    vector<int> population(train_args->x_train().rows());
+    std::iota(population.begin(), population.end(), 0);
     std::pair<SharedStorage, SharedStorage> data;
+    int producer_idx(0);
+    int end(train_args->x_train().rows());
+    std::shuffle(population.begin(), population.end(), gen);
     while (train_args->current_epoch() < train_args->epochs()) {
         if (train_args->data_queue.size() < 5) {
-            random_numbers(samples, gen);
+            maybe_shuffle(samples, producer_idx, end, train_args->batch_size(),
+                          gen);
+            prepare_subset(population, samples, producer_idx,
+                           train_args->batch_size());
+            // random_numbers(samples, producer_idx);
             get_new_sample(samples, x_train, y_train);
             shared_ptr<Storage> SharedInput = make_shared<Storage>(x_train);
             shared_ptr<Storage> SharedTarget = make_shared<Storage>(y_train);

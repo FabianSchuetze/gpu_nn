@@ -1,8 +1,8 @@
 #ifndef network_h
 #define network_h
 #include <chrono>
-#include <list>
 #include <deque>
+#include <list>
 #include <memory>
 #include <random>
 #include <vector>
@@ -47,9 +47,8 @@ class NeuralNetwork {
     void random_numbers(std::vector<int>&, std::mt19937&);
 
    private:
-    typedef void (NeuralNetwork::*update_func)(std::shared_ptr<GradientDescent>&,
-                                               std::vector<VecSharedStorage>&,
-                                               int);
+    typedef void (NeuralNetwork::*update_func)(
+        std::shared_ptr<GradientDescent>&, std::vector<VecSharedStorage>&, int);
     typedef void (NeuralNetwork::*forward_func)(std::vector<SharedStorage>&,
                                                 const std::string&);
     typedef void (NeuralNetwork::*backward_func)(
@@ -71,7 +70,8 @@ class NeuralNetwork {
                       const std::vector<SharedStorage>&);
     void backward_gpu(std::vector<SharedStorage>&,
                       const std::vector<SharedStorage>&);
-    //void allocate_storage(int, int&, std::vector<SharedStorage>&, const Layer*);
+    // void allocate_storage(int, int&, std::vector<SharedStorage>&, const
+    // Layer*);
     void get_new_sample(const std::vector<int>&, Matrix&, Matrix&);
     void consumer(std::shared_ptr<GradientDescent>&);
     void producer();
@@ -91,5 +91,9 @@ class NeuralNetwork {
     int convert_output_dimension(const std::shared_ptr<Layer>&);
     void allocate_storage(int, std::vector<SharedStorage>&,
                           const std::shared_ptr<Layer>&);
+    void maybe_shuffle(std::vector<int>&, int&, const int&, const int&,
+                       std::mt19937&);
+    void prepare_subset(const std::vector<int>&, std::vector<int>&, int&,
+                        const int&);
 };
 #endif
