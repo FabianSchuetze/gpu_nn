@@ -38,16 +38,16 @@ class NeuralNetwork {
     std::vector<SharedStorage> allocate_backward(int);
     void forward(std::vector<SharedStorage>&, const std::string&);
     void fill_hiddens(std::vector<SharedStorage>&, const Matrix&);
-    void update_weights(std::shared_ptr<GradientDescent>,
+    void update_weights(std::shared_ptr<GradientDescent>&,
                         std::vector<VecSharedStorage>&, int);
-    void train(std::shared_ptr<GradientDescent>);
-    void train(const Matrix&, const Matrix&, std::shared_ptr<GradientDescent>,
+    void train(std::shared_ptr<GradientDescent>&);
+    void train(const Matrix&, const Matrix&, std::shared_ptr<GradientDescent>&,
                Epochs, Patience, BatchSize);
     dtype validate(std::chrono::milliseconds);
     void random_numbers(std::vector<int>&, std::mt19937&);
 
    private:
-    typedef void (NeuralNetwork::*update_func)(std::shared_ptr<GradientDescent>,
+    typedef void (NeuralNetwork::*update_func)(std::shared_ptr<GradientDescent>&,
                                                std::vector<VecSharedStorage>&,
                                                int);
     typedef void (NeuralNetwork::*forward_func)(std::vector<SharedStorage>&,
@@ -61,9 +61,9 @@ class NeuralNetwork {
     std::shared_ptr<Loss> loss;
     std::unique_ptr<trainArgs> train_args;
     void create_loss(const std::string& s);
-    void update_weights_cpu(std::shared_ptr<GradientDescent>,
+    void update_weights_cpu(std::shared_ptr<GradientDescent>&,
                             std::vector<VecSharedStorage>&, int);
-    void update_weights_gpu(std::shared_ptr<GradientDescent>,
+    void update_weights_gpu(std::shared_ptr<GradientDescent>&,
                             std::vector<VecSharedStorage>&, int);
     void forward_gpu(std::vector<SharedStorage>&, const std::string&);
     void forward_cpu(std::vector<SharedStorage>&, const std::string&);
@@ -73,7 +73,7 @@ class NeuralNetwork {
                       const std::vector<SharedStorage>&);
     //void allocate_storage(int, int&, std::vector<SharedStorage>&, const Layer*);
     void get_new_sample(const std::vector<int>&, Matrix&, Matrix&);
-    void consumer(std::shared_ptr<GradientDescent>);
+    void consumer(std::shared_ptr<GradientDescent>&);
     void producer();
     std::vector<int> predict_sample(int&, int);
     void get_new_predict_sample(const std::vector<int>&, const Matrix&,

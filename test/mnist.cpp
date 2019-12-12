@@ -8,8 +8,8 @@ typedef std::shared_ptr<Layer> s_Layer;
 using std::make_shared;
 
 int main(int argc, char** argv) {
-    //if ((argc != 2) and (argc != 5))
-        //throw std::invalid_argument("Must have one or four arguemnts");
+    if ((argc != 2) and (argc != 5))
+        throw std::invalid_argument("Must have one or four arguemnts");
     Mnist data = Mnist();
     srand((unsigned int)time(0));
     Init* init = new Glorot();
