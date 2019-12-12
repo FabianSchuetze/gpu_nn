@@ -1,25 +1,29 @@
 #include "../../include/layer/dropout.h"
 #include <curand.h>
+#include <iomanip>
 #include <iostream>
+#include <memory>
+#include <random>
 #include <stdexcept>
 #include "../../include/cuda_math.h"
 #include "../../include/math.h"
-#include <random>
-#include <iomanip>
 
 Dropout::Dropout(dtype prob) : Layer("Dropout"), probability(prob) {
     initialize_random();
     initialize_masking();
-    //_name = "Dropout";
-    //std::random_device rd;
-    //gen_host = std::mt19937(rd());
-    //gen_host.seed(0);
     dis = std::uniform_real_distribution<float>(0.0, 1.0);
 }
 
-void Dropout::initialize_masking() {
-    masking = std::make_shared<Storage>();
+Dropout::Dropout(dtype prob, const std::shared_ptr<Layer>& previous)
+    : Layer("Dropout"), probability(prob) {
+    initialize_random();
+    initialize_masking();
+    dis = std::uniform_real_distribution<float>(0.0, 1.0);
+    _previous = previous;
 }
+
+
+void Dropout::initialize_masking() { masking = std::make_shared<Storage>(); }
 
 Dropout::~Dropout() { CHECK_CURAND(curandDestroyGenerator(gen_device)); }
 
@@ -34,8 +38,8 @@ void Dropout::initialize_random() {
 
 void Dropout::check_masking(const SharedStorage& in) {
     if (!same_size(in, masking)) {
-        masking = std::make_shared<Storage>(Matrix::Zero(in->get_rows(),
-                    in->get_cols()));
+        masking = std::make_shared<Storage>(
+            Matrix::Zero(in->get_rows(), in->get_cols()));
     }
 }
 
@@ -48,7 +52,8 @@ void Dropout::forward_cpu(const SharedStorage& in, SharedStorage& out,
     check_masking(in);
     int rows = in->get_rows();
     int cols = in->get_cols();
-    Matrix bern = Matrix::NullaryExpr(rows,cols,[&](){return dis(gen_host);});
+    Matrix bern =
+        Matrix::NullaryExpr(rows, cols, [&]() { return dis(gen_host); });
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; j++) {
             masking->return_data()(i, j) =
@@ -66,7 +71,7 @@ void Dropout::forward_gpu(const SharedStorage& in, SharedStorage& out,
         out->update_gpu_data(in->gpu_pointer_const());
         return;
     };
-    srand((unsigned int) 0);
+    srand((unsigned int)0);
     check_masking(in);
     int rows = in->get_rows();
     int cols = in->get_cols();
@@ -83,7 +88,7 @@ void Dropout::check_backward() {
 }
 
 void Dropout::backward_gpu(const SharedStorage&, const SharedStorage& grad_in,
-                           SharedStorage& grad_out){
+                           SharedStorage& grad_out) {
     check_backward();
     my_mult_elementwise(grad_in, masking, grad_out);
 };
@@ -96,5 +101,14 @@ void Dropout::backward_cpu(const SharedStorage&, const SharedStorage& grad_in,
                                   .matrix();
 }
 
-//void Dropout::clear_gradients_cpu(){};
-//void Dropout::clear_gradients_gpu(){};
+std::vector<int> Dropout::output_dimension() {
+    if (_previous) {
+        return _previous->output_dimension();
+    }
+    else {
+        throw std::invalid_argument("Doesn't match in Dropout");
+    }
+}
+
+// void Dropout::clear_gradients_cpu(){};
+// void Dropout::clear_gradients_gpu(){};

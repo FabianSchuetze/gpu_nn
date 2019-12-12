@@ -16,10 +16,17 @@ typedef std::shared_ptr<Storage> SharedStorage;
 Softmax::Softmax() : Layer("Activation") {
     cublasStatus_t stat = cublasCreate(&_handle);
     CHECK_CUBLAS(stat);
-    //_name = "Activation";
 }
 
-void Softmax::forward_cpu(const SharedStorage& in, SharedStorage& out, const std::string&) {
+Softmax::Softmax(const std::shared_ptr<Layer>& previous) : Layer("Activation") {
+    cublasStatus_t stat = cublasCreate(&_handle);
+    CHECK_CUBLAS(stat);
+    initialize_output_dimension(previous);
+    _previous = previous;
+}
+
+void Softmax::forward_cpu(const SharedStorage& in, SharedStorage& out,
+                          const std::string&) {
     int cols = in->get_cols();
     const Matrix& in_ref = in->return_data_const();
     Matrix& out_ref = out->return_data();
@@ -31,7 +38,8 @@ void Softmax::forward_cpu(const SharedStorage& in, SharedStorage& out, const std
         out_ref(all, i) = out_ref(all, i).array() / summation(i);
 }
 
-void Softmax::forward_gpu(const SharedStorage& in, SharedStorage& out, const std::string&) {
+void Softmax::forward_gpu(const SharedStorage& in, SharedStorage& out,
+                          const std::string&) {
     int rows = in->get_rows();
     int cols = in->get_cols();
     // Ones could be part of the class definition
@@ -49,5 +57,3 @@ void Softmax::backward_gpu(const SharedStorage&, const SharedStorage&,
                            SharedStorage&) {}
 void Softmax::backward_cpu(const SharedStorage&, const SharedStorage&,
                            SharedStorage&) {}
-//void Softmax::clear_gradients_cpu(){};
-//void Softmax::clear_gradients_gpu(){};

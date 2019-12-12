@@ -1,4 +1,6 @@
 #pragma once
+#include <algorithm>
+#include <memory>
 #ifndef softmax_h
 #define softmax_h
 #include "cublas_v2.h"
@@ -9,6 +11,7 @@ class Softmax : public Layer {
 
    public:
     Softmax();
+    explicit Softmax(const std::shared_ptr<Layer>&);
     virtual ~Softmax() { CHECK_CUBLAS(cublasDestroy(_handle)); };
     void forward_gpu(const SharedStorage&, SharedStorage&,
                      const std::string&) override;

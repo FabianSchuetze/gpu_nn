@@ -1,8 +1,10 @@
 #include "../../include/layer/pooling.h"
 #include <sys/time.h>
 #include <iostream>
+#include <memory>
 #include "../../include/cuda_math.h"
 #include "../../include/math.h"
+
 Pooling::Pooling(Window window, Stride stride, ImageShape imageshape,
                  Channels channels)
     : Layer("Pooling"),
@@ -13,21 +15,37 @@ Pooling::Pooling(Window window, Stride stride, ImageShape imageshape,
       _out(0, 0),
       batch_size(0) {
     initialize_masking();
-    output_shape();
+    initialize_output_dimension();
 }
 
-void Pooling::output_shape() {
-    int out_height = (_inp.first()- _window.get()) / _stride.get() + 1;
-    int out_width = (_inp.second() - _window.get()) / _stride.get() + 1;
+Pooling::Pooling(Window window, Stride stride,
+                 const std::shared_ptr<Convolution>& previous)
+    : Layer("Pooling"),
+      _window(window),
+      _stride(stride),
+      _inp(previous->_inp),
+      _channels(previous->_channels),
+      _out(previous->_out),
+      batch_size(0) {
+    // initialize_previous();
+    initialize_masking();
+    initialize_output_dimension();
+    _previous = previous;
+}
+
+void Pooling::initialize_output_dimension() {
+    int out_height =
+        static_cast<int>(ceil(static_cast<float>(_inp.first() - _window.get()) /
+                              _stride.get())) +
+        1;
+    int out_width = static_cast<int>(
+                        ceil(static_cast<float>(_inp.second() - _window.get()) /
+                             _stride.get())) +
+                    1;
     _out = ImageShape(out_height, out_width);
-}
-
-int Pooling::output_dimension() {
-    return _out.first() * _out.second() * _channels.get();
-}
-
-int Pooling::output_dimension() const {
-    return _out.first() * _out.second() * _channels.get();
+    _out_dim.push_back(_channels.get());
+    _out_dim.push_back(out_height);
+    _out_dim.push_back(out_width);
 }
 
 void Pooling::initialize_masking() { mask = std::make_shared<Storage>(); }

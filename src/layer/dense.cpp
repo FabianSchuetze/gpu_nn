@@ -15,38 +15,74 @@ using std::vector;
 
 typedef std::shared_ptr<Storage> SharedStorage;
 
-//void print_Matrix_to_stdout2(const Matrix& val, std::string loc) {
-    //int rows(val.rows()), cols(val.cols());
-    //std::ofstream myfile(loc);
-    //myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
-    //myfile << std::fixed;
-    //myfile << std::setprecision(2);
-    //for (int row = 0; row < rows; ++row) {
-        //myfile << val(row, 0);
-        //for (int col = 1; col < cols; ++col) {
-            //myfile << ", " << val(row, col);
-        //}
-        //myfile << std::endl;
-    //}
+// void print_Matrix_to_stdout2(const Matrix& val, std::string loc) {
+// int rows(val.rows()), cols(val.cols());
+// std::ofstream myfile(loc);
+// myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
+// myfile << std::fixed;
+// myfile << std::setprecision(2);
+// for (int row = 0; row < rows; ++row) {
+// myfile << val(row, 0);
+// for (int col = 1; col < cols; ++col) {
+// myfile << ", " << val(row, col);
+//}
+// myfile << std::endl;
+//}
 //}
 
-Dense::Dense(int rows, int cols, Init* init)
-    : Layer("Dense"), _input_dimension(cols), _output_dimension(rows) {
+Dense::Dense(Features out, Features in, Init* init)
+    : Layer("Dense"), _out(out), _in(in) {
+    _previous = NULL;
     cublasStatus_t stat = cublasCreate(&_handle);
     CHECK_CUBLAS(stat);
-    initialize_weight(rows, cols, init);
-    initialize_bias(rows, cols);
-    initialize_grad(rows, cols);
+    initialize_weight(_out.get(), _in.get(), init);
+    initialize_bias(_out.get(), _in.get());
+    initialize_grad(_out.get(), _in.get());
+    initialize_output_dimension();
 }
 
-void Dense::forward_cpu(const SharedStorage& in, SharedStorage& out, const std::string&) {
+Dense::Dense(Features out, const std::shared_ptr<Layer>& previous, Init* init)
+    : Layer("Dense"), _out(out), _in(0) {
+    _previous = previous;
+    initialize_input_dimension(previous);
+    cublasStatus_t stat = cublasCreate(&_handle);
+    CHECK_CUBLAS(stat);
+    initialize_weight(_out.get(), _in.get(), init);
+    initialize_bias(_out.get(), _in.get());
+    initialize_grad(_out.get(), _in.get());
+    initialize_output_dimension();
+}
+
+void Dense::initialize_input_dimension(const std::shared_ptr<Layer>& previous) {
+    std::vector<int> in = previous->output_dimension();
+    int i = 1;
+    if ((in.size() == 1) and (in[0] > 0)) {
+        i = in[0];
+    } else if (in.size() == 3) {
+        for (int shape : previous->output_dimension()) i *= shape;
+    } else {
+        std::stringstream ss;
+        ss << "Dimension do not fit, in:\n"
+           << __PRETTY_FUNCTION__ << "\ncalled with layer " << previous->name()
+           << " from\n"
+           << __FILE__ << " at " << __LINE__;
+        throw std::invalid_argument(ss.str());
+    }
+    _in = Features(i);
+}
+
+void Dense::initialize_output_dimension() { _out_dim.push_back(_out.get()); }
+
+void Dense::forward_cpu(const SharedStorage& in, SharedStorage& out,
+                        const std::string&) {
     const Matrix& in_ref = in->return_data_const();
     out->return_data() = parameters[0]->return_data_const() * in_ref;
     for (int i = 0; i < out->get_cols(); i++)
         out->return_data()(all, i) += parameters[1]->return_data_const();
 }
 
-void Dense::forward_gpu(const SharedStorage& in, SharedStorage& out, const std::string&) {
+void Dense::forward_gpu(const SharedStorage& in, SharedStorage& out,
+                        const std::string&) {
     cublasOperation_t transA = CUBLAS_OP_N;
     cublasOperation_t transB = CUBLAS_OP_N;
     dtype alpha = 1;
@@ -73,7 +109,7 @@ void Dense::backward_cpu(const SharedStorage& values,
     Matrix& weight_ref = gradients[0]->return_data();
     bias_ref = gradient_in->return_data_const().rowwise().sum();
     weight_ref = gradient_in->return_data_const() *
-                  values->return_data_const().transpose();
+                 values->return_data_const().transpose();
     Matrix tmp = parameters[0]->return_data_const().transpose() *
                  gradient_in->return_data_const();
     if ((tmp.rows() != gradient_out->get_rows()) or
@@ -96,10 +132,6 @@ void Dense::initialize_grad(int rows, int cols) {
 
 void Dense::initialize_weight(int rows, int cols, Init* init) {
     Matrix weights = init->weights(rows, cols);
-    //srand((unsigned int)time(0));
-    //Matrix mat = Matrix::Random(rows, cols);
-    //dtype glorot_scale = std::sqrt(6.) / std::sqrt(rows + cols);
-    //mat *= glorot_scale;
     parameters.push_back(std::make_shared<Storage>(weights));
 }
 
@@ -107,16 +139,3 @@ void Dense::initialize_bias(int rows, int cols) {
     Matrix mat = Matrix(rows, 1).setZero();
     parameters.push_back(std::make_shared<Storage>(mat));
 }
-
-//void Dense::clear_gradients_cpu() {
-    //for (SharedStorage& grad : gradients) {
-        //Matrix tmp = Matrix::Zero(grad->get_rows(), grad->get_cols());
-        //grad->update_cpu_data(tmp);
-    //}
-//}
-
-//void Dense::clear_gradients_gpu() {
-    //for (SharedStorage& grad : gradients) {
-        //grad->update_gpu_data(0.);
-    //}
-//}

@@ -39,6 +39,8 @@ class NamedPair {
 
 struct MomentumRateParameter {};
 using MomentumRate = NamedType<dtype, MomentumRateParameter>;
+struct FeaturesParameter {};
+using Features = NamedType<int, FeaturesParameter>;
 struct LearningRateParameter {};
 using LearningRate = NamedType<dtype, LearningRateParameter>;
 struct WeightDecayParameter {};

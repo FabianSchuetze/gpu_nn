@@ -6,19 +6,25 @@
 #include "../storage.h"
 class Layer {
    protected:
+    friend class NeuralNetwork;
     typedef std::shared_ptr<Storage> SharedStorage;
     typedef std::vector<std::shared_ptr<Storage>> VecSharedStorage;
+    std::vector<int> _out_dim;
+    std::vector<SharedStorage> parameters;
+    std::vector<SharedStorage> gradients;
+    std::string _name;
+    std::shared_ptr<Layer> _previous;
+    virtual void initialize_output_dimension(const std::shared_ptr<Layer>&);
+    virtual void initialize_output_dimension();
 
    public:
     Layer() : _name("Template"){};
-    Layer(std::string s): _name(s) {};
+    explicit Layer(const std::string& s): _name(s) {};
     virtual ~Layer() = default;
-    virtual int input_dimension();
-    virtual int input_dimension() const;
-    virtual int output_dimension();
-    virtual int output_dimension() const;
-    virtual int n_cols();
-    virtual int n_cols() const;
+    virtual int input_dimension() {return 0;}
+    virtual int input_dimension() const {return 0;}
+    virtual std::vector<int> output_dimension() {return _out_dim;}
+    virtual std::vector<int> output_dimension() const {return _out_dim;}
     virtual std::string name() { return _name; };
     virtual std::string name() const { return _name; };
     virtual void forward_gpu(const SharedStorage&, SharedStorage&,
@@ -36,10 +42,6 @@ class Layer {
     //virtual void clear_gradients_cpu();
     //virtual void clear_gradients_gpu();
     virtual int n_paras() { return parameters.size(); };
-
-   protected:
-    std::vector<SharedStorage> parameters;
-    std::vector<SharedStorage> gradients;
-    std::string _name;
+    virtual std::shared_ptr<Layer> previous() {return _previous;};
 };
 #endif

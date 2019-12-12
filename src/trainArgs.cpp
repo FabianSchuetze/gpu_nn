@@ -9,7 +9,7 @@ trainArgs::trainArgs(const Matrix& features, const Matrix& target,
                      Epochs __epochs, Patience __patience,
                      BatchSize __batch_size,
                      std::shared_ptr<GradientDescent>& sgd,
-                     std::vector<Layer*>& layers)
+                     std::list<std::shared_ptr<Layer>>& layers)
     : _x_train(),
       _x_val(),
       _y_train(),
@@ -26,11 +26,11 @@ trainArgs::trainArgs(const Matrix& features, const Matrix& target,
     train_test_split(features, target, 0.1);
     _y_val_shared = std::make_shared<Storage>(_y_val.transpose());
     create_optimizers(sgd, layers);
-    create_backup(layers);
+    // create_backup(layers);
 };
 
-void trainArgs::create_backup(const std::vector<Layer*>& layers) {
-    for (Layer* layer : layers) {
+void trainArgs::create_backup(const std::list<std::shared_ptr<Layer>>& layers) {
+    for (std::shared_ptr<Layer> layer : layers) {
         if (layer->n_paras() > 0) {
             for (SharedStorage store : layer->return_parameters()) {
                 Matrix tmp = store->copy_data();
@@ -40,10 +40,11 @@ void trainArgs::create_backup(const std::vector<Layer*>& layers) {
     }
 }
 
-void trainArgs::create_optimizers(const std::shared_ptr<GradientDescent>& sgd,
-                                  const std::vector<Layer*>& layers) {
+void trainArgs::create_optimizers(
+    const std::shared_ptr<GradientDescent>& sgd,
+    const std::list<std::shared_ptr<Layer>>& layers) {
     if (sgd->name() == "Momentum")
-        for (Layer* layer : layers) {
+        for (std::shared_ptr<Layer> layer : layers) {
             if (layer->n_paras() > 0) {
                 std::vector<SharedStorage> helper;
                 for (SharedStorage store : layer->return_gradients()) {

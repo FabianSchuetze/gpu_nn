@@ -1,14 +1,15 @@
 #pragma once
+#include <memory>
 #ifndef pooling_h
 #define pooling_h
 #include "layer.h"
+#include "convolution.h"
 class Pooling : public Layer {
    public:
     //Pooling(int);
     Pooling(Window, Stride, ImageShape, Channels);
+    Pooling(Window, Stride, const std::shared_ptr<Convolution>&);
     virtual ~Pooling() = default;
-    int output_dimension() override;
-    int output_dimension() const override;
     void forward_gpu(const std::shared_ptr<Storage>&,
                      std::shared_ptr<Storage>&, const std::string&) override;
     void forward_cpu(const std::shared_ptr<Storage>&,
@@ -30,6 +31,7 @@ class Pooling : public Layer {
     void check_masking(const SharedStorage&);
     void initialize_masking();
     void inline check_input_size(const SharedStorage&);
-    void output_shape();
+    void initialize_output_dimension() override;
+    //void initialize_previous(Layer*);
 };
 #endif

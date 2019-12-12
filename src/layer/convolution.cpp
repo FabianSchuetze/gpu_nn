@@ -1,10 +1,12 @@
 #include "../../include/layer/convolution.h"
 #include <cblas.h>
+#include <algorithm>
 //#include "/usr/lib/x86_64-linux-gnu/cblas_atlas.h>
-//c
+// c
 #include <iostream>
 #include <memory>
 #include <random>
+#include <stdexcept>
 #include "../../include/cuda_math.h"
 #include "../../include/math.h"
 
@@ -21,27 +23,62 @@ Convolution::Convolution(FilterShape filtershape, Pad pad, Stride stride,
       _channels(channels) {
     cublasStatus_t stat = cublasCreate(&_handle);
     CHECK_CUBLAS(stat);
-    output_shape();
+    //initialize_output_dimension();
     initialize_weight(init);
     initialize_bias();
     initialize_grad();
 }
+
+Convolution::Convolution(FilterShape filtershape, Pad pad, Stride stride,
+                         Filters filters,
+                         const std::shared_ptr<Layer>& previous, Init* init)
+    : Layer("Convolution"),
+      _kernel(filtershape),
+      _pad(pad),
+      _stride(stride),
+      _filters(filters),
+      _inp(0, 0),
+      _out(0, 0),
+      _channels(0) {
+    cublasStatus_t stat = cublasCreate(&_handle);
+    CHECK_CUBLAS(stat);
+    initialize_output_dimension();
+    initialize_input_dimension(previous);
+    initialize_weight(init);
+    initialize_bias();
+    initialize_grad();
+    _previous = previous;
+}
+
+void Convolution::initialize_input_dimension(
+    const std::shared_ptr<Layer>& previous) {
+    std::vector<int> shapes = previous->output_dimension();
+    if (shapes.size() == 3) {
+        int channels = shapes[0];
+        int height = shapes[1];
+        int width = shapes[2];
+        _channels = Channels(channels);
+        _inp = ImageShape(height, width);
+    } else {
+        throw std::invalid_argument("Cannot construct the thing");
+    }
+}
+
+void Convolution::reset_previous(const std::shared_ptr<Layer>& previous) {
+    _previous = previous;
+}
+
 Convolution::~Convolution() { CHECK_CUBLAS(cublasDestroy(_handle)); };
 
-void Convolution::output_shape() {
+void Convolution::initialize_output_dimension() {
     int out_height =
         (_inp.first() + 2 * _pad.get() - _kernel.first()) / _stride.get() + 1;
     int out_width =
         (_inp.second() + 2 * _pad.get() - _kernel.second()) / _stride.get() + 1;
     _out = ImageShape(out_height, out_width);
-}
-
-int Convolution::output_dimension() {
-    return _filters.get() * _out.first() * _out.second();
-}
-
-int Convolution::output_dimension() const {
-    return _filters.get() * _out.first() * _out.second();
+    _out_dim.push_back(_channels.get());
+    _out_dim.push_back(out_height);
+    _out_dim.push_back(out_width);
 }
 
 void Convolution::initialize_grad() {
@@ -188,11 +225,11 @@ void Convolution::backward_gpu(const SharedStorage& values,
     my_Dgemv(_handle, CUBLAS_OP_N, gradient_in, assistance_parameters[0],
              gradients[1], 2, 0);
     for (int n = 0; n < gradient_in->get_cols(); ++n) {
-        my_cuda_Dgemm(_handle, CUBLAS_OP_T, CUBLAS_OP_N, M, N, K, alphap,
-                    valp, K, grad_inp, K, &beta, weight_gradp, M);
+        my_cuda_Dgemm(_handle, CUBLAS_OP_T, CUBLAS_OP_N, M, N, K, alphap, valp,
+                      K, grad_inp, K, &beta, weight_gradp, M);
         beta = 0.0f;
         my_cuda_Dgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_T, K, M, N, alphap,
-                    grad_inp, K, wp, M, &beta, grad_outp, K);
+                      grad_inp, K, wp, M, &beta, grad_outp, K);
         beta = 1.0f;
         advance_pointers_backward(grad_inp, valp, grad_outp);
     }

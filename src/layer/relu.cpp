@@ -3,6 +3,7 @@
 //#include <iostream>
 //#include <memory>
 #include <iostream>
+#include <memory>
 #include "../../include/layer/layer.h"
 #include "../../include/math.h"
 
@@ -11,6 +12,13 @@ Relu::Relu() : Layer("Activation") {
     cublasStatus_t stat = cublasCreate(&_handle);
     CHECK_CUBLAS(stat);
     //_name = "Activation";
+}
+
+Relu::Relu(const std::shared_ptr<Layer>& previous) : Layer("Activation") {
+    cublasStatus_t stat = cublasCreate(&_handle);
+    CHECK_CUBLAS(stat);
+    initialize_output_dimension(previous);
+    _previous = previous;
 }
 
 void Relu::forward_cpu(const SharedStorage& in, SharedStorage& out,
@@ -48,6 +56,3 @@ void Relu::backward_cpu(const SharedStorage& values,
         grad_out = out;
     }
 }
-
-// void Relu::clear_gradients_cpu(){};
-// void Relu::clear_gradients_gpu(){};

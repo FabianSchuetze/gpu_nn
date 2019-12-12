@@ -37,11 +37,16 @@ void NeuralNetwork::backwards(std::vector<SharedStorage>& gradients,
 void NeuralNetwork::backward_cpu(std::vector<SharedStorage>& gradients,
                                  const std::vector<SharedStorage>& values) {
     int idx = gradients.size() - 1;
-    for (int i = layers.size() - 2; i > 0; i--) {
+    //int idx = gradients.size() - 1;
+    std::list<std::shared_ptr<Layer>>::reverse_iterator layer = layers.rbegin();
+    std::list<std::shared_ptr<Layer>>::reverse_iterator end = layers.rend();
+    ++layer;
+    while (layer != end) {
+    //for (int i = layers.size() - 2; i > 0; i--) {
         const SharedStorage& gradient_in = gradients[idx];
         SharedStorage& gradient_out = gradients[idx - 1];
         const SharedStorage& vals = values[idx - 1];
-        layers[i]->backward_cpu(vals, gradient_in, gradient_out);
+        (*layer)->backward_cpu(vals, gradient_in, gradient_out);
         idx--;
     }
 }
@@ -49,11 +54,15 @@ void NeuralNetwork::backward_cpu(std::vector<SharedStorage>& gradients,
 void NeuralNetwork::backward_gpu(vector<SharedStorage>& gradients,
                                  const vector<SharedStorage>& values) {
     int idx = gradients.size() - 1;
-    for (int i = layers.size() - 2; i > 0; i--) {
+    std::list<std::shared_ptr<Layer>>::reverse_iterator layer = layers.rbegin();
+    std::list<std::shared_ptr<Layer>>::reverse_iterator end = layers.rend();
+    ++layer;
+    while (layer != end) {
+    //for (int i = layers.size() - 2; i > 0; i--) {
         const SharedStorage& gradient_in = gradients[idx];
         SharedStorage& gradient_out = gradients[idx - 1];
         const SharedStorage& vals = values[idx - 1];
-        layers[i]->backward_gpu(vals, gradient_in, gradient_out);
+        (*layer)->backward_gpu(vals, gradient_in, gradient_out);
         idx--;
     }
 }
@@ -69,7 +78,7 @@ void NeuralNetwork::update_weights_cpu(std::shared_ptr<GradientDescent> opt,
                                        int batch_size) {
     // int i = helpers.size() - 1;
     int i = 0;
-    for (Layer* layer : layers) {
+    for (std::shared_ptr<Layer> layer : layers) {
         if (layer->n_paras() > 0) {
             vector<SharedStorage> parameters = layer->return_parameters();
             const vector<SharedStorage>& gradients = layer->return_gradients();
@@ -85,7 +94,7 @@ void NeuralNetwork::update_weights_gpu(std::shared_ptr<GradientDescent> opt,
                                        vector<VecSharedStorage>& helpers,
                                        int batch_size) {
     int i = 0;
-    for (Layer* layer : layers) {
+    for (std::shared_ptr<Layer> layer : layers) {
         if (layer->n_paras() > 0) {
             vector<SharedStorage> parameters = layer->return_parameters();
             const vector<SharedStorage>& gradients = layer->return_gradients();
@@ -110,35 +119,35 @@ void NeuralNetwork::get_new_sample(const vector<int>& samples, Matrix& x_train,
     y_train = train_args->y_train()(samples, all).transpose();
 }
 
-void NeuralNetwork::restore() {
-    int i = 0;
-    for (Layer* layer : layers) {
-        for (SharedStorage param : layer->return_parameters()) {
-            param->update_cpu_data(
-                train_args->backup()[i++]->return_data_const());
-        }
-    }
-    train_args->advance_iter_since_update();
-}
+//void NeuralNetwork::restore() {
+    //int i = 0;
+    //for (std::shared_ptr<Layer* layer : layers) {
+        //for (SharedStorage param : layer->return_parameters()) {
+            //param->update_cpu_data(
+                //train_args->backup()[i++]->return_data_const());
+        //}
+    //}
+    //train_args->advance_iter_since_update();
+//}
 
-void NeuralNetwork::update_bkp(dtype curr) {
-    int i = 0;
-    for (Layer* layer : layers) {
-        for (SharedStorage param : layer->return_parameters()) {
-            train_args->backup()[i++]->update_cpu_data(
-                    param->copy_data());
-        }
-    }
-    train_args->reset_iter_since_update();
-    train_args->best_error() = curr;
-}
+//void NeuralNetwork::update_bkp(dtype curr) {
+    //int i = 0;
+    //for (Layer* layer : layers) {
+        //for (SharedStorage param : layer->return_parameters()) {
+            //train_args->backup()[i++]->update_cpu_data(
+                    //param->copy_data());
+        //}
+    //}
+    //train_args->reset_iter_since_update();
+    //train_args->best_error() = curr;
+//}
 
 // I need to instantiate a vector of shared pointers to SGD one for each layer
 // use this as part of train args!!!
 void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
                           std::shared_ptr<GradientDescent> sgd, Epochs _epoch,
                           Patience _patience, BatchSize _batch_size) {
-    if (layers[0]->output_dimension() != features.cols()) {
+    if ((*layers.begin())->output_dimension()[0] != features.cols()) {
         std::string m("N of input features != col in features, in:\n");
         throw std::invalid_argument(m + __PRETTY_FUNCTION__);
     }

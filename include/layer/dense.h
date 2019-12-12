@@ -1,17 +1,15 @@
 #pragma once
+#include <memory>
 #ifndef dense_h
 #define dense_h
+#include "../initalization/init.hpp"
 #include "cublas_v2.h"
 #include "layer.h"
-#include "../initalization/init.hpp"
 class Dense : public Layer {
    public:
-    Dense(int, int, Init*);
+    Dense(Features, Features, Init*);
+    Dense(Features, const std::shared_ptr<Layer>&, Init*);
     virtual ~Dense() { CHECK_CUBLAS(cublasDestroy(_handle)); };
-    int input_dimension() override { return _input_dimension; };
-    int input_dimension() const override { return _input_dimension; };
-    int output_dimension() override { return _output_dimension; };
-    int output_dimension() const override { return _output_dimension; };
     void forward_gpu(const SharedStorage&, SharedStorage&,
                      const std::string&) override;
     void forward_cpu(const SharedStorage&, SharedStorage&,
@@ -23,19 +21,17 @@ class Dense : public Layer {
     VecSharedStorage return_parameters() override { return parameters; };
     VecSharedStorage return_gradients() override { return gradients; }
     VecSharedStorage return_parameters() const override { return parameters; };
-     VecSharedStorage return_gradients() const override { return gradients; }
-    // void clear_gradients_cpu() override;
-    // void clear_gradients_gpu() override;
-    // int n_paras() override { return parameters.size();};
+    VecSharedStorage return_gradients() const override { return gradients; }
+
    private:
     void initialize_weight(int, int, Init*);
     void initialize_bias(int, int);
     void initialize_grad(int, int);
-    // std::vector<SharedStorage> parameters;
+    void initialize_output_dimension() override;
+    void initialize_input_dimension(const std::shared_ptr<Layer>&);
     std::vector<SharedStorage> assistance_parameters;
-    // std::vector<SharedStorage> gradients;
     cublasHandle_t _handle;
-    int _input_dimension;
-    int _output_dimension;
+    Features _out;
+    Features _in;
 };
 #endif

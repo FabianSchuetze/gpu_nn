@@ -1,26 +1,30 @@
 #include <stdlib.h>
 //#include <type_traits>
+#include <memory>
 #include "../include/neural_network.h"
 #include "../third_party/mnist/include/mnist/get_data.h"
 
+typedef std::shared_ptr<Layer> s_Layer;
+using std::make_shared;
+
 int main(int argc, char** argv) {
-    if ((argc != 2) and (argc != 5))
-        throw std::invalid_argument("Must have one or four arguemnts");
+    //if ((argc != 2) and (argc != 5))
+        //throw std::invalid_argument("Must have one or four arguemnts");
     Mnist data = Mnist();
     srand((unsigned int)time(0));
     Init* init = new Glorot();
-    Layer* l1 = new Input(data.get_x_train().cols());
-    Layer* d1 = new Dense(1024, data.get_x_train().cols(), init);
-    Layer* r1 = new Relu;
-    Layer* drop1 = new Dropout(0.5);
-    Layer* d2 = new Dense(1024, 1024, init);
-    Layer* r2 = new Relu;
-    Layer* drop2 = new Dropout(0.5);
-    Layer* d3 = new Dense(10, 1024, init);
-    Layer* s1 = new Softmax;
-    std::shared_ptr<Loss> loss = std::make_shared<CrossEntropy>(CrossEntropy(
-                argv[1]));
-    NeuralNetwork n1({l1, d1, r1, drop1, d2, r2, drop2, d3, s1}, loss, argv[1]);
+    s_Layer l1 = make_shared<Input>(Features(data.get_x_train().cols()));
+    s_Layer d1 = make_shared<Dense>(Features(1024), l1, init);
+    s_Layer r1 = make_shared<Relu>(d1);
+    s_Layer drop1 = make_shared<Dropout>(0.5, r1);
+    s_Layer d2 = make_shared<Dense>(Features(1024), drop1, init);
+    s_Layer r2 = make_shared<Relu>(d2);
+    s_Layer drop2 = make_shared<Dropout>(0.5, r2);
+    s_Layer d3 = make_shared<Dense>(Features(10), drop2, init);
+    s_Layer s1 = make_shared<Softmax>(d3);
+    std::shared_ptr<Loss> loss =
+        std::make_shared<CrossEntropy>(CrossEntropy("GPU"));
+    NeuralNetwork n1(s1, loss, "GPU");
     std::shared_ptr<GradientDescent> sgd =
         std::make_shared<Momentum>(LearningRate(0.001), MomentumRate(0.75));
     if (argc == 5) {
@@ -32,10 +36,4 @@ int main(int argc, char** argv) {
     } else
         n1.train(data.get_x_train(), data.get_y_train(), sgd, Epochs(10),
                  Patience(10), BatchSize(32));
-    //delete l1;
-    //delete l2;
-    //delete l3;
-    //delete l4;
-    //delete l5;
-    //delete l6;
 }

@@ -3,7 +3,9 @@
 #include <memory>
 #include <stdexcept>
 #include <thread>
+#include "../include/layer/im2col_layer.h"
 #include "../include/loss/cross_entropy.h"
+using std::shared_ptr;
 using std::vector;
 
 // void print_Matrix_to_stdout2(const Matrix& val, std::string loc) {
@@ -20,18 +22,20 @@ using std::vector;
 // myfile << std::endl;
 //}
 //}
-NeuralNetwork::NeuralNetwork(vector<Layer*> _layers,
-                             std::shared_ptr<Loss> _loss)
-    : layers(_layers), loss(_loss) {
+NeuralNetwork::NeuralNetwork(const std::shared_ptr<Layer>& last_layer,
+                             std::shared_ptr<Loss>& _loss)
+    : layers(), loss(_loss) {
+    construct_layers(last_layer);
     fun_forward = &NeuralNetwork::forward_gpu;
     fun_backward = &NeuralNetwork::backward_gpu;
     fun_update = &NeuralNetwork::update_weights_gpu;
 };
 
-NeuralNetwork::NeuralNetwork(vector<Layer*> _layers,
-                             std::shared_ptr<Loss> _loss,
+NeuralNetwork::NeuralNetwork(const std::shared_ptr<Layer>& last_layer,
+                             std::shared_ptr<Loss>& _loss,
                              const std::string& device)
-    : layers(_layers), loss(_loss) {
+    : layers(), loss(_loss) {
+    construct_layers(last_layer);
     if (device == "GPU") {
         fun_forward = &NeuralNetwork::forward_gpu;
         fun_backward = &NeuralNetwork::backward_gpu;
@@ -43,60 +47,62 @@ NeuralNetwork::NeuralNetwork(vector<Layer*> _layers,
     }
 };
 
-void NeuralNetwork::allocate_storage(int obs, int& out_dim,
-                                     std::vector<SharedStorage>& inp,
-                                     const Layer* layer) {
-    if (layer->name() == "Dense") {
-        if (layer->input_dimension() != out_dim) {
-            int input_dim = layer->input_dimension();
-            std::stringstream ss;
-            ss << "Dimension do not fit, in:\n"
-               << __PRETTY_FUNCTION__ << "\n Previous output:" << out_dim
-               << " expected input " << input_dim << "\ncalled with layer "
-               << layer->name() << " from\n"
-               << __FILE__ << " at " << __LINE__;
-            throw std::invalid_argument(ss.str());
-        }
-        out_dim = layer->output_dimension();
-    } else if (layer->name() == "Activation")
-        ;
-    else if (layer->name() == "BatchNorm") {
-        ;
-    } else if (layer->name() == "Convolution") {
-        out_dim = layer->output_dimension();
-    } else if (layer->name() == "Dropout") {
-        ;
-    } else if (layer->name() == "Pooling") {
-        out_dim = layer->output_dimension();
-    } else if (layer->name() == "Im2ColLayer") {
-        out_dim = layer->output_dimension();
-        obs *= layer->n_cols();
-    } else if (layer->name() == "Input") {
-        out_dim = layer->output_dimension();
-    } else {
-        std::stringstream ss;
-        ss << "Cannot figure out name, in:\n"
-           << __PRETTY_FUNCTION__ << "\ncalled from " << __FILE__ << " at "
-           << __LINE__;
-        throw std::invalid_argument(ss.str());
+void NeuralNetwork::insert_cnn_layer(const std::shared_ptr<Layer>& layer) {
+    std::shared_ptr<Convolution> derived =
+               std::dynamic_pointer_cast<Convolution> (layer);
+    //std::shared_ptr<Convolution> d = dynamic_cast<Derived<int> *>(b);
+    std::shared_ptr<Layer> im2col =
+        std::make_shared<Im2ColLayer>(Im2ColLayer(derived));
+    layer->_previous = im2col;
+    layers.push_front(im2col);
+    layers.push_front(layer);
+}
+
+void NeuralNetwork::construct_layers(std::shared_ptr<Layer> curr) {
+    while (curr->name() != "Input") {
+        if (curr->name() == "Convolution")
+            insert_cnn_layer(curr);
+        else
+            layers.push_front(curr);
+        std::shared_ptr<Layer> tmp = curr->previous();
+        curr.swap(tmp);
     }
+}
+
+int NeuralNetwork::convert_output_dimension(const shared_ptr<Layer>& layer) {
+    int i = 1;
+    for (int shape : layer->output_dimension()) i *= shape;
+    return i;
+}
+
+void NeuralNetwork::allocate_storage(int obs, std::vector<SharedStorage>& inp,
+                                     const std::shared_ptr<Layer>& layer) {
+    if (layer->name() == "Im2ColLayer") {
+        obs *= layer->input_dimension();
+    }
+    int out_dim = convert_output_dimension(layer);
     inp.push_back(std::make_shared<Storage>(Matrix::Zero(out_dim, obs)));
 }
 
 vector<SharedStorage> NeuralNetwork::allocate_forward(int obs) {
     vector<SharedStorage> vals;
-    int out_dim(0);
-    for (const Layer* layer : layers) {
-        allocate_storage(obs, out_dim, vals, layer);
+    // int out_dim(0);
+    for (shared_ptr<Layer> layer : layers) {
+        allocate_storage(obs, vals, layer);
     }
     return vals;
 }
 
 vector<SharedStorage> NeuralNetwork::allocate_backward(int obs) {
     vector<SharedStorage> vals;
-    int out_dim(0);
-    for (size_t i = 0; i < layers.size() - 1; i++) {
-        allocate_storage(obs, out_dim, vals, layers[i]);
+    // int out_dim(0);
+    std::list<shared_ptr<Layer>>::iterator layer = layers.begin();
+    std::list<shared_ptr<Layer>>::iterator end = layers.end();
+    --end;
+    while (layer != end) {
+        // for (size_t i = 0; i < layers.size() - 1; i++) {
+        allocate_storage(obs, vals, *layer);
+        ++layer;
     }
     return vals;
 }
@@ -114,18 +120,28 @@ void NeuralNetwork::forward(vector<SharedStorage>& values,
 void NeuralNetwork::forward_gpu(vector<SharedStorage>& values,
                                 const std::string& type) {
     int i = 0;
-    for (size_t layer_idx = 1; layer_idx < layers.size(); ++layer_idx) {
-        layers[layer_idx]->forward_gpu(values[i], values[i + 1], type);
+    std::list<shared_ptr<Layer>>::iterator layer = layers.begin();
+    ++layer;
+    while (layer != layers.end()) {
+        // for (; it != layers.end(); ++it) {
+        // for (size_t layer_idx = 1; layer_idx < layers.size(); ++layer_idx) {
+        (*layer)->forward_gpu(values[i], values[i + 1], type);
         i++;
+        ++layer;
     }
 }
 
 void NeuralNetwork::forward_cpu(vector<SharedStorage>& values,
                                 const std::string& type) {
     int i = 0;
-    for (size_t layer_idx = 1; layer_idx < layers.size(); ++layer_idx) {
-        layers[layer_idx]->forward_cpu(values[i], values[i + 1], type);
+    std::list<shared_ptr<Layer>>::iterator layer = layers.begin();
+    ++layer;
+    while (layer != layers.end()) {
+        // for (; it != layers.end(); ++it) {
+        // for (size_t layer_idx = 1; layer_idx < layers.size(); ++layer_idx) {
+        (*layer)->forward_gpu(values[i], values[i + 1], type);
         i++;
+        ++layer;
     }
 }
 
@@ -196,27 +212,3 @@ Matrix NeuralNetwork::predict(const Matrix& input) {
     predict(input, SharedTarget);
     return SharedTarget->return_data_const().transpose();
 }
-
-// Matrix NeuralNetwork::predict(const Matrix& input) {
-// std::cout << "inside predict\n";
-// int iter = 0;
-// const int total = input.rows();
-// Matrix output = Matrix::Zero(10, input.rows());
-// SharedStorage SharedTarget = std::make_shared<Storage>(output);
-// Matrix x;
-// while (iter < total) {
-// unsigned int start_position = iter * 10;
-// vector<int> samples = predict_sample(iter, total);
-// get_new_predict_sample(samples, input, x);
-// unsigned int len = samples.size() * 10;
-// SharedStorage inp = std::make_shared<Storage>(x);
-// vector<SharedStorage> vals = allocate_forward(x.cols());
-// vals[0] = inp;
-// forward(vals, "predict");
-// SharedTarget->update_gpu_data(vals.back()->gpu_pointer_const(),
-// start_position, len);
-//}
-// std::cout << "leaving predict\n";
-// return SharedTarget->return_data_const();
-//// return output;
-//}

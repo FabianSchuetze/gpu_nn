@@ -1,40 +1,33 @@
 #include "../../include/layer/im2col_layer.h"
 #include <iostream>
+#include <memory>
 #include "../../include/cuda_math.h"
 #include "../../include/math.h"
-Im2ColLayer::Im2ColLayer(FilterShape filtershape, Pad pad, Stride stride,
-                         ImageShape imageshape, Channels channels)
+
+Im2ColLayer::Im2ColLayer(const std::shared_ptr<Convolution>& convolution_layer)
     : Layer("Im2ColLayer"),
-      _kernel(filtershape),
-      _pad(pad),
-      _stride(stride),
-      _inp(imageshape),
-      _out(0, 0),
-      _channels(channels) {
-    output_shape();
-};
-
-int Im2ColLayer::output_dimension() {
-    return _out.first() * _out.second();
+      _kernel(convolution_layer->_kernel),
+      _pad(convolution_layer->_pad),
+      _stride(convolution_layer->_stride),
+      _inp(convolution_layer->_inp),
+      _out(convolution_layer->_out),
+      _channels(convolution_layer->_channels) {
+    _previous = convolution_layer->_previous;
+    //convolution_layer->reset_previous(std::make_shared<Layer>(this));
+    initialize_output_dimension();
+    ;
 }
 
-int Im2ColLayer::output_dimension() const {
-    return  _out.first() * _out.second();
+void Im2ColLayer::initialize_output_dimension() {
+    _out_dim[0] = _out.first() * _out.second();
 }
 
-int Im2ColLayer::n_cols() {
-    return _channels.get() * _kernel.first() * _kernel.second();
-}
-int Im2ColLayer::n_cols() const {
+int Im2ColLayer::input_dimension() {
     return _channels.get() * _kernel.first() * _kernel.second();
 }
 
-void Im2ColLayer::output_shape() {
-    int out_height =
-        (_inp.first() + 2 * _pad.get() - _kernel.first()) / _stride.get() + 1;
-    int out_width =
-        (_inp.second() + 2 * _pad.get() - _kernel.second()) / _stride.get() + 1;
-    _out = ImageShape(out_height, out_width);
+int Im2ColLayer::input_dimension() const {
+    return _channels.get() * _kernel.first() * _kernel.second();
 }
 
 void Im2ColLayer::check_size(const SharedStorage& in,
@@ -66,6 +59,7 @@ void Im2ColLayer::advance_pointers_forward(const float*& input, float*& column,
     column += (_out.first() * _out.second() * _kernel.first() *
                _kernel.second() * _channels.get());
 }
+
 void Im2ColLayer::forward_gpu(const SharedStorage& in, SharedStorage& out,
                               const std::string&) {
     check_size(in, out);
@@ -91,12 +85,14 @@ void Im2ColLayer::forward_cpu(const SharedStorage& in, SharedStorage& out,
         advance_pointers_forward(inpp, colp, in->get_rows());
     }
 }
+
 void Im2ColLayer::advance_pointers_backward(const float*& input,
                                             float*& output) {
     input += _out.first() * _out.second() * _kernel.first() * _kernel.second() *
              _channels.get();
     output += _inp.first() * _inp.second() * _channels.get();
 }
+
 void Im2ColLayer::backward_cpu(const SharedStorage&,
                                const SharedStorage& gradient_in,
                                SharedStorage& gradient_out) {

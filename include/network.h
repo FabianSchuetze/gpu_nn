@@ -1,6 +1,7 @@
 #ifndef network_h
 #define network_h
 #include <chrono>
+#include <list>
 #include <memory>
 #include <random>
 #include <vector>
@@ -13,8 +14,8 @@ class NeuralNetwork {
    public:
     typedef std::vector<std::shared_ptr<Storage>> VecSharedStorage;
     // I NEED TO THINK ABOUT THE MOVE CONSTCUTOR
-    NeuralNetwork(std::vector<Layer*>, std::shared_ptr<Loss>);
-    NeuralNetwork(std::vector<Layer*>, std::shared_ptr<Loss>,
+    NeuralNetwork(const std::shared_ptr<Layer>&, std::shared_ptr<Loss>&);
+    NeuralNetwork(const std::shared_ptr<Layer>&, std::shared_ptr<Loss>&,
                   const std::string&);
     NeuralNetwork(const NeuralNetwork&) = delete;
     NeuralNetwork(NeuralNetwork&&) = delete;
@@ -46,7 +47,8 @@ class NeuralNetwork {
 
    private:
     typedef void (NeuralNetwork::*update_func)(std::shared_ptr<GradientDescent>,
-            std::vector<VecSharedStorage>&, int);
+                                               std::vector<VecSharedStorage>&,
+                                               int);
     typedef void (NeuralNetwork::*forward_func)(std::vector<SharedStorage>&,
                                                 const std::string&);
     typedef void (NeuralNetwork::*backward_func)(
@@ -54,7 +56,7 @@ class NeuralNetwork {
     NeuralNetwork::forward_func fun_forward;
     NeuralNetwork::backward_func fun_backward;
     NeuralNetwork::update_func fun_update;
-    std::vector<Layer*> layers;
+    std::list<std::shared_ptr<Layer>> layers;
     std::shared_ptr<Loss> loss;
     std::unique_ptr<trainArgs> train_args;
     void create_loss(const std::string& s);
@@ -68,7 +70,7 @@ class NeuralNetwork {
                       const std::vector<SharedStorage>&);
     void backward_gpu(std::vector<SharedStorage>&,
                       const std::vector<SharedStorage>&);
-    void allocate_storage(int, int&, std::vector<SharedStorage>&, const Layer*);
+    //void allocate_storage(int, int&, std::vector<SharedStorage>&, const Layer*);
     void get_new_sample(const std::vector<int>&, Matrix&, Matrix&);
     void consumer(std::shared_ptr<GradientDescent>);
     void producer();
@@ -81,5 +83,12 @@ class NeuralNetwork {
                           threadsafe_queue<std::vector<SharedStorage>>*);
     void update_bkp(dtype curr);
     void restore();
+    void append_convolution_layer(Layer*);
+    void construct_layers(std::vector<Layer*>);
+    void insert_cnn_layer(const std::shared_ptr<Layer>&);
+    void construct_layers(std::shared_ptr<Layer>);
+    int convert_output_dimension(const std::shared_ptr<Layer>&);
+    void allocate_storage(int, std::vector<SharedStorage>&,
+                          const std::shared_ptr<Layer>&);
 };
 #endif

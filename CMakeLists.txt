@@ -46,10 +46,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3  -fPIC -lopenblas\
     -Wall -std=c++17 -Wno-error=unused-command-line-argument")
 set(${LIBRARY_TARGET_NAME}_TEST
     #test/normalization.cpp
-    test/cifar10.cpp
-    test/mnist_lenet.cpp
+    #test/cifar10.cpp
+    #test/mnist_lenet.cpp
     test/mnist.cpp
-    test/inits.cpp
+    #test/inits.cpp
     #test/im2col_layer.cpp
     #test/convolution.cpp
     #test/softmax.cpp
