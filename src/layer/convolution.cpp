@@ -84,7 +84,7 @@ void Convolution::initialize_output_dimension() {
     int out_width =
         (_inp.second() + 2 * _pad.get() - _kernel.second()) / _stride.get() + 1;
     _out = ImageShape(out_height, out_width);
-    _out_dim[0] = _channels.get();
+    _out_dim[0] = _filters.get();
     _out_dim.push_back(out_height);
     _out_dim.push_back(out_width);
 }

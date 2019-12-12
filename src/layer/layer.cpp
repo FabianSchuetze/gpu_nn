@@ -38,7 +38,7 @@ void Layer::initialize_output_dimension(
     if (previous) {
         int i = 1;
         for (int shape : previous->output_dimension()) i *= shape;
-        _out_dim.push_back(i);
+        _out_dim[0] = i;
     }
 }
 

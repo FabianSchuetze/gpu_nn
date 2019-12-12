@@ -204,7 +204,6 @@ void NeuralNetwork::producer() {
                           gen);
             prepare_subset(population, samples, producer_idx,
                            train_args->batch_size());
-            // random_numbers(samples, producer_idx);
             get_new_sample(samples, x_train, y_train);
             shared_ptr<Storage> SharedInput = make_shared<Storage>(x_train);
             shared_ptr<Storage> SharedTarget = make_shared<Storage>(y_train);
@@ -215,10 +214,12 @@ void NeuralNetwork::producer() {
 }
 
 dtype NeuralNetwork::validate(std::chrono::milliseconds diff) {
-    Matrix output = Matrix::Zero(10, train_args->x_val().rows());
+    dtype total_loss(0.);
+    int out_size = layers[layers.size() - 1]->output_dimension()[0];
+    Matrix output = Matrix::Zero(out_size, train_args->x_val().rows());
     SharedStorage SharedPred = std::make_shared<Storage>(output);
     predict(train_args->x_val(), SharedPred);
-    dtype total_loss = loss->loss(SharedPred, train_args->y_val_shared());
+    total_loss = loss->loss(SharedPred, train_args->y_val_shared());
     size_t obs = train_args->x_val().rows();
     std::cout << "after iter " << train_args->current_epoch() << "the loss is "
               << total_loss / obs << ", in " << diff.count() << " milliseconds"

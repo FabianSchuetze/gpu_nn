@@ -800,7 +800,7 @@ void im2col_gpu(const float* data_im, int channels, int height, const int width,
     im2col_gpu_kernel<<<grid, block>>>(numThreads, data_im, height, width,
                                        kernel_h, kernel_w, pad, stride,
                                        out_height, out_width, data_col);
-    MY_CHECK(cudaDeviceSynchronize());
+    //MY_CHECK(cudaDeviceSynchronize());
     MY_CHECK(cudaPeekAtLastError());
 }
 
