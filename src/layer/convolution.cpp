@@ -4,6 +4,7 @@
 //#include "/usr/lib/x86_64-linux-gnu/cblas_atlas.h>
 // c
 #include <iostream>
+#include <iterator>
 #include <memory>
 #include <random>
 #include <stdexcept>
@@ -23,7 +24,7 @@ Convolution::Convolution(FilterShape filtershape, Pad pad, Stride stride,
       _channels(channels) {
     cublasStatus_t stat = cublasCreate(&_handle);
     CHECK_CUBLAS(stat);
-    //initialize_output_dimension();
+    // initialize_output_dimension();
     initialize_weight(init);
     initialize_bias();
     initialize_grad();
@@ -42,8 +43,8 @@ Convolution::Convolution(FilterShape filtershape, Pad pad, Stride stride,
       _channels(0) {
     cublasStatus_t stat = cublasCreate(&_handle);
     CHECK_CUBLAS(stat);
-    initialize_output_dimension();
     initialize_input_dimension(previous);
+    initialize_output_dimension();
     initialize_weight(init);
     initialize_bias();
     initialize_grad();
@@ -60,7 +61,14 @@ void Convolution::initialize_input_dimension(
         _channels = Channels(channels);
         _inp = ImageShape(height, width);
     } else {
-        throw std::invalid_argument("Cannot construct the thing");
+        std::stringstream ss;
+        ss << "Cannot construct the convolution layer as the previous layer's"
+              " output don't match. Received\n";
+        std::copy(shapes.begin(), shapes.end(),
+                  std::ostream_iterator<int>(ss, " "));
+        ss << "in:\n" << __PRETTY_FUNCTION__ << "\ncalled from " << __FILE__
+           << " at " << __LINE__;
+        throw std::invalid_argument(ss.str());
     }
 }
 
@@ -76,7 +84,7 @@ void Convolution::initialize_output_dimension() {
     int out_width =
         (_inp.second() + 2 * _pad.get() - _kernel.second()) / _stride.get() + 1;
     _out = ImageShape(out_height, out_width);
-    _out_dim.push_back(_channels.get());
+    _out_dim[0] = _channels.get();
     _out_dim.push_back(out_height);
     _out_dim.push_back(out_width);
 }

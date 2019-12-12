@@ -13,7 +13,7 @@ Im2ColLayer::Im2ColLayer(const std::shared_ptr<Convolution>& convolution_layer)
       _out(convolution_layer->_out),
       _channels(convolution_layer->_channels) {
     _previous = convolution_layer->_previous;
-    //convolution_layer->reset_previous(std::make_shared<Layer>(this));
+    // convolution_layer->reset_previous(std::make_shared<Layer>(this));
     initialize_output_dimension();
     ;
 }

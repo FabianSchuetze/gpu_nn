@@ -1,4 +1,5 @@
 #include "../../include/layer/pooling.h"
+#include <stdexcept>
 #include <sys/time.h>
 #include <iostream>
 #include <memory>
@@ -19,18 +20,31 @@ Pooling::Pooling(Window window, Stride stride, ImageShape imageshape,
 }
 
 Pooling::Pooling(Window window, Stride stride,
-                 const std::shared_ptr<Convolution>& previous)
+                 const std::shared_ptr<Layer>& previous)
     : Layer("Pooling"),
       _window(window),
       _stride(stride),
-      _inp(previous->_inp),
-      _channels(previous->_channels),
-      _out(previous->_out),
+      _inp(0,0),
+      _channels(0),
+      _out(0, 0),
       batch_size(0) {
-    // initialize_previous();
+    initialize_from_previous(previous);
     initialize_masking();
     initialize_output_dimension();
     _previous = previous;
+}
+
+void Pooling::initialize_from_previous(const std::shared_ptr<Layer>& previous) {
+    if (previous->name() == "Convolution") {
+        std::shared_ptr<Convolution> conv =
+            std::dynamic_pointer_cast<Convolution>(previous);
+        _inp = conv->_inp;
+        _channels = conv->_channels;
+        _out = conv->_out;
+    }
+    else {
+        throw std::runtime_error("Can only convert conv\n");
+    }
 }
 
 void Pooling::initialize_output_dimension() {
@@ -43,7 +57,7 @@ void Pooling::initialize_output_dimension() {
                              _stride.get())) +
                     1;
     _out = ImageShape(out_height, out_width);
-    _out_dim.push_back(_channels.get());
+    _out_dim[0] = _channels.get();
     _out_dim.push_back(out_height);
     _out_dim.push_back(out_width);
 }

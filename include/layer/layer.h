@@ -9,17 +9,17 @@ class Layer {
     friend class NeuralNetwork;
     typedef std::shared_ptr<Storage> SharedStorage;
     typedef std::vector<std::shared_ptr<Storage>> VecSharedStorage;
+    std::string _name;
     std::vector<int> _out_dim;
     std::vector<SharedStorage> parameters;
     std::vector<SharedStorage> gradients;
-    std::string _name;
     std::shared_ptr<Layer> _previous;
     virtual void initialize_output_dimension(const std::shared_ptr<Layer>&);
     virtual void initialize_output_dimension();
 
    public:
-    Layer() : _name("Template"){};
-    explicit Layer(const std::string& s): _name(s) {};
+    Layer();
+    explicit Layer(const std::string& s);
     virtual ~Layer() = default;
     virtual int input_dimension() {return 0;}
     virtual int input_dimension() const {return 0;}

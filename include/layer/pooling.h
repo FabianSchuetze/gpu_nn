@@ -8,7 +8,7 @@ class Pooling : public Layer {
    public:
     //Pooling(int);
     Pooling(Window, Stride, ImageShape, Channels);
-    Pooling(Window, Stride, const std::shared_ptr<Convolution>&);
+    Pooling(Window, Stride, const std::shared_ptr<Layer>&);
     virtual ~Pooling() = default;
     void forward_gpu(const std::shared_ptr<Storage>&,
                      std::shared_ptr<Storage>&, const std::string&) override;
@@ -32,6 +32,6 @@ class Pooling : public Layer {
     void initialize_masking();
     void inline check_input_size(const SharedStorage&);
     void initialize_output_dimension() override;
-    //void initialize_previous(Layer*);
+    void initialize_from_previous(const std::shared_ptr<Layer>&);
 };
 #endif

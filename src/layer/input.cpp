@@ -5,12 +5,12 @@ Input::Input(Features features)
       _features(features),
       _channels(0),
       _img(0, 0) {
-    _out_dim.push_back(_features.get());
+    _out_dim[0] = _features.get();
 }
 
 Input::Input(Channels channels, ImageShape img)
     : Layer("Input"), _features(0), _channels(channels), _img(img) {
-    _out_dim.push_back(_channels.get());
+    _out_dim[0] = _channels.get();
     _out_dim.push_back(_img.first());
     _out_dim.push_back(_img.second());
 };

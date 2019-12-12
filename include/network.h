@@ -95,5 +95,6 @@ class NeuralNetwork {
                        std::mt19937&);
     void prepare_subset(const std::vector<int>&, std::vector<int>&, int&,
                         const int&);
+    int check_input_dimension(const std::vector<int>&);
 };
 #endif

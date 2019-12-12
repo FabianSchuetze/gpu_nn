@@ -59,7 +59,12 @@ void my_add_vec_to_mat_colwise(SharedStorage& A, const SharedStorage& B,
     dtype* d_A = A->gpu_pointer();
     const dtype* d_B = B->gpu_pointer_const();
     if (rows != B->get_rows()) {
-        throw std::runtime_error("Invalid size in addtion");
+        std::stringstream ss;
+        ss << "\nCannot add the two matrices as row numbers differ."
+            " A rows: " << rows << " vs B rows: " << B->get_rows() << " in:\n"
+           << __PRETTY_FUNCTION__ << "\ncalled from " << __FILE__ << " at "
+           << __LINE__;
+        throw std::invalid_argument(ss.str());
     }
     add_vec_to_mat_colwise(rows, cols, d_A, d_B, alpha);
     // cudaDeviceSyncronize();

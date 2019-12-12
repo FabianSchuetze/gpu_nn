@@ -26,7 +26,6 @@ class Im2ColLayer : public Layer {
     Stride _stride;
     ImageShape _inp, _out;
     Channels _channels;
-    //std::shared_ptr<Convolution> next;
 
     void initialize_output_dimension() override;
     void check_size(const SharedStorage&, const SharedStorage&);

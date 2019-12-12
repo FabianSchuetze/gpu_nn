@@ -155,12 +155,28 @@ void NeuralNetwork::get_new_sample(const vector<int>& samples, Matrix& x_train,
 
 // I need to instantiate a vector of shared pointers to SGD one for each layer
 // use this as part of train args!!!
+//
+int NeuralNetwork::check_input_dimension(const std::vector<int>& dim) {
+    int i = 1;
+    for (int shape : dim) i *= shape;
+    return i;
+}
+
 void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
                           std::shared_ptr<GradientDescent>& sgd, Epochs _epoch,
                           Patience _patience, BatchSize _batch_size) {
-    if ((*layers.begin())->output_dimension()[0] != features.cols()) {
-        std::string m("N of input features != col in features, in:\n");
-        throw std::invalid_argument(m + __PRETTY_FUNCTION__);
+    std::vector<int> input_dim = layers[0]->output_dimension();
+    int expected_cols = check_input_dimension(input_dim);
+    if (expected_cols != features.cols()) {
+        std::stringstream ss;
+        ss << "The number of input features is: " << features.cols()
+           << " but the input layer expects: ";
+        std::copy(input_dim.begin(), input_dim.end(),
+                  std::ostream_iterator<int>(ss, " "));
+        ss << "in:\n"
+           << __PRETTY_FUNCTION__ << "\ncalled from " << __FILE__ << " at "
+           << __LINE__;
+        throw std::invalid_argument(ss.str());
     }
     train_args = std::make_unique<trainArgs>(
         features, targets, _epoch, _patience, _batch_size, sgd, layers);
