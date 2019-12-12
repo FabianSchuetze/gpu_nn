@@ -101,8 +101,8 @@ vector<SharedStorage> NeuralNetwork::allocate_forward(int obs) {
 vector<SharedStorage> NeuralNetwork::allocate_backward(int obs) {
     vector<SharedStorage> vals;
     // int out_dim(0);
-    std::list<shared_ptr<Layer>>::iterator layer = layers.begin();
-    std::list<shared_ptr<Layer>>::iterator end = layers.end();
+    std::deque<shared_ptr<Layer>>::iterator layer = layers.begin();
+    std::deque<shared_ptr<Layer>>::iterator end = layers.end();
     --end;
     while (layer != end) {
         // for (size_t i = 0; i < layers.size() - 1; i++) {
@@ -125,7 +125,7 @@ void NeuralNetwork::forward(vector<SharedStorage>& values,
 void NeuralNetwork::forward_gpu(vector<SharedStorage>& values,
                                 const std::string& type) {
     int i = 0;
-    std::list<shared_ptr<Layer>>::iterator layer = layers.begin();
+    std::deque<shared_ptr<Layer>>::iterator layer = layers.begin();
     ++layer;
     while (layer != layers.end()) {
         // for (; it != layers.end(); ++it) {
@@ -139,7 +139,7 @@ void NeuralNetwork::forward_gpu(vector<SharedStorage>& values,
 void NeuralNetwork::forward_cpu(vector<SharedStorage>& values,
                                 const std::string& type) {
     int i = 0;
-    std::list<shared_ptr<Layer>>::iterator layer = layers.begin();
+    std::deque<shared_ptr<Layer>>::iterator layer = layers.begin();
     ++layer;
     while (layer != layers.end()) {
         // for (; it != layers.end(); ++it) {

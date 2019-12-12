@@ -17,7 +17,7 @@ class trainArgs {
     trainArgs() = default;
     trainArgs(const Matrix&, const Matrix&, Epochs, Patience, BatchSize,
               std::shared_ptr<GradientDescent>&,
-              std::list<std::shared_ptr<Layer>>&);
+              std::deque<std::shared_ptr<Layer>>&);
     int iter_since_update() { return _iter_since_update; }
     void reset_iter_since_update() { _iter_since_update = 0; }
     void reset_total_iter() { _total_iter = 0; }
@@ -60,7 +60,7 @@ class trainArgs {
     int _patience;
     void train_test_split(const Matrix&, const Matrix&, dtype);
     void create_optimizers(const std::shared_ptr<GradientDescent>&,
-                           const std::list<std::shared_ptr<Layer>>&);
-    void create_backup(const std::list<std::shared_ptr<Layer>>&);
+                           const std::deque<std::shared_ptr<Layer>>&);
+    void create_backup(const std::deque<std::shared_ptr<Layer>>&);
 };
 #endif

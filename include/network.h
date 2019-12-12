@@ -2,6 +2,7 @@
 #define network_h
 #include <chrono>
 #include <list>
+#include <deque>
 #include <memory>
 #include <random>
 #include <vector>
@@ -56,7 +57,7 @@ class NeuralNetwork {
     NeuralNetwork::forward_func fun_forward;
     NeuralNetwork::backward_func fun_backward;
     NeuralNetwork::update_func fun_update;
-    std::list<std::shared_ptr<Layer>> layers;
+    std::deque<std::shared_ptr<Layer>> layers;
     std::shared_ptr<Loss> loss;
     std::unique_ptr<trainArgs> train_args;
     void create_loss(const std::string& s);

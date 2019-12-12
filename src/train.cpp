@@ -38,15 +38,16 @@ void NeuralNetwork::backward_cpu(std::vector<SharedStorage>& gradients,
                                  const std::vector<SharedStorage>& values) {
     int idx = gradients.size() - 1;
     // int idx = gradients.size() - 1;
-    std::list<std::shared_ptr<Layer>>::reverse_iterator layer = layers.rbegin();
-    std::list<std::shared_ptr<Layer>>::reverse_iterator end = layers.rend();
-    ++layer;
-    while (layer != end) {
+    //std::deque<std::shared_ptr<Layer>>::reverse_iterator layer = layers.rbegin();
+    //std::deque<std::shared_ptr<Layer>>::reverse_iterator end = layers.rend();
+    //++layer;
+    for (int i = layers.size() - 2; i > 0; i--) {
+    //while (layer != end) {
         // for (int i = layers.size() - 2; i > 0; i--) {
         const SharedStorage& gradient_in = gradients[idx];
         SharedStorage& gradient_out = gradients[idx - 1];
         const SharedStorage& vals = values[idx - 1];
-        (*layer)->backward_cpu(vals, gradient_in, gradient_out);
+        layers[i]->backward_cpu(vals, gradient_in, gradient_out);
         idx--;
     }
 }
@@ -54,21 +55,29 @@ void NeuralNetwork::backward_cpu(std::vector<SharedStorage>& gradients,
 void NeuralNetwork::backward_gpu(vector<SharedStorage>& gradients,
                                  const vector<SharedStorage>& values) {
     int idx = gradients.size() - 1;
-    std::list<std::shared_ptr<Layer>>::reverse_iterator curr = layers.rbegin();
+    //std::list<std::shared_ptr<Layer>>::reverse_iterator curr = layers.rbegin();
+    //std::cout << "the size is\n" << layers.size() << std::endl;
+    //std::cout << "and the name\n" << (*curr)->name() << std::endl;
+    //auto curr2 = layers.rbegin();
+    //curr2++;
+    //bool test1 = ((*curr2)->previous() != NULL);
+    //std::cout << "inside GPU: " << test1 << std::endl;
+    //std::cout << "the size is: " << layers.size() << std::endl;
     //std::list<std::shared_ptr<Layer>>::reverse_iterator end = layers.rend();
-    //++layer;
-    while ((*curr)->previous()) {
+    //++curr;
+    for (int i = layers.size() - 2; i > 0; i--) {
+    //while ((*curr)->previous()) {
     //while (layer != end) {
-        std::cout << ((*curr)->name()) << std::endl;
+        //std::cout << ((layers[i])->name()) << std::endl;
         // for (int i = layers.size() - 2; i > 0; i--) {
         const SharedStorage& gradient_in = gradients[idx];
         SharedStorage& gradient_out = gradients[idx - 1];
         const SharedStorage& vals = values[idx - 1];
-        (*curr)->backward_gpu(vals, gradient_in, gradient_out);
+        layers[i]->backward_gpu(vals, gradient_in, gradient_out);
         idx--;
-        std::shared_ptr<Layer> tmp = (*curr)->previous();
+        //std::shared_ptr<Layer> tmp = (*curr)->previous();
         //(*curr).swap(tmp);
-        curr->swap(tmp);
+        //curr->swap(tmp);
         //++layer;
     }
 }
@@ -163,11 +172,11 @@ void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
     }
     train_args = std::make_unique<trainArgs>(
         features, targets, _epoch, _patience, _batch_size, sgd, layers);
-     train(sgd);
-    //std::thread produce([&]() { producer(); });
-    //std::thread consume([&]() { consumer(sgd); });
-    //produce.join();
-    //consume.join();
+     //train(sgd);
+    std::thread produce([&]() { producer(); });
+    std::thread consume([&]() { consumer(sgd); });
+    produce.join();
+    consume.join();
 }
 
 void NeuralNetwork::producer() {
@@ -217,9 +226,13 @@ void NeuralNetwork::consumer(std::shared_ptr<GradientDescent> sgd) {
         vals[0] = out->first;
         forward(vals, type);
         loss->grad_loss(grads.back(), vals.back(), out->second, out->second);
+        //auto curr = layers.rbegin();
+        //bool test1 = ((*curr)->previous() != NULL);
+        //std::cout << test1 << std::endl;
         backwards(grads, vals);
         update_weights(sgd, train_args->optimizer(), train_args->batch_size());
         train_args->advance_total_iter();
+        //cout << test2 << std::endl;
         if (train_args->total_iter() > train_args->max_total_iter()) {
             diff = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::system_clock::now() - begin);
