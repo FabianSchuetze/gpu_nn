@@ -59,13 +59,18 @@ void NeuralNetwork::insert_cnn_layer(const std::shared_ptr<Layer>& layer) {
 }
 
 void NeuralNetwork::construct_layers(std::shared_ptr<Layer> curr) {
-    while (curr->name() != "Input") {
+    while (curr->previous()) {
         if (curr->name() == "Convolution")
             insert_cnn_layer(curr);
         else
             layers.push_front(curr);
         std::shared_ptr<Layer> tmp = curr->previous();
         curr.swap(tmp);
+    }
+    if (curr->name() == "Input")
+            layers.push_front(curr);
+    else {
+        throw std::runtime_error("Must finish with the input");
     }
 }
 
