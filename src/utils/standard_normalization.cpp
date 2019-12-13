@@ -11,7 +11,7 @@ Matrix StandardNormalization::transform(const Matrix& input) {
     Matrix tmp = input;
     Eigen::VectorXf means = tmp.colwise().mean();
     tmp.rowwise() -= means.transpose();
-    Vector std = colwise_std(tmp);
-    tmp.array().rowwise() /= std.transpose().array();
+    //Vector std = colwise_std(tmp);
+    //tmp.array().rowwise() /= std.transpose().array();
     return tmp;
 }

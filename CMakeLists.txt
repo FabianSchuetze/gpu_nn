@@ -40,7 +40,7 @@ if (UNIX)
 endif(UNIX)
 
 # moved the CXX flags to after the cuda_add_library call
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3 -fPIC -lopenblas\
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fPIC -lopenblas\
     -lcudnn -lcurand -L /usr/lib/cuda/lib64 -lcudart  -lcublas\
     -L /usr/lib/x86_64-linux-gnu -lblas\
     -Wall -std=c++17 -Wno-error=unused-command-line-argument")

@@ -9,20 +9,20 @@
 using std::shared_ptr;
 using std::vector;
 
-// void print_Matrix_to_stdout2(const Matrix& val, std::string loc) {
-// int rows(val.rows()), cols(val.cols());
-// std::ofstream myfile(loc);
-// myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
-// myfile << std::fixed;
-// myfile << std::setprecision(2);
-// for (int row = 0; row < rows; ++row) {
-// myfile << val(row, 0);
-// for (int col = 1; col < cols; ++col) {
-// myfile << ", " << val(row, col);
-//}
-// myfile << std::endl;
-//}
-//}
+void print_Matrix_to_stdout3(const Matrix& val, std::string loc) {
+    int rows(val.rows()), cols(val.cols());
+    std::ofstream myfile(loc);
+    myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
+    myfile << std::fixed;
+    myfile << std::setprecision(2);
+    for (int row = 0; row < rows; ++row) {
+        myfile << val(row, 0);
+        for (int col = 1; col < cols; ++col) {
+            myfile << ", " << val(row, col);
+        }
+        myfile << std::endl;
+    }
+}
 NeuralNetwork::NeuralNetwork(const std::shared_ptr<Layer>& last_layer,
                              std::shared_ptr<Loss>& _loss)
     : layers(), loss(_loss) {
@@ -148,6 +148,7 @@ void NeuralNetwork::forward_gpu(vector<SharedStorage>& values,
     ++layer;
     while (layer != layers.end()) {
         (*layer)->forward_gpu(values[i], values[i + 1], type);
+        //print_Matrix_to_stdout3(values[i]->return_data_const(), "out.txt");
         i++;
         ++layer;
     }

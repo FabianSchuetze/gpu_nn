@@ -36,8 +36,8 @@ void pooling_cpu(const float* src, int window, int stride, int rows, int cols,
                  float* dest, float* mask);
 void pooling_backward_cpu(const float* src, const float* mask, int window,
                           int stride, int rows, int cols, int channels,
-                          int out_height, int out_width,
-                          int n_batches, float* dest);
+                          int out_height, int out_width, int n_batches,
+                          float* dest);
 void im2col_cpu(const float* data_im, int channels, int rows, int cols,
                 int kernel_h, const int kernel_w, int pad, int stride,
                 float* data_col);

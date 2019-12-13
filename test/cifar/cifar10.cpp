@@ -55,29 +55,28 @@ int main(int argc, char** argv) {
     Matrix y_train;
     read_binary("/home/fabian/Documents/work/gpu_nn/test/cifar/y_train.dat",
                 y_train);
-    Init* init = new Glorot();
     s_Layer l1 = make_shared<Input>(Channels(3), ImageShape(32, 32));
     s_Layer conv1 =
         make_shared<Convolution>(FilterShape(5, 5), Pad(2), Stride(1),
                                  Filters(32), l1, new Normal(0, 0.0001));
-    s_Layer pool1 = make_shared<Pooling>(Window(2), Stride(2), conv1);
+    s_Layer pool1 = make_shared<Pooling>(Window(3), Stride(2), conv1);
     s_Layer conv2 =
         make_shared<Convolution>(FilterShape(5, 5), Pad(2), Stride(1),
                                  Filters(32), pool1, new Normal(0, 0.01));
-    s_Layer pool2 = make_shared<Pooling>(Window(2), Stride(2), conv2);
+    s_Layer pool2 = make_shared<Pooling>(Window(3), Stride(2), conv2);
     s_Layer conv3 =
         make_shared<Convolution>(FilterShape(5, 5), Pad(2), Stride(1),
                                  Filters(64), pool2, new Normal(0., 0.01));
-    s_Layer pool3 = make_shared<Pooling>(Window(2), Stride(2), conv3);
+    s_Layer pool3 = make_shared<Pooling>(Window(3), Stride(2), conv3);
     s_Layer d1 = make_shared<Dense>(Features(64), pool3, new Normal(0., 0.1));
-    s_Layer r1 = make_shared<Relu>(d1);
-    s_Layer d2 = make_shared<Dense>(Features(10), r1, new Normal(0., 0.1));
+    //s_Layer r1 = make_shared<Relu>(d1);
+    s_Layer d2 = make_shared<Dense>(Features(10), d1, new Normal(0., 0.1));
     s_Layer s1 = make_shared<Softmax>(d2);
     std::shared_ptr<Loss> loss =
         std::make_shared<CrossEntropy>(CrossEntropy("GPU"));
-    NeuralNetwork n1(s1, loss, "CPU");
+    NeuralNetwork n1(s1, loss, "GPU");
     std::shared_ptr<GradientDescent> sgd = std::make_shared<Momentum>(
-        LearningRate(0.001), MomentumRate(0.90), WeightDecay(0.4));
+        LearningRate(0.001), MomentumRate(0.90), WeightDecay(0.004));
     n1.train(x_train, y_train, sgd, Epochs(30), Patience(10), BatchSize(32));
     // Matrix predictions = n1.predict(transform_data(data.get_x_test()));
     // n_missclassified(predictions, data.get_y_test());

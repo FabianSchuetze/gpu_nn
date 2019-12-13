@@ -1,8 +1,8 @@
 #include <curand.h>
+#include <float.h>
 #include <sys/time.h>
 #include "../include/common.h"
 #include "../include/cuda_math.h"
-#include <float.h>
 double cpuSecond() {
     struct timeval tp;
     gettimeofday(&tp, NULL);
@@ -234,10 +234,9 @@ __global__ void cuda_matrix_addition_inplace(int rows, int cols,
     }
 }
 
-__global__ void cuda_matrix_addition(int rows, int cols,
-                                     const float* d_A, const float* d_B,
-                                     float* d_C, const float alpha_A,
-                                     const float alpha_B) {
+__global__ void cuda_matrix_addition(int rows, int cols, const float* d_A,
+                                     const float* d_B, float* d_C,
+                                     const float alpha_A, const float alpha_B) {
     unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
     unsigned int linear = row + col * rows;
@@ -369,8 +368,7 @@ __global__ void MaxPoolBackward(const int nthreads, const dtype* const top_diff,
 __global__ void MaxPoolForward(int nthreads, const dtype* bottom_data, int num,
                                int channels, int height, int width,
                                int out_height, int out_width, int window,
-                               int stride, dtype* top_data,
-                               dtype* mask) {
+                               int stride, dtype* top_data, dtype* mask) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     if (index < nthreads) {
         const int pw = index % out_width;
@@ -400,34 +398,34 @@ __global__ void MaxPoolForward(int nthreads, const dtype* bottom_data, int num,
     }
 }
 
-__global__ void CudaPooling(float const* inp, int window, int stride, int rows,
-                            int cols, int channels, int batches, float* out,
-                            float* mask) {
-    int ph = (blockIdx.x * blockDim.x + threadIdx.x);
-    int pw = (blockIdx.y * blockDim.y + threadIdx.y);
-    int c = (blockIdx.z * blockDim.z + threadIdx.z);
-    int out_height = (rows - window) / stride + 1;
-    int out_width = (cols - window) / stride + 1;
-    if (ph < out_height && pw < out_width && c < channels) {
-        for (int n = 0; n < batches; n++) {
-            for (int i = 0; i < window; i++) {
-                for (int j = 0; j < window; j++) {
-                    int curRow = ph * stride + i;
-                    int curCol = pw * stride + j;
-                    int li = c * cols * rows + curRow * cols + curCol;
-                    int lo = c * out_width * out_height + ph * out_width + pw;
-                    if (inp[li] > out[lo]) {
-                        out[lo] = inp[li];
-                        mask[lo] = li % (cols * rows);
-                    }
-                }
-            }
-            inp += rows * cols * channels;
-            out += out_width * out_height * channels;
-            mask += out_width * out_height * channels;
-        }
-    }
-}
+//__global__ void CudaPooling(float const* inp, int window, int stride, int rows,
+                            //int cols, int channels, int batches, float* out,
+                            //float* mask) {
+    //int ph = (blockIdx.x * blockDim.x + threadIdx.x);
+    //int pw = (blockIdx.y * blockDim.y + threadIdx.y);
+    //int c = (blockIdx.z * blockDim.z + threadIdx.z);
+    //int out_height = (rows - window) / stride + 1;
+    //int out_width = (cols - window) / stride + 1;
+    //if (ph < out_height && pw < out_width && c < channels) {
+        //for (int n = 0; n < batches; n++) {
+            //for (int i = 0; i < window; i++) {
+                //for (int j = 0; j < window; j++) {
+                    //int curRow = ph * stride + i;
+                    //int curCol = pw * stride + j;
+                    //int li = c * cols * rows + curRow * cols + curCol;
+                    //int lo = c * out_width * out_height + ph * out_width + pw;
+                    //if (inp[li] > out[lo]) {
+                        //out[lo] = inp[li];
+                        //mask[lo] = li % (cols * rows);
+                    //}
+                //}
+            //}
+            //inp += rows * cols * channels;
+            //out += out_width * out_height * channels;
+            //mask += out_width * out_height * channels;
+        //}
+    //}
+//}
 
 __global__ void im2col_gpu_kernel(int numThreads, const dtype* data_im,
                                   const int height, const int width,
@@ -662,13 +660,12 @@ void cross_entropy_gradient(int rows, int cols, const float* prediction,
     // MY_CHECK(cudaDeviceSynchronize());
 }
 
-void matrix_addition(int rows, int cols, const float* A,
-                     const float* B, float* C, const float alpha_A,
-                     const float alpha_B) {
+void matrix_addition(int rows, int cols, const float* A, const float* B,
+                     float* C, const float alpha_A, const float alpha_B) {
     dim3 block(16, 16);
     dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     cuda_matrix_addition<<<grid, block>>>(rows, cols, A, B, C, alpha_A,
-            alpha_B);
+                                          alpha_B);
     // cudaDeviceSynchronize();
     MY_CHECK(cudaPeekAtLastError());
     // MY_CHECK(cudaDeviceSynchronize());
@@ -731,37 +728,31 @@ void cuda_masking(int rows, int cols, const double prob, double* d_A) {
 }
 
 void pooling_gpu(const float* bottom_data, int window, int stride, int rows,
-                 int cols, int channels, int batches, int out_height, 
-                 int out_width, float* top_data,
-                 float* mask) {
-    //if (((rows - window) % stride) or ((cols - window) % stride)) {
-        //throw std::invalid_argument("Doesnt match");
+                 int cols, int channels, int out_height, int out_width,
+                 int batches, float* top_data, float* mask) {
+    // if (((rows - window) % stride) or ((cols - window) % stride)) {
+    // throw std::invalid_argument("Doesnt match");
     //}
     dim3 block(512);
     int eles = out_height * out_width * channels * batches;
     dim3 grid((eles + block.x - 1) / block.x);
-    MaxPoolForward<<<grid, block>>>(eles, bottom_data, batches, channels,
-                                    rows, cols, out_height, out_width, window,
-                                    stride, top_data, mask);
+    MaxPoolForward<<<grid, block>>>(eles, bottom_data, batches, channels, rows,
+                                    cols, out_height, out_width, window, stride,
+                                    top_data, mask);
     MY_CHECK(cudaPeekAtLastError());
 }
 
 void pooling_backward_gpu(const float* src, const float* mask, int window,
                           int stride, int rows, int cols, int channels,
-                          int out_height, int out_width,
-                          int batches, float* dest) {
-    //if (((rows - window) % stride) or ((cols - window) % stride)) {
-        //throw std::invalid_argument("Doesnt match");
-    //}
-    //int out_height = (rows - window) / stride + 1;
-    //int out_width = (cols - window) / stride + 1;
+                          int out_height, int out_width, int batches,
+                          float* dest) {
     dim3 block(512);
     int eles = rows * cols * channels * batches;
     dim3 grid((eles + block.x - 1) / block.x);
     MaxPoolBackward<<<grid, block>>>(eles, src, mask, batches, channels, rows,
                                      cols, out_height, out_width, window,
                                      stride, dest);
-    //MY_CHECK(cudaDeviceSynchronize());
+     MY_CHECK(cudaDeviceSynchronize());
     MY_CHECK(cudaPeekAtLastError());
 }
 
@@ -778,7 +769,7 @@ void im2col_gpu(const float* data_im, int channels, int height, const int width,
     im2col_gpu_kernel<<<grid, block>>>(numThreads, data_im, height, width,
                                        kernel_h, kernel_w, pad, stride,
                                        out_height, out_width, data_col);
-    //MY_CHECK(cudaDeviceSynchronize());
+    // MY_CHECK(cudaDeviceSynchronize());
     MY_CHECK(cudaPeekAtLastError());
 }
 
