@@ -69,7 +69,7 @@ void Storage::update_gpu_data(const dtype* src,
 
 void Storage::sync_to_cpu() {
     if (recent_head == "GPU") {
-        std::cout << "copying to CPU\n";
+        //std::cout << "copying to CPU\n";
         unsigned int nBytes = _data.rows() * _data.cols() * sizeof(dtype);
         MY_CHECK(cudaMemcpy(_cpu_pointer, _gpu_pointer, nBytes,
                             cudaMemcpyDeviceToHost));

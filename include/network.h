@@ -82,8 +82,6 @@ class NeuralNetwork {
                           threadsafe_queue<std::vector<SharedStorage>>*);
     void producer_predict(const Matrix&,
                           threadsafe_queue<std::vector<SharedStorage>>*);
-    void update_bkp(dtype curr);
-    void restore();
     void append_convolution_layer(Layer*);
     void construct_layers(std::vector<Layer*>);
     void insert_cnn_layer(const std::shared_ptr<Layer>&);
@@ -97,5 +95,6 @@ class NeuralNetwork {
                         const int&);
     int check_input_dimension(const std::vector<int>&);
     void print_network();
+    void display_train_loss(dtype&);
 };
 #endif
