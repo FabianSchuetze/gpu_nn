@@ -67,6 +67,12 @@ void Storage::update_gpu_data(const dtype* src,
     recent_head = "GPU";
 }
 
+void Storage::update_cpu_data(const dtype* src) {
+    memcpy(_data.data(), src, _data.size() * sizeof(dtype));
+    MY_CHECK(cudaDeviceSynchronize());
+    recent_head = "CPU";
+}
+
 void Storage::sync_to_cpu() {
     if (recent_head == "GPU") {
         //std::cout << "copying to CPU\n";

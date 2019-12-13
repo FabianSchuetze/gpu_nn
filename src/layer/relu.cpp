@@ -8,13 +8,12 @@
 #include "../../include/math.h"
 
 using std::vector;
-Relu::Relu() : Layer("Activation") {
+Relu::Relu() : Layer("Relu") {
     cublasStatus_t stat = cublasCreate(&_handle);
     CHECK_CUBLAS(stat);
-    //_name = "Activation";
 }
 
-Relu::Relu(const std::shared_ptr<Layer>& previous) : Layer("Activation") {
+Relu::Relu(const std::shared_ptr<Layer>& previous) : Layer("Relu") {
     cublasStatus_t stat = cublasCreate(&_handle);
     CHECK_CUBLAS(stat);
     initialize_output_dimension(previous);

@@ -61,7 +61,8 @@ void my_add_vec_to_mat_colwise(SharedStorage& A, const SharedStorage& B,
     if (rows != B->get_rows()) {
         std::stringstream ss;
         ss << "\nCannot add the two matrices as row numbers differ."
-            " A rows: " << rows << " vs B rows: " << B->get_rows() << " in:\n"
+              " A rows: "
+           << rows << " vs B rows: " << B->get_rows() << " in:\n"
            << __PRETTY_FUNCTION__ << "\ncalled from " << __FILE__ << " at "
            << __LINE__;
         throw std::invalid_argument(ss.str());
@@ -246,25 +247,27 @@ void col2im_cpu(const dtype* data_col, int channels, int rows, int cols,
         }
     }
 }
+// I NEED TO RESET THE DATA TO -INF!!!
 void pooling_cpu(const float* src, int window, int stride, int rows, int cols,
-                 int channels, int n_batches, float* dest, float* mask) {
-    if (((rows - window) % stride) or ((cols - window) % stride)) {
-        throw std::invalid_argument("Doesnt match");
-    }
-    int out_height = (rows - window) / stride + 1;
-    int out_width = (cols - window) / stride + 1;
+                 int channels, int n_batches, int out_height, int out_width,
+                 float* dest, float* mask) {
+    //if (((rows - window) % stride) or ((cols - window) % stride)) {
+        //throw std::invalid_argument("Doesnt match");
+    //}
+    //int out_height = (rows - window) / stride + 1;
+    //int out_width = (cols - window) / stride + 1;
     for (int n = 0; n < n_batches; ++n) {
         for (int c = 0; c < channels; ++c) {
             for (int ph = 0; ph < out_height; ++ph) {
                 for (int pw = 0; pw < out_width; ++pw) {
                     int hstart = ph * stride;
                     int wstart = pw * stride;
-                    // int hend = std::min(hstart + window, rows);
-                    // int wend = std::min(wstart + window, cols);
-                    int hend = hstart + window;
-                    int wend = wstart + window;
-                    // hstart = std::max(hstart, 0);
-                    // wstart = std::max(wstart, 0);
+                    int hend = std::min(hstart + window, rows);
+                    int wend = std::min(wstart + window, cols);
+                    // int hend = hstart + window;
+                    // int wend = wstart + window;
+                    hstart = std::max(hstart, 0);
+                    wstart = std::max(wstart, 0);
                     const int pool_index = ph * out_width + pw;
                     for (int h = hstart; h < hend; ++h) {
                         for (int w = wstart; w < wend; ++w) {
@@ -286,12 +289,13 @@ void pooling_cpu(const float* src, int window, int stride, int rows, int cols,
 
 void pooling_backward_cpu(const float* src, const float* mask, int window,
                           int stride, int rows, int cols, int channels,
+                          int out_height, int out_width,
                           int n_batches, float* dest) {
-    if (((rows - window) % stride) or ((cols - window) % stride)) {
-        throw std::invalid_argument("Doesnt match");
-    }
-    int out_height = (rows - window) / stride + 1;
-    int out_width = (cols - window) / stride + 1;
+    //if (((rows - window) % stride) or ((cols - window) % stride)) {
+        //throw std::invalid_argument("Doesnt match");
+    //}
+    //int out_height = (rows - window) / stride + 1;
+    //int out_width = (cols - window) / stride + 1;
     for (int n = 0; n < n_batches; ++n) {
         for (int c = 0; c < channels; ++c) {
             for (int ph = 0; ph < out_height; ++ph) {

@@ -43,22 +43,17 @@ void matrix_addition_inplace(int, int, const float*, float*, const float);
 void matrix_addition_inplace(int, int, const double*, double*, const float);
 void matrix_addition(int, int, const float*, const float*, float*, const float,
                      const float);
-// void dropout(int, int, const float, const float*, float*);
-// void dropout(int, int, const double, const double*, double*);
 void cuda_init(int, int, curandState*, int);
 void cuda_masking(int, int, float, float*);
 void cuda_masking(int, int, double, double*);
 void pooling_gpu(const float* const bottom_data, const int window,
                  const int stride, int rows, int cols, const int channels,
-                 int batches, float* top_data, float* mask);
-// void pooling_backward_gpu_my(const float* bottom_data, const float* mask,
-// const int window, const int stride, int rows,
-// int cols, const int channels, const int batches,
-// float* dest);
+                 const int out_height, const int out_width, int batches,
+                 float* top_data, float* mask);
 void pooling_backward_gpu(const float* bottom_data, const float* mask,
                           const int window, const int stride, int rows,
-                          int cols, const int channels, const int batches,
-                          float* dest);
+                          int cols, const int channels, int out_height,
+                          int out_width, const int batches, float* dest);
 void im2col_gpu(const float* data_im, int channels, int height, const int width,
                 int kernel_h, const int kernel_w, int pad, int stride,
                 float* data_col);

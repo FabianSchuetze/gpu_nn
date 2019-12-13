@@ -13,12 +13,12 @@ using std::vector;
 
 typedef std::shared_ptr<Storage> SharedStorage;
 
-Softmax::Softmax() : Layer("Activation") {
+Softmax::Softmax() : Layer("Softmax") {
     cublasStatus_t stat = cublasCreate(&_handle);
     CHECK_CUBLAS(stat);
 }
 
-Softmax::Softmax(const std::shared_ptr<Layer>& previous) : Layer("Activation") {
+Softmax::Softmax(const std::shared_ptr<Layer>& previous) : Layer("Softmax") {
     cublasStatus_t stat = cublasCreate(&_handle);
     CHECK_CUBLAS(stat);
     initialize_output_dimension(previous);
