@@ -39,7 +39,7 @@ void Pooling::initialize_from_previous(const std::shared_ptr<Layer>& previous) {
         std::shared_ptr<Convolution> conv =
             std::dynamic_pointer_cast<Convolution>(previous);
         _inp = conv->_inp;
-        _channels = conv->_channels;
+        _channels.get() = conv->_filters.get();
         _out = conv->_out;
     }
     else {

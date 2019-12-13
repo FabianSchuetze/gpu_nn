@@ -1,5 +1,6 @@
 #include "../include/network.h"
 #include <iostream>
+#include <iterator>
 #include <memory>
 #include <stdexcept>
 #include <thread>
@@ -29,6 +30,7 @@ NeuralNetwork::NeuralNetwork(const std::shared_ptr<Layer>& last_layer,
     fun_forward = &NeuralNetwork::forward_gpu;
     fun_backward = &NeuralNetwork::backward_gpu;
     fun_update = &NeuralNetwork::update_weights_gpu;
+    print_network();
 };
 
 NeuralNetwork::NeuralNetwork(const std::shared_ptr<Layer>& last_layer,
@@ -45,22 +47,40 @@ NeuralNetwork::NeuralNetwork(const std::shared_ptr<Layer>& last_layer,
         fun_backward = &NeuralNetwork::backward_cpu;
         fun_update = &NeuralNetwork::update_weights_cpu;
     }
+    print_network();
 };
+
+void NeuralNetwork::print_network() {
+    int i = 0;
+    std::vector<int> input_dim;
+    for (const std::shared_ptr<Layer> layer : layers) {
+        input_dim = layer->output_dimension();
+        std::stringstream ss;
+        ss << "Layer " << i << ": " << layer->name() << ", output size: ";
+        std::copy(input_dim.begin(), input_dim.end(),
+                  std::ostream_iterator<int>(ss, " "));
+        std::cout << ss.str() << std::endl;
+        i++;
+    }
+}
 
 void NeuralNetwork::insert_cnn_layer(const std::shared_ptr<Layer>& layer) {
     std::shared_ptr<Convolution> derived =
         std::dynamic_pointer_cast<Convolution>(layer);
     std::shared_ptr<Layer> im2col = std::make_shared<Im2ColLayer>(derived);
+    // std::shared_ptr<Layer> tmp = layer->_previous;
     layer->_previous = im2col;
-    layers.push_front(im2col);
     layers.push_front(layer);
+    layers.push_front(im2col);
 }
 
 void NeuralNetwork::construct_layers(std::shared_ptr<Layer> curr) {
     while (curr->previous()) {
-        if (curr->name() == "Convolution")
+        if (curr->name() == "Convolution") {
             insert_cnn_layer(curr);
-        else
+        } else if (curr->name() == "Im2ColLayer") {
+            ;
+        } else
             layers.push_front(curr);
         std::shared_ptr<Layer> tmp = curr->previous();
         curr.swap(tmp);

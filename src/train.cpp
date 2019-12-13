@@ -110,7 +110,6 @@ void NeuralNetwork::prepare_subset(const vector<int>& pop, vector<int>& subset,
 void NeuralNetwork::maybe_shuffle(vector<int>& pop, int& start, const int& end,
                                   const int& step, std::mt19937& gen) {
     if (start + step >= end) {
-        std::cout << "shuffling" << std::endl;
         std::shuffle(pop.begin(), pop.end(), gen);
         start = 0;
     }
@@ -289,11 +288,7 @@ void NeuralNetwork::train(std::shared_ptr<GradientDescent>& sgd) {
         // SharedStorage& grad_in = grads[grads.size() - 1];
         loss->grad_loss(grads.back(), vals.back(), SharedTarget, SharedTarget);
         backwards(grads, vals);
-        // std::cout << grads[grads.size() - 1]->return_data_const() <<
-        // std::endl;
-
         update_weights(sgd, train_args->optimizer(), train_args->batch_size());
-        // std::cout << "UPDATING\n";
         train_args->advance_total_iter();
         diff_3 += std::chrono::duration_cast<std::chrono::nanoseconds>(
             std::chrono::system_clock::now() - begin_other);
