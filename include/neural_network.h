@@ -18,5 +18,6 @@
 #include "gradient_descent/momentum.hpp"
 #include "initalization/normal.hpp"
 #include "initalization/glorot.hpp"
+#include "initalization/lcn.hpp"
 
 #endif

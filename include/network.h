@@ -2,6 +2,7 @@
 #define network_h
 #include <chrono>
 #include <deque>
+#include <fstream>
 #include <list>
 #include <memory>
 #include <random>
@@ -25,7 +26,7 @@ class NeuralNetwork {
     // What predict function do I need?
     //@brief Returns a prediction from the neural network, calling this
     // function allocates shared storage;
-    Matrix predict(const Matrix&);
+    Matrix predict(const Matrix&, int);
     void predict(const Matrix&, SharedStorage&);
     //@brief Returns a prediction from the neural network, calling this
     // function presumes that the SharedStorage is appropriate for all the
@@ -42,7 +43,7 @@ class NeuralNetwork {
                         std::vector<VecSharedStorage>&, int);
     void train(std::shared_ptr<GradientDescent>&);
     void train(const Matrix&, const Matrix&, std::shared_ptr<GradientDescent>&,
-               Epochs, Patience, BatchSize);
+               Epochs, Patience, BatchSize, bool debug_info=false);
     dtype validate(std::chrono::milliseconds);
     void random_numbers(std::vector<int>&, std::mt19937&);
 
@@ -96,5 +97,8 @@ class NeuralNetwork {
     int check_input_dimension(const std::vector<int>&);
     void print_network();
     void display_train_loss(dtype&);
+    void forward_debug_info(const std::vector<SharedStorage>&);
+    void backward_debug_info(const std::vector<SharedStorage>&);
+    void print_layers(std::ofstream&);
 };
 #endif

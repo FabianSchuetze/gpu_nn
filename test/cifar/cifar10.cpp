@@ -10,20 +10,20 @@
 typedef std::shared_ptr<Layer> s_Layer;
 using std::make_shared;
 
-void print_Matrix_to_stdout2(const Matrix& val, std::string loc) {
-    int rows(val.rows()), cols(val.cols());
-    std::ofstream myfile(loc);
-    myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
-    myfile << std::fixed;
-    myfile << std::setprecision(2);
-    for (int row = 0; row < rows; ++row) {
-        myfile << val(row, 0);
-        for (int col = 1; col < cols; ++col) {
-            myfile << ", " << val(row, col);
-        }
-        myfile << std::endl;
-    }
-}
+//void print_Matrix_to_stdout2(const Matrix& val, std::string loc) {
+    //int rows(val.rows()), cols(val.cols());
+    //std::ofstream myfile(loc);
+    //myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
+    ////myfile << std::fixed;
+    ////myfile << std::setprecision(2);
+    //for (int row = 0; row < rows; ++row) {
+        //myfile << val(row, 0);
+        //for (int col = 1; col < cols; ++col) {
+            //myfile << ", " << val(row, col);
+        //}
+        //myfile << std::endl;
+    //}
+//}
 void n_missclassified(const Matrix& y_pred, const Matrix& y_true) {
     int missclassified(0);
     for (int i = 0; i < y_pred.rows(); ++i) {
@@ -77,7 +77,8 @@ int main(int argc, char** argv) {
     NeuralNetwork n1(s1, loss, "GPU");
     std::shared_ptr<GradientDescent> sgd = std::make_shared<Momentum>(
         LearningRate(0.001), MomentumRate(0.90), WeightDecay(0.004));
-    n1.train(x_train, y_train, sgd, Epochs(30), Patience(10), BatchSize(32));
+    n1.train(x_train, y_train, sgd, Epochs(30), Patience(10), BatchSize(32),
+            true);
     // Matrix predictions = n1.predict(transform_data(data.get_x_test()));
     // n_missclassified(predictions, data.get_y_test());
 }

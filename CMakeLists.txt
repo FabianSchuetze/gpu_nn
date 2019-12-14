@@ -34,6 +34,7 @@ set(${LIBRARY_TARGET_NAME}_SRC
     src/gradient_descent/momentum.cpp
     src/initalization/normal.cpp
     src/initalization/glorot.cpp
+    src/initalization/lcn.cpp
 )
 if (UNIX)
   add_library(${LIBRARY_TARGET_NAME} SHARED ${${LIBRARY_TARGET_NAME}_SRC})

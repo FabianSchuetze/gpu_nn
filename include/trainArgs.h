@@ -1,8 +1,9 @@
 #ifndef GUARD_trainArgs_h
 #define GUARD_trainArgs_h
+#include <fstream>
+#include <list>
 #include <memory>
 #include <vector>
-#include <list>
 #include "common.h"
 #include "gradient_descent/gradient_descent.h"
 #include "storage.h"
@@ -17,12 +18,12 @@ class trainArgs {
     trainArgs() = default;
     trainArgs(const Matrix&, const Matrix&, Epochs, Patience, BatchSize,
               std::shared_ptr<GradientDescent>&,
-              std::deque<std::shared_ptr<Layer>>&);
+              std::deque<std::shared_ptr<Layer>>&, bool debug_info);
     int iter_since_update() { return _iter_since_update; }
     void reset_iter_since_update() { _iter_since_update = 0; }
     void reset_total_iter() { _total_iter = 0; }
-    int cummulative_iter() {return _cum_iter;}
-    void advance_cumulative_iter(int step) {_cum_iter += step;}
+    int cummulative_iter() { return _cum_iter; }
+    void advance_cumulative_iter(int step) { _cum_iter += step; }
     int total_iter() { return _total_iter; }
     void advance_total_iter() { _total_iter += _batch_size; };
     void advance_iter_since_update() { _iter_since_update++; };
@@ -40,6 +41,9 @@ class trainArgs {
     const SharedStorage& y_val_shared() { return _y_val_shared; }
     std::vector<std::vector<SharedStorage>>& optimizer() { return _optimizer; }
     threadsafe_queue<std::pair<SharedStorage, SharedStorage>> data_queue;
+    bool debug_info() { return _debug_info; }
+    std::ofstream& ffw_stream() {return _ffw_stream;}
+    std::ofstream& bwd_stream() {return _bwd_stream;}
 
    private:
     Matrix _x_train;
@@ -52,12 +56,14 @@ class trainArgs {
     int _iter_since_update;
     int _total_iter;
     int _current_epoch;
-     int _cum_iter;
+    int _cum_iter;
     dtype _best_error;
-    // dtype _current_error;
+    bool _debug_info;
     int _batch_size;
     int _epochs;
     int _patience;
+    std::ofstream _ffw_stream;
+    std::ofstream _bwd_stream;
     void train_test_split(const Matrix&, const Matrix&, dtype);
     void create_optimizers(const std::shared_ptr<GradientDescent>&,
                            const std::deque<std::shared_ptr<Layer>>&);

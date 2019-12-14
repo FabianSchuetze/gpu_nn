@@ -141,6 +141,20 @@ void NeuralNetwork::forward(vector<SharedStorage>& values,
     (this->*fun_forward)(values, type);
 }
 
+void NeuralNetwork::forward_debug_info(const vector<SharedStorage>& val) {
+    train_args->ffw_stream() <<  val[0]->return_data_const().mean();
+    for (size_t i = 1; i < val.size(); ++i) {
+        //dtype avg = val[i]->return_data_const().mean();
+        train_args->ffw_stream() << " ";
+        train_args->ffw_stream() << val[i]->return_data_const().mean();
+        for (const SharedStorage& para : layers[i]->return_parameters()) {
+            train_args->ffw_stream() << " ";
+            train_args->ffw_stream() <<  para->return_data_const().mean();
+        }
+    }
+    train_args->ffw_stream() << "\n";
+}
+
 void NeuralNetwork::forward_gpu(vector<SharedStorage>& values,
                                 const std::string& type) {
     int i = 0;
@@ -148,10 +162,10 @@ void NeuralNetwork::forward_gpu(vector<SharedStorage>& values,
     ++layer;
     while (layer != layers.end()) {
         (*layer)->forward_gpu(values[i], values[i + 1], type);
-        //print_Matrix_to_stdout3(values[i]->return_data_const(), "out.txt");
         i++;
         ++layer;
     }
+    if (train_args->debug_info()) forward_debug_info(values);
 }
 
 void NeuralNetwork::forward_cpu(vector<SharedStorage>& values,
@@ -225,10 +239,10 @@ void NeuralNetwork::predict(const Matrix& input, SharedStorage& SharedTarget) {
     consume.join();
 }
 
-Matrix NeuralNetwork::predict(const Matrix& input) {
+Matrix NeuralNetwork::predict(const Matrix& input, int output_size) {
     // THIS IS A HUGE BUG ! IT MUST BE DEPENDTENT ON THE TARGET!!! I NEED TO
     // FIX THE LAYERS BUSINESS!!!
-    Matrix output = Matrix::Zero(10, input.rows());
+    Matrix output = Matrix::Zero(output_size, input.rows());
     SharedStorage SharedTarget = std::make_shared<Storage>(output);
     predict(input, SharedTarget);
     return SharedTarget->return_data_const().transpose();
