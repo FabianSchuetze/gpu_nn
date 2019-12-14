@@ -91,15 +91,24 @@ void Dense::forward_gpu(const SharedStorage& in, SharedStorage& out,
     my_add_vec_to_mat_colwise(out, parameters[1], 1.0f);
 }
 
+void Dense::resize_assistance(int batches) {
+    if (batches != assistance_parameters[0]->get_rows()) {
+        Matrix ones = Matrix::Ones(batches, 1);
+        assistance_parameters[0] = std::make_shared<Storage>(ones);
+    }
+}
+
 void Dense::backward_gpu(const SharedStorage& values,
                          const SharedStorage& gradient_in,
                          SharedStorage& gradient_out) {
+    resize_assistance(gradient_in->get_cols());
+    Matrix test = gradient_in->return_data_const().rowwise().sum();
     my_Dgemv(_handle, CUBLAS_OP_N, gradient_in, assistance_parameters[0],
-             gradients[1], 2, 0);
+             gradients[1], 1., 0); //bias
     my_Dgemm(_handle, CUBLAS_OP_N, CUBLAS_OP_T, gradient_in, values,
-             gradients[0], 1, 0);
+             gradients[0], 1, 0); // weights
     my_Dgemm(_handle, CUBLAS_OP_T, CUBLAS_OP_N, parameters[0], gradient_in,
-             gradient_out, 1, 0);
+             gradient_out, 1, 0); //out
 }
 
 void Dense::backward_cpu(const SharedStorage& values,
@@ -124,7 +133,7 @@ void Dense::backward_cpu(const SharedStorage& values,
 void Dense::initialize_grad(int rows, int cols) {
     Matrix tmp = Matrix(rows, cols).setZero();
     Matrix bias_tmp = Matrix(rows, 1).setZero();
-    Matrix ones = Matrix::Ones(cols, 1);
+    Matrix ones = Matrix::Ones(32, 1); // guess
     gradients.push_back(std::make_shared<Storage>(tmp));
     gradients.push_back(std::make_shared<Storage>(bias_tmp));
     assistance_parameters.push_back(std::make_shared<Storage>(ones));

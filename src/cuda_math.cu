@@ -39,7 +39,7 @@ void my_cuda_Dgemv(cublasHandle_t handle, cublasOperation_t transA, int M,
     // N Defines the number of columns of the Matrix B and C
     CHECK_CUBLAS(
         cublasDgemv(handle, transA, M, N, alpha, d_A, M, d_B, 1, beta, d_C, 1));
-    // MY_CHECK(cudaDeviceSynchronize());
+     MY_CHECK(cudaDeviceSynchronize());
 
     // WHAT ABOUT SYNRONIZING THE DEVICE?
 }
@@ -51,7 +51,7 @@ void my_cuda_Dgemv(cublasHandle_t handle, cublasOperation_t transA, int M,
     // N Defines the number of columns of the Matrix B and C
     CHECK_CUBLAS(
         cublasSgemv(handle, transA, M, N, alpha, d_A, M, d_B, 1, beta, d_C, 1));
-    // cudaDeviceSynchronize();
+     cudaDeviceSynchronize();
     // MY_CHECK(cudaDeviceSynchronize());
 
     // WHAT ABOUT SYNRONIZING THE DEVICE?

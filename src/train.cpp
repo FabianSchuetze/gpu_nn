@@ -38,13 +38,13 @@ void NeuralNetwork::backwards(std::vector<SharedStorage>& gradients,
 }
 
 void NeuralNetwork::backward_debug_info(const vector<SharedStorage>& grad) {
-    train_args->bwd_stream() <<  grad[0]->return_data_const().mean();
+    train_args->bwd_stream() << grad[0]->return_data_const().mean();
     for (size_t i = 1; i < grad.size(); ++i) {
         train_args->bwd_stream() << " ";
         train_args->bwd_stream() << grad[i]->return_data_const().mean();
         for (const SharedStorage& para : layers[i]->return_gradients()) {
             train_args->bwd_stream() << " ";
-            train_args->bwd_stream() <<  para->return_data_const().mean();
+            train_args->bwd_stream() << para->return_data_const().mean();
         }
     }
     train_args->bwd_stream() << "\n";
@@ -197,7 +197,7 @@ void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
 
 void NeuralNetwork::producer() {
     std::mt19937 gen;
-    gen.seed(0);
+    // gen.seed(10);
     Matrix x_train, y_train;
     vector<int> samples(train_args->batch_size());
     vector<int> population(train_args->x_train().rows());
@@ -208,8 +208,8 @@ void NeuralNetwork::producer() {
     std::shuffle(population.begin(), population.end(), gen);
     while (train_args->current_epoch() < train_args->epochs()) {
         if (train_args->data_queue.size() < 5) {
-            maybe_shuffle(samples, producer_idx, end, train_args->batch_size(),
-                          gen);
+            maybe_shuffle(population, producer_idx, end,
+                          train_args->batch_size(), gen);
             prepare_subset(population, samples, producer_idx,
                            train_args->batch_size());
             get_new_sample(samples, x_train, y_train);
@@ -274,53 +274,53 @@ void NeuralNetwork::consumer(std::shared_ptr<GradientDescent>& sgd) {
     }
 }
 
-//void NeuralNetwork::train(std::shared_ptr<GradientDescent>& sgd) {
-    //std::mt19937 gen;
-    //gen.seed(0);
-    //vector<SharedStorage> vals = allocate_forward(train_args->batch_size());
-    //vector<SharedStorage> grads = allocate_backward(train_args->batch_size());
-    //Matrix tmp =
-        //Matrix::Zero(train_args->y_train().cols(), train_args->batch_size());
-    //SharedStorage SharedTarget = std::make_shared<Storage>(tmp);
-    //vector<int> samples(train_args->batch_size());
-    //Matrix x_train, y_train;
-    //auto begin = std::chrono::system_clock::now();
-    //auto begin_fill = std::chrono::system_clock::now();
-    //auto begin_other = std::chrono::system_clock::now();
-    //auto end = std::chrono::system_clock::now();
-    //// auto end_fill = std::chrono::system_clock::now();
-    //std::chrono::milliseconds diff;
-    //std::chrono::nanoseconds diff_2;
-    //std::chrono::nanoseconds diff_3;
-    //while (train_args->current_epoch() < train_args->epochs()) {
-        //begin_fill = std::chrono::system_clock::now();
-        //random_numbers(samples, gen);
-        //get_new_sample(samples, x_train, y_train);
-        //SharedTarget->update_cpu_data(y_train);
-        //fill_hiddens(vals, x_train);
-        //diff_2 += std::chrono::duration_cast<std::chrono::nanoseconds>(
-            //std::chrono::system_clock::now() - begin_fill);
-        //begin_other = std::chrono::system_clock::now();
-        //forward(vals, "train");
-        //// SharedStorage& grad_in = grads[grads.size() - 1];
-        //loss->grad_loss(grads.back(), vals.back(), SharedTarget, SharedTarget);
-        //backwards(grads, vals);
-        //update_weights(sgd, train_args->optimizer(), train_args->batch_size());
-        //train_args->advance_total_iter();
-        //diff_3 += std::chrono::duration_cast<std::chrono::nanoseconds>(
-            //std::chrono::system_clock::now() - begin_other);
-        //if (train_args->total_iter() > train_args->max_total_iter()) {
-            //end = std::chrono::system_clock::now();
-            //diff = std::chrono::duration_cast<std::chrono::milliseconds>(end -
-                                                                         //begin);
-            //std::cout << "the input used " << diff_2.count() << " milliseconds"
-                      //<< std::endl;
-            //std::cout << "the other part used " << diff_3.count()
-                      //<< " milliseconds" << std::endl;
-            //diff_2 = std::chrono::nanoseconds::zero();
-            //diff_3 = std::chrono::nanoseconds::zero();
-            //validate(diff);
-            //begin = std::chrono::system_clock::now();
-        //}
-    //}
+// void NeuralNetwork::train(std::shared_ptr<GradientDescent>& sgd) {
+// std::mt19937 gen;
+// gen.seed(0);
+// vector<SharedStorage> vals = allocate_forward(train_args->batch_size());
+// vector<SharedStorage> grads = allocate_backward(train_args->batch_size());
+// Matrix tmp =
+// Matrix::Zero(train_args->y_train().cols(), train_args->batch_size());
+// SharedStorage SharedTarget = std::make_shared<Storage>(tmp);
+// vector<int> samples(train_args->batch_size());
+// Matrix x_train, y_train;
+// auto begin = std::chrono::system_clock::now();
+// auto begin_fill = std::chrono::system_clock::now();
+// auto begin_other = std::chrono::system_clock::now();
+// auto end = std::chrono::system_clock::now();
+//// auto end_fill = std::chrono::system_clock::now();
+// std::chrono::milliseconds diff;
+// std::chrono::nanoseconds diff_2;
+// std::chrono::nanoseconds diff_3;
+// while (train_args->current_epoch() < train_args->epochs()) {
+// begin_fill = std::chrono::system_clock::now();
+// random_numbers(samples, gen);
+// get_new_sample(samples, x_train, y_train);
+// SharedTarget->update_cpu_data(y_train);
+// fill_hiddens(vals, x_train);
+// diff_2 += std::chrono::duration_cast<std::chrono::nanoseconds>(
+// std::chrono::system_clock::now() - begin_fill);
+// begin_other = std::chrono::system_clock::now();
+// forward(vals, "train");
+//// SharedStorage& grad_in = grads[grads.size() - 1];
+// loss->grad_loss(grads.back(), vals.back(), SharedTarget, SharedTarget);
+// backwards(grads, vals);
+// update_weights(sgd, train_args->optimizer(), train_args->batch_size());
+// train_args->advance_total_iter();
+// diff_3 += std::chrono::duration_cast<std::chrono::nanoseconds>(
+// std::chrono::system_clock::now() - begin_other);
+// if (train_args->total_iter() > train_args->max_total_iter()) {
+// end = std::chrono::system_clock::now();
+// diff = std::chrono::duration_cast<std::chrono::milliseconds>(end -
+// begin);
+// std::cout << "the input used " << diff_2.count() << " milliseconds"
+//<< std::endl;
+// std::cout << "the other part used " << diff_3.count()
+//<< " milliseconds" << std::endl;
+// diff_2 = std::chrono::nanoseconds::zero();
+// diff_3 = std::chrono::nanoseconds::zero();
+// validate(diff);
+// begin = std::chrono::system_clock::now();
+//}
+//}
 //}

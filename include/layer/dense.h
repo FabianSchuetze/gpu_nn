@@ -29,6 +29,7 @@ class Dense : public Layer {
     void initialize_grad(int, int);
     void initialize_output_dimension() override;
     void initialize_input_dimension(const std::shared_ptr<Layer>&);
+    void resize_assistance(int);
     std::vector<SharedStorage> assistance_parameters;
     cublasHandle_t _handle;
     Features _out;
