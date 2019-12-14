@@ -61,5 +61,8 @@ void col2im_gpu(const dtype* data_col, int channels, int height, int width,
                 int kernel_h, int kernel_w, int pad, int stride,
                 dtype* data_im);
 void cuda_colwise_max(const dtype* input, int rows, int cols, dtype* out);
+//void pooling_gpu2(const float* bottom_data, int window, int stride, int rows,
+                 //int cols, int channels, int out_height, int out_width,
+                 //int batches, float* top_data, float* mask);
 
 #endif

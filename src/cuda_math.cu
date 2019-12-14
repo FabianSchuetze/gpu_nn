@@ -39,7 +39,7 @@ void my_cuda_Dgemv(cublasHandle_t handle, cublasOperation_t transA, int M,
     // N Defines the number of columns of the Matrix B and C
     CHECK_CUBLAS(
         cublasDgemv(handle, transA, M, N, alpha, d_A, M, d_B, 1, beta, d_C, 1));
-     MY_CHECK(cudaDeviceSynchronize());
+    MY_CHECK(cudaDeviceSynchronize());
 
     // WHAT ABOUT SYNRONIZING THE DEVICE?
 }
@@ -51,7 +51,7 @@ void my_cuda_Dgemv(cublasHandle_t handle, cublasOperation_t transA, int M,
     // N Defines the number of columns of the Matrix B and C
     CHECK_CUBLAS(
         cublasSgemv(handle, transA, M, N, alpha, d_A, M, d_B, 1, beta, d_C, 1));
-     cudaDeviceSynchronize();
+    cudaDeviceSynchronize();
     // MY_CHECK(cudaDeviceSynchronize());
 
     // WHAT ABOUT SYNRONIZING THE DEVICE?
@@ -342,22 +342,22 @@ __global__ void MaxPoolBackward(const int nthreads, const dtype* const top_diff,
         // CUDA_KERNEL_LOOP(index, nthreads) {
         // find out the local index
         // find out the local offset
-        const int w = index % width;
-        const int h = (index / width) % height;
-        const int c = (index / width / height) % channels;
-        const int n = index / width / height / channels;
-        const int phstart = (h < window) ? 0 : (h + window) / stride + 1;
-        const int phend = min((h) / stride + 1, pooled_height);
-        const int pwstart = (w < window) ? 0 : (w + window) / stride + 1;
-        const int pwend = min((w) / stride + 1, pooled_width);
+        const int h = index % height;
+        const int w = (index / height) % width;
+        const int c = (index / height / width) % channels;
+        const int n = index / height / width / channels;
+        const int phstart = (h < window) ? 0 : (h - window) / stride + 1;
+        const int phend = min(h / stride + 1, pooled_height);
+        const int pwstart = (w < window) ? 0 : (w - window) / stride + 1;
+        const int pwend = min(w / stride + 1, pooled_width);
         dtype gradient = 0;
         const int offset = (n * channels + c) * pooled_height * pooled_width;
         const dtype* const top_diff_slice = top_diff + offset;
         const float* const mask_slice = mask + offset;
         for (int ph = phstart; ph < phend; ++ph) {
             for (int pw = pwstart; pw < pwend; ++pw) {
-                if (mask_slice[ph * pooled_width + pw] == h * width + w) {
-                    gradient += top_diff_slice[ph * pooled_width + pw];
+                if (mask_slice[pw * pooled_height + ph] == w * height + h) {
+                    gradient += top_diff_slice[pw * pooled_height + ph];
                 }
             }
         }
@@ -371,10 +371,10 @@ __global__ void MaxPoolForward(int nthreads, const dtype* bottom_data, int num,
                                int stride, dtype* top_data, dtype* mask) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     if (index < nthreads) {
-        const int pw = index % out_width;
-        const int ph = (index / out_width) % out_height;
-        const int c = (index / out_width / out_height) % channels;
-        const int n = index / out_width / out_height / channels;
+        const int ph = index % out_height;
+        const int pw = (index / out_height) % out_width;
+        const int c = (index / out_height / out_width) % channels;
+        const int n = index / out_height / out_width / channels;
         int hstart = ph * stride;
         int wstart = pw * stride;
         const int hend = min(hstart + window, height);
@@ -387,8 +387,8 @@ __global__ void MaxPoolForward(int nthreads, const dtype* bottom_data, int num,
             bottom_data + (n * channels + c) * height * width;
         for (int h = hstart; h < hend; ++h) {
             for (int w = wstart; w < wend; ++w) {
-                if (bottom_slice[h * width + w] > maxval) {
-                    maxidx = h * width + w;
+                if (bottom_slice[w * height + h] > maxval) {
+                    maxidx = w * height + h;
                     maxval = bottom_slice[maxidx];
                 }
             }
@@ -399,23 +399,23 @@ __global__ void MaxPoolForward(int nthreads, const dtype* bottom_data, int num,
 }
 
 //__global__ void CudaPooling(float const* inp, int window, int stride, int rows,
-                            //int cols, int channels, int batches, float* out,
+                            //int cols, int channels, int out_height,
+                            //int out_width, int batches, float* out,
                             //float* mask) {
     //int ph = (blockIdx.x * blockDim.x + threadIdx.x);
     //int pw = (blockIdx.y * blockDim.y + threadIdx.y);
     //int c = (blockIdx.z * blockDim.z + threadIdx.z);
-    //int out_height = (rows - window) / stride + 1;
-    //int out_width = (cols - window) / stride + 1;
     //if (ph < out_height && pw < out_width && c < channels) {
         //for (int n = 0; n < batches; n++) {
             //for (int i = 0; i < window; i++) {
                 //for (int j = 0; j < window; j++) {
                     //int curRow = ph * stride + i;
                     //int curCol = pw * stride + j;
-                    //int li = c * cols * rows + curRow * cols + curCol;
-                    //int lo = c * out_width * out_height + ph * out_width + pw;
-                    //if (inp[li] > out[lo]) {
-                        //out[lo] = inp[li];
+                    //int li = c * cols * rows + curCol * rows + curRow;
+                    //int lo = c * out_width * out_height + pw * out_height + ph;
+                    //if (inp[li] > maxval) {
+                        //maxval = inp[li];
+                        //maxidx = li % (cols * rows);
                         //mask[lo] = li % (cols * rows);
                     //}
                 //}
@@ -744,9 +744,6 @@ void cuda_masking(int rows, int cols, const double prob, double* d_A) {
 void pooling_gpu(const float* bottom_data, int window, int stride, int rows,
                  int cols, int channels, int out_height, int out_width,
                  int batches, float* top_data, float* mask) {
-    // if (((rows - window) % stride) or ((cols - window) % stride)) {
-    // throw std::invalid_argument("Doesnt match");
-    //}
     dim3 block(512);
     int eles = out_height * out_width * channels * batches;
     dim3 grid((eles + block.x - 1) / block.x);
@@ -755,6 +752,19 @@ void pooling_gpu(const float* bottom_data, int window, int stride, int rows,
                                     top_data, mask);
     MY_CHECK(cudaPeekAtLastError());
 }
+
+//void pooling_gpu2(const float* bottom_data, int window, int stride, int rows,
+                 //int cols, int channels, int out_height, int out_width,
+                 //int batches, float* top_data, float* mask) {
+    //dim3 block(16, 16, 4);
+    //dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y,
+              //(channels + block.z - 1) / block.z);
+    //CudaPooling<<<grid, block>>>(bottom_data, window, stride, rows, cols,
+                                 //channels, out_height, out_width, batches,
+                                 //top_data, mask);
+    //MY_CHECK(cudaDeviceSynchronize());
+    //MY_CHECK(cudaPeekAtLastError());
+//}
 
 void pooling_backward_gpu(const float* src, const float* mask, int window,
                           int stride, int rows, int cols, int channels,
@@ -766,7 +776,7 @@ void pooling_backward_gpu(const float* src, const float* mask, int window,
     MaxPoolBackward<<<grid, block>>>(eles, src, mask, batches, channels, rows,
                                      cols, out_height, out_width, window,
                                      stride, dest);
-     MY_CHECK(cudaDeviceSynchronize());
+    MY_CHECK(cudaDeviceSynchronize());
     MY_CHECK(cudaPeekAtLastError());
 }
 
@@ -804,7 +814,6 @@ void col2im_gpu(const dtype* data_col, int channels, int height, int width,
     MY_CHECK(cudaDeviceSynchronize());
     MY_CHECK(cudaPeekAtLastError());
 }
-
 
 void cuda_colwise_max(const dtype* input, int rows, int cols, dtype* out) {
     dim3 block(512);

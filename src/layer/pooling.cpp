@@ -1,11 +1,11 @@
 #include "../../include/layer/pooling.h"
+#include <float.h>
 #include <sys/time.h>
 #include <iostream>
 #include <memory>
 #include <stdexcept>
 #include "../../include/cuda_math.h"
 #include "../../include/math.h"
-#include <float.h>
 
 Pooling::Pooling(Window window, Stride stride, ImageShape imageshape,
                  Channels channels)
@@ -62,7 +62,10 @@ void Pooling::initialize_output_dimension() {
     _out_dim.push_back(out_width);
 }
 
-void Pooling::initialize_masking() { mask = std::make_shared<Storage>(); }
+void Pooling::initialize_masking() {
+    mask = std::make_shared<Storage>();
+    mask2 = std::make_shared<Storage>();
+}
 
 void inline Pooling::check_input_size(const SharedStorage& in) {
     int rows = _channels.get() * _inp.first() * _inp.second();
@@ -75,25 +78,42 @@ void inline Pooling::check_input_size(const SharedStorage& in) {
     }
 }
 
-void Pooling::check_masking(const SharedStorage& in) {
-    if (!same_size(in, mask)) {
+void Pooling::check_masking(const SharedStorage& out) {
+    if (!same_size(out, mask)) {
         mask = std::make_shared<Storage>(
-            Matrix::Zero(in->get_rows(), in->get_cols()));
-        batch_size = in->get_cols();
+            Matrix::Zero(out->get_rows(), out->get_cols()));
+        mask2 = std::make_shared<Storage>(
+            Matrix::Zero(out->get_rows(), out->get_cols()));
+        batch_size = out->get_cols();
     }
 }
 
+void dump_file2(const dtype* val, int size, const char* name) {
+    std::ofstream file(name);
+    for (int i = 0; i < size; ++i) {
+        file << val[i];
+        file << " ";
+    }
+}
 void Pooling::forward_gpu(const std::shared_ptr<Storage>& in,
                           std::shared_ptr<Storage>& out, const std::string&) {
-    check_masking(in);
+    check_masking(out);
     check_input_size(in);
-    //dtype min = -FLT_MAX;
-    //out->update_gpu_data(&min);
+    // dtype min = -FLT_MAX;
+    // out->update_gpu_data(&min);
     // put out to minus infiity
     pooling_gpu(in->gpu_pointer_const(), _window.get(), _stride.get(),
                 _inp.first(), _inp.second(), _channels.get(), _out.first(),
                 _out.second(), batch_size, out->gpu_pointer(),
                 mask->gpu_pointer());
+    //dump_file2(mask->cpu_pointer(), mask->get_cols() * mask->get_rows(),
+               //"mask.txt");
+    // pooling_gpu2(in->gpu_pointer_const(), _window.get(), _stride.get(),
+    //_inp.first(), _inp.second(), _channels.get(), _out.first(),
+    //_out.second(), batch_size, out->gpu_pointer(),
+    // mask2->gpu_pointer());
+    // dump_file2(mask2->cpu_pointer(), mask->get_cols() * mask->get_rows(),
+    //"dump2.txt");
 }
 
 void Pooling::forward_cpu(const std::shared_ptr<Storage>& in,
@@ -111,19 +131,21 @@ void Pooling::forward_cpu(const std::shared_ptr<Storage>& in,
 void Pooling::backward_gpu(const SharedStorage&,
                            const SharedStorage& gradient_in,
                            SharedStorage& gradient_out) {
-    pooling_backward_gpu(
-        gradient_in->gpu_pointer_const(), mask->gpu_pointer_const(),
-        _window.get(), _stride.get(), _inp.first(), _inp.second(),
-        _channels.get(), _out.first(), _out.second(),
-        batch_size, gradient_out->gpu_pointer());
+    pooling_backward_gpu(gradient_in->gpu_pointer_const(),
+                         mask->gpu_pointer_const(), _window.get(),
+                         _stride.get(), _inp.first(), _inp.second(),
+                         _channels.get(), _out.first(), _out.second(),
+                         batch_size, gradient_out->gpu_pointer());
+    //int size = gradient_out->get_rows() * gradient_out->get_cols();
+    //dump_file2(gradient_out->cpu_pointer(), size, "grad_out.txt");
 };
 
 void Pooling::backward_cpu(const SharedStorage&,
                            const SharedStorage& gradient_in,
                            SharedStorage& gradient_out) {
-    pooling_backward_cpu(
-        gradient_in->cpu_pointer_const(), mask->cpu_pointer_const(),
-        _window.get(), _stride.get(), _inp.first(), _inp.second(),
-        _channels.get(), _out.first(), _out.second(),
-        batch_size, gradient_out->cpu_pointer());
+    pooling_backward_cpu(gradient_in->cpu_pointer_const(),
+                         mask->cpu_pointer_const(), _window.get(),
+                         _stride.get(), _inp.first(), _inp.second(),
+                         _channels.get(), _out.first(), _out.second(),
+                         batch_size, gradient_out->cpu_pointer());
 };

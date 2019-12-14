@@ -233,8 +233,8 @@ void Convolution::backward_gpu(const SharedStorage& values,
                                SharedStorage& gradient_out) {
     //check_size_backwards(values, gradient_out);
     resize_assistance(gradient_in);
-    int size = gradient_in->get_cols() * gradient_in->get_rows();
-    dump_file(gradient_in->cpu_pointer(), size);
+    //int size = gradient_in->get_cols() * gradient_in->get_rows();
+    //dump_file(gradient_in->cpu_pointer(), size);
     int M, N, K;
     backwards_weight_grad_para(M, N, K);
     const float* valp = values->gpu_pointer_const();

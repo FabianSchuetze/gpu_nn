@@ -21,6 +21,7 @@ class Pooling : public Layer {
 
    private:
     SharedStorage mask;
+    SharedStorage mask2;
     Window _window;
     Stride _stride;
     ImageShape _inp;
