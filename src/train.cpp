@@ -42,9 +42,14 @@ void NeuralNetwork::backward_debug_info(const vector<SharedStorage>& grad) {
     for (size_t i = 1; i < grad.size(); ++i) {
         train_args->bwd_stream() << " ";
         train_args->bwd_stream() << grad[i]->return_data_const().mean();
+        train_args->bwd_stream() << " ";
+        train_args->bwd_stream() << grad[i]->return_data_const().lpNorm<1>() /
+            train_args->batch_size();
         for (const SharedStorage& para : layers[i]->return_gradients()) {
             train_args->bwd_stream() << " ";
             train_args->bwd_stream() << para->return_data_const().mean();
+            train_args->bwd_stream() << " ";
+            train_args->bwd_stream() << para->return_data_const().lpNorm<1>();
         }
     }
     train_args->bwd_stream() << "\n";
@@ -155,10 +160,14 @@ void NeuralNetwork::print_layers(std::ofstream& stream) {
     stream << layers[0]->name();
     for (size_t i = 1; i < layers.size(); ++i) {
         stream << " ";
-        stream << layers[i]->name();
+        stream << layers[i]->name() << "_mean_";
+        stream << " ";
+        stream << layers[i]->name() << "_l1_";
         for (size_t j = 0; j < layers[i]->return_parameters().size(); ++j) {
             stream << " ";
-            stream << layers[i]->name() << "_param_" << j;
+            stream << layers[i]->name() << "_param_mena" << j;
+            stream << " ";
+            stream << layers[i]->name() << "_param_l1" << j;
         }
     }
     stream << "\n";
