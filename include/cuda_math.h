@@ -60,5 +60,6 @@ void im2col_gpu(const float* data_im, int channels, int height, const int width,
 void col2im_gpu(const dtype* data_col, int channels, int height, int width,
                 int kernel_h, int kernel_w, int pad, int stride,
                 dtype* data_im);
+void cuda_colwise_max(const dtype* input, int rows, int cols, dtype* out);
 
 #endif

@@ -497,6 +497,20 @@ __global__ void col2im_gpu_kernel(int numThreads, const dtype* data_col,
     }
 }
 
+__global__ void colwise_max(const dtype* in, int rows, int cols, dtype* out) {
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if (index < cols) {
+        dtype maxval = -FLT_MAX;
+        for (int i = 0; i < rows; ++i) {
+            int src_pos = index * rows + i;
+            if (in[src_pos] > maxval) {
+                maxval = in[src_pos];
+            }
+        }
+        out[index] = maxval;
+    }
+}
+
 void add_vec_to_mat_colwise(int rows, int cols, double* matrix,
                             const double* vector, double alpha) {
     dim3 block(256);
@@ -787,6 +801,15 @@ void col2im_gpu(const dtype* data_col, int channels, int height, int width,
     col2im_gpu_kernel<<<grid, block>>>(numThreads, data_col, height, width,
                                        channels, kernel_h, kernel_w, pad,
                                        stride, out_height, out_width, data_im);
+    MY_CHECK(cudaDeviceSynchronize());
+    MY_CHECK(cudaPeekAtLastError());
+}
+
+
+void cuda_colwise_max(const dtype* input, int rows, int cols, dtype* out) {
+    dim3 block(512);
+    dim3 grid((cols + block.x - 1) / block.x);
+    colwise_max<<<grid, block>>>(input, rows, cols, out);
     MY_CHECK(cudaDeviceSynchronize());
     MY_CHECK(cudaPeekAtLastError());
 }

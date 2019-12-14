@@ -144,7 +144,6 @@ void NeuralNetwork::forward(vector<SharedStorage>& values,
 void NeuralNetwork::forward_debug_info(const vector<SharedStorage>& val) {
     train_args->ffw_stream() <<  val[0]->return_data_const().mean();
     for (size_t i = 1; i < val.size(); ++i) {
-        //dtype avg = val[i]->return_data_const().mean();
         train_args->ffw_stream() << " ";
         train_args->ffw_stream() << val[i]->return_data_const().mean();
         for (const SharedStorage& para : layers[i]->return_parameters()) {

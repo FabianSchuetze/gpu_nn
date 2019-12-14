@@ -71,8 +71,6 @@ class NeuralNetwork {
                       const std::vector<SharedStorage>&);
     void backward_gpu(std::vector<SharedStorage>&,
                       const std::vector<SharedStorage>&);
-    // void allocate_storage(int, int&, std::vector<SharedStorage>&, const
-    // Layer*);
     void get_new_sample(const std::vector<int>&, Matrix&, Matrix&);
     void consumer(std::shared_ptr<GradientDescent>&);
     void producer();
