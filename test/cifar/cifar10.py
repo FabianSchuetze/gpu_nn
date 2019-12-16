@@ -5,11 +5,12 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation, Flatten
 from keras.layers import Conv2D, MaxPooling2D
+from keras.regularizers import l2
 import os
 
 batch_size = 32
 num_classes = 10
-epochs = 10
+epochs = 3
 
 
 def normalize(data):
@@ -29,16 +30,17 @@ y_test = keras.utils.to_categorical(y_test, num_classes)
 
 model = Sequential()
 model.add(Conv2D(32, (5, 5), padding='same',
-                 input_shape=x_train.shape[1:]))
-model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Conv2D(32, (5, 5)))
-model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Conv2D(64, (5, 5)))
-model.add(MaxPooling2D(pool_size=(2, 2)))
+                 input_shape=x_train.shape[1:],
+                 kernel_regularizer=l2(0.000)))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+model.add(Conv2D(32, (5, 5), padding='same', kernel_regularizer=l2(0.000)))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+model.add(Conv2D(64, (5, 5), padding='same', kernel_regularizer=l2(0.000)))
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 model.add(Flatten())
-model.add(Dense(64))
+model.add(Dense(64, kernel_regularizer=l2(0.000)))
 model.add(Activation('relu'))
-model.add(Dense(num_classes))
+model.add(Dense(num_classes, kernel_regularizer=l2(0.000)))
 model.add(Activation('softmax'))
 
 # initiate RMSprop optimizer
@@ -52,5 +54,5 @@ model.compile(loss='categorical_crossentropy',
 x_train = x_train.astype('float32')
 # x_test = x_test.astype('float32')
 
-model.fit(normalize(x_train), y_train, batch_size=batch_size, epochs=epochs,
-          validation_split=0.2)
+hist = model.fit(normalize(x_train), y_train, batch_size=batch_size, 
+                 epochs=epochs, validation_split=0.2)

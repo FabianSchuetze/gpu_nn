@@ -35,13 +35,16 @@ set(${LIBRARY_TARGET_NAME}_SRC
     src/initalization/normal.cpp
     src/initalization/glorot.cpp
     src/initalization/lcn.cpp
+    src/debug_info.cpp
 )
 if (UNIX)
   add_library(${LIBRARY_TARGET_NAME} SHARED ${${LIBRARY_TARGET_NAME}_SRC})
 endif(UNIX)
 
 # moved the CXX flags to after the cuda_add_library call
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fPIC -lopenblas\
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3 -fPIC -lopenblas\
+    -Wunused -Wunused-member-function -Wunused-function\
+    -Wunneeded-member-function\
     -lcudnn -lcurand -L /usr/lib/cuda/lib64 -lcudart  -lcublas\
     -L /usr/lib/x86_64-linux-gnu -lblas\
     -Wall -std=c++17 -Wno-error=unused-command-line-argument")

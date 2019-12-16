@@ -9,20 +9,20 @@
 using std::shared_ptr;
 using std::vector;
 
-void print_Matrix_to_stdout3(const Matrix& val, std::string loc) {
-    int rows(val.rows()), cols(val.cols());
-    std::ofstream myfile(loc);
-    myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
-    myfile << std::fixed;
-    myfile << std::setprecision(2);
-    for (int row = 0; row < rows; ++row) {
-        myfile << val(row, 0);
-        for (int col = 1; col < cols; ++col) {
-            myfile << ", " << val(row, col);
-        }
-        myfile << std::endl;
-    }
-}
+//void print_Matrix_to_stdout3(const Matrix& val, std::string loc) {
+    //int rows(val.rows()), cols(val.cols());
+    //std::ofstream myfile(loc);
+    //myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
+    //myfile << std::fixed;
+    //myfile << std::setprecision(2);
+    //for (int row = 0; row < rows; ++row) {
+        //myfile << val(row, 0);
+        //for (int col = 1; col < cols; ++col) {
+            //myfile << ", " << val(row, col);
+        //}
+        //myfile << std::endl;
+    //}
+//}
 NeuralNetwork::NeuralNetwork(const std::shared_ptr<Layer>& last_layer,
                              std::shared_ptr<Loss>& _loss)
     : layers(), loss(_loss) {
@@ -137,29 +137,31 @@ void NeuralNetwork::fill_hiddens(vector<SharedStorage>& values,
 }
 
 void NeuralNetwork::forward(vector<SharedStorage>& values,
-                            const std::string& type) {
-    (this->*fun_forward)(values, type);
+                            const std::string& type,
+                            DebugInfo& debug) {
+    (this->*fun_forward)(values, type, debug);
 }
 
-void NeuralNetwork::forward_debug_info(const vector<SharedStorage>& val) {
-    train_args->ffw_stream() <<  val[0]->return_data_const().mean();
-    for (size_t i = 1; i < val.size(); ++i) {
-        train_args->ffw_stream() << " ";
-        train_args->ffw_stream() << val[i]->return_data_const().mean();
-        train_args->ffw_stream() << " ";
-        train_args->ffw_stream() << val[i]->return_data_const().lpNorm<1>();
-        for (const SharedStorage& para : layers[i]->return_parameters()) {
-            train_args->ffw_stream() << " ";
-            train_args->ffw_stream() <<  para->return_data_const().maxCoeff();
-            train_args->ffw_stream() << " ";
-            train_args->ffw_stream() << para->return_data_const().lpNorm<1>();
-        }
-    }
-    train_args->ffw_stream() << "\n";
-}
+//void NeuralNetwork::forward_debug_info(const vector<SharedStorage>& val) {
+    //train_args->ffw_stream() <<  val[0]->return_data_const().mean();
+    //for (size_t i = 1; i < val.size(); ++i) {
+        //train_args->ffw_stream() << " ";
+        //train_args->ffw_stream() << val[i]->return_data_const().mean();
+        //train_args->ffw_stream() << " ";
+        //train_args->ffw_stream() << val[i]->return_data_const().lpNorm<1>();
+        //for (const SharedStorage& para : layers[i]->return_parameters()) {
+            //train_args->ffw_stream() << " ";
+            //train_args->ffw_stream() <<  para->return_data_const().maxCoeff();
+            //train_args->ffw_stream() << " ";
+            //train_args->ffw_stream() << para->return_data_const().lpNorm<1>();
+        //}
+    //}
+    //train_args->ffw_stream() << "\n";
+//}
 
 void NeuralNetwork::forward_gpu(vector<SharedStorage>& values,
-                                const std::string& type) {
+                                const std::string& type,
+                                DebugInfo& debug) {
     int i = 0;
     std::deque<shared_ptr<Layer>>::iterator layer = layers.begin();
     ++layer;
@@ -168,11 +170,12 @@ void NeuralNetwork::forward_gpu(vector<SharedStorage>& values,
         i++;
         ++layer;
     }
-    if (train_args->debug_info()) forward_debug_info(values);
+    if (debug.is_set()) debug.forward_debug_info(values, layers, 32);
 }
 
 void NeuralNetwork::forward_cpu(vector<SharedStorage>& values,
-                                const std::string& type) {
+                                const std::string& type,
+                                DebugInfo& debug) {
     int i = 0;
     std::deque<shared_ptr<Layer>>::iterator layer = layers.begin();
     ++layer;
@@ -181,6 +184,7 @@ void NeuralNetwork::forward_cpu(vector<SharedStorage>& values,
         i++;
         ++layer;
     }
+    if (debug.is_set()) debug.forward_debug_info(values, layers, 32);
 }
 
 void NeuralNetwork::get_new_predict_sample(const vector<int>& samples,
@@ -219,13 +223,14 @@ void NeuralNetwork::producer_predict(
 
 void NeuralNetwork::consumer_predict(
     SharedStorage& target,
-    threadsafe_queue<vector<SharedStorage>>* pred_queue) {
+    threadsafe_queue<vector<SharedStorage>>* pred_queue,
+    DebugInfo& debug) {
     int iter = 0;
     int total = target->get_cols();
     while (iter < total) {
         std::shared_ptr<vector<SharedStorage>> out = pred_queue->wait_and_pop();
         unsigned int start_position = iter * out->back()->get_rows();
-        forward(*out, "predict");
+        forward(*out, "predict", debug);
         unsigned int obs = (*out)[0]->get_cols();
         target->update_gpu_data(out->back()->gpu_pointer_const(),
                                 start_position, obs * out->back()->get_rows());
@@ -233,20 +238,20 @@ void NeuralNetwork::consumer_predict(
     }
 }
 
-void NeuralNetwork::predict(const Matrix& input, SharedStorage& SharedTarget) {
+void NeuralNetwork::predict(const Matrix& input, SharedStorage& SharedTarget,
+                            DebugInfo& debug) {
     threadsafe_queue<vector<SharedStorage>> pred_queue;
     threadsafe_queue<vector<SharedStorage>>* ppred_queue = &pred_queue;
     std::thread produce([&]() { producer_predict(input, ppred_queue); });
-    std::thread consume([&]() { consumer_predict(SharedTarget, ppred_queue); });
+    std::thread consume([&]() { consumer_predict(SharedTarget, ppred_queue, debug); });
     produce.join();
     consume.join();
 }
 
-Matrix NeuralNetwork::predict(const Matrix& input, int output_size) {
-    // THIS IS A HUGE BUG ! IT MUST BE DEPENDTENT ON THE TARGET!!! I NEED TO
-    // FIX THE LAYERS BUSINESS!!!
+Matrix NeuralNetwork::predict(const Matrix& input, int output_size, DebugInfo&&
+                              debug) {
     Matrix output = Matrix::Zero(output_size, input.rows());
     SharedStorage SharedTarget = std::make_shared<Storage>(output);
-    predict(input, SharedTarget);
+    predict(input, SharedTarget, debug);
     return SharedTarget->return_data_const().transpose();
 }

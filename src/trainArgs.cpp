@@ -9,8 +9,7 @@ trainArgs::trainArgs(const Matrix& features, const Matrix& target,
                      Epochs __epochs, Patience __patience,
                      BatchSize __batch_size,
                      std::shared_ptr<GradientDescent>& sgd,
-                     std::deque<std::shared_ptr<Layer>>& layers,
-                     bool debug_info)
+                     std::deque<std::shared_ptr<Layer>>& layers)
     : _x_train(),
       _x_val(),
       _y_train(),
@@ -20,12 +19,12 @@ trainArgs::trainArgs(const Matrix& features, const Matrix& target,
       _current_epoch(0),
       _cum_iter(0),
       _best_error(std::numeric_limits<double>::infinity()),
-      _debug_info(debug_info),
+      //_debug_info(debug_info),
       _batch_size(__batch_size.get()),
       _epochs(__epochs.get()),
-      _patience(__patience.get()),
-      _ffw_stream("ffw_stream.txt"),
-      _bwd_stream("bwd_stream.txt") {
+      _patience(__patience.get()) {
+      //_ffw_stream("ffw_stream_good.txt"),
+      //_bwd_stream("bwd_stream_good.txt") {
     train_test_split(features, target, 0.1);
     _y_val_shared = std::make_shared<Storage>(_y_val.transpose());
     create_optimizers(sgd, layers);

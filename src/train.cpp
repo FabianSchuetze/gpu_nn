@@ -33,30 +33,32 @@ using std::vector;
 //}
 
 void NeuralNetwork::backwards(std::vector<SharedStorage>& gradients,
-                              const std::vector<SharedStorage>& values) {
-    (this->*fun_backward)(gradients, values);
+                              const std::vector<SharedStorage>& values,
+                              DebugInfo& debug) {
+    (this->*fun_backward)(gradients, values, debug);
 }
 
-void NeuralNetwork::backward_debug_info(const vector<SharedStorage>& grad) {
-    train_args->bwd_stream() << grad[0]->return_data_const().mean();
-    for (size_t i = 1; i < grad.size(); ++i) {
-        train_args->bwd_stream() << " ";
-        train_args->bwd_stream() << grad[i]->return_data_const().mean();
-        train_args->bwd_stream() << " ";
-        train_args->bwd_stream() << grad[i]->return_data_const().lpNorm<1>() /
-            train_args->batch_size();
-        for (const SharedStorage& para : layers[i]->return_gradients()) {
-            train_args->bwd_stream() << " ";
-            train_args->bwd_stream() << para->return_data_const().mean();
-            train_args->bwd_stream() << " ";
-            train_args->bwd_stream() << para->return_data_const().lpNorm<1>();
-        }
-    }
-    train_args->bwd_stream() << "\n";
-}
+// void NeuralNetwork::backward_debug_info(const vector<SharedStorage>& grad) {
+// train_args->bwd_stream() << grad[0]->return_data_const().mean();
+// for (size_t i = 1; i < grad.size(); ++i) {
+// train_args->bwd_stream() << " ";
+// train_args->bwd_stream() << grad[i]->return_data_const().mean();
+// train_args->bwd_stream() << " ";
+// train_args->bwd_stream() << grad[i]->return_data_const().lpNorm<1>() /
+// train_args->batch_size();
+// for (const SharedStorage& para : layers[i]->return_gradients()) {
+// train_args->bwd_stream() << " ";
+// train_args->bwd_stream() << para->return_data_const().mean();
+// train_args->bwd_stream() << " ";
+// train_args->bwd_stream() << para->return_data_const().lpNorm<1>();
+//}
+//}
+// train_args->bwd_stream() << "\n";
+//}
 
 void NeuralNetwork::backward_cpu(std::vector<SharedStorage>& gradients,
-                                 const std::vector<SharedStorage>& values) {
+                                 const std::vector<SharedStorage>& values,
+                                 DebugInfo& debug) {
     int idx = gradients.size() - 1;
     for (int i = layers.size() - 2; i > 0; i--) {
         const SharedStorage& gradient_in = gradients[idx];
@@ -65,10 +67,12 @@ void NeuralNetwork::backward_cpu(std::vector<SharedStorage>& gradients,
         layers[i]->backward_cpu(vals, gradient_in, gradient_out);
         idx--;
     }
+    if (debug.is_set()) debug.backward_debug_info(gradients, layers, 32);
 }
 
 void NeuralNetwork::backward_gpu(vector<SharedStorage>& gradients,
-                                 const vector<SharedStorage>& values) {
+                                 const vector<SharedStorage>& values,
+                                 DebugInfo& debug) {
     int idx = gradients.size() - 1;
     for (int i = layers.size() - 2; i > 0; i--) {
         const SharedStorage& gradient_in = gradients[idx];
@@ -77,7 +81,7 @@ void NeuralNetwork::backward_gpu(vector<SharedStorage>& gradients,
         layers[i]->backward_gpu(vals, gradient_in, gradient_out);
         idx--;
     }
-    if (train_args->debug_info()) backward_debug_info(gradients);
+    if (debug.is_set()) debug.backward_debug_info(gradients, layers, 32);
 }
 
 void NeuralNetwork::update_weights(std::shared_ptr<GradientDescent>& opt,
@@ -156,27 +160,27 @@ int NeuralNetwork::check_input_dimension(const std::vector<int>& dim) {
     return i;
 }
 
-void NeuralNetwork::print_layers(std::ofstream& stream) {
-    stream << layers[0]->name();
-    for (size_t i = 1; i < layers.size(); ++i) {
-        stream << " ";
-        stream << layers[i]->name() << "_mean_";
-        stream << " ";
-        stream << layers[i]->name() << "_l1_";
-        for (size_t j = 0; j < layers[i]->return_parameters().size(); ++j) {
-            stream << " ";
-            stream << layers[i]->name() << "_param_mena" << j;
-            stream << " ";
-            stream << layers[i]->name() << "_param_l1" << j;
-        }
-    }
-    stream << "\n";
-}
+// void NeuralNetwork::print_layers(std::ofstream& stream) {
+// stream << layers[0]->name();
+// for (size_t i = 1; i < layers.size(); ++i) {
+// stream << " ";
+// stream << layers[i]->name() << "_mean_";
+// stream << " ";
+// stream << layers[i]->name() << "_l1_";
+// for (size_t j = 0; j < layers[i]->return_parameters().size(); ++j) {
+// stream << " ";
+// stream << layers[i]->name() << "_param_mena" << j;
+// stream << " ";
+// stream << layers[i]->name() << "_param_l1" << j;
+//}
+//}
+// stream << "\n";
+//}
 
 void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
                           std::shared_ptr<GradientDescent>& sgd, Epochs _epoch,
                           Patience _patience, BatchSize _batch_size,
-                          bool debug_info) {
+                          DebugInfo&& debug_info) {
     std::vector<int> input_dim = layers[0]->output_dimension();
     int expected_cols = check_input_dimension(input_dim);
     if (expected_cols != features.cols()) {
@@ -192,14 +196,15 @@ void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
     }
     train_args =
         std::make_unique<trainArgs>(features, targets, _epoch, _patience,
-                                    _batch_size, sgd, layers, debug_info);
-    if (debug_info) {
-        print_layers(train_args->ffw_stream());
-        print_layers(train_args->bwd_stream());
+                                    _batch_size, sgd, layers);
+    if (debug_info.is_set()) {
+        debug_info.print_layers(layers);
+        // print_layers(train_args->ffw_stream());
+        // print_layers(train_args->bwd_stream());
     }
     // train(sgd);
     std::thread produce([&]() { producer(); });
-    std::thread consume([&]() { consumer(sgd); });
+    std::thread consume([&]() { consumer(sgd, debug_info); });
     produce.join();
     consume.join();
 }
@@ -232,10 +237,11 @@ void NeuralNetwork::producer() {
 
 dtype NeuralNetwork::validate(std::chrono::milliseconds diff) {
     dtype total_loss(0.);
+    DebugInfo no_debugging("", "");
     int out_size = layers[layers.size() - 1]->output_dimension()[0];
     Matrix output = Matrix::Zero(out_size, train_args->x_val().rows());
     SharedStorage SharedPred = std::make_shared<Storage>(output);
-    predict(train_args->x_val(), SharedPred);
+    predict(train_args->x_val(), SharedPred, no_debugging);
     total_loss = loss->loss(SharedPred, train_args->y_val_shared());
     size_t obs = train_args->x_val().rows();
     std::cout << "after iter " << train_args->current_epoch() << "the loss is "
@@ -256,7 +262,7 @@ void NeuralNetwork::display_train_loss(dtype& train_loss) {
     }
 }
 
-void NeuralNetwork::consumer(std::shared_ptr<GradientDescent>& sgd) {
+void NeuralNetwork::consumer(std::shared_ptr<GradientDescent>& sgd, DebugInfo& debug) {
     vector<SharedStorage> vals = allocate_forward(train_args->batch_size());
     vector<SharedStorage> grads = allocate_backward(train_args->batch_size());
     auto begin = std::chrono::system_clock::now();
@@ -267,9 +273,9 @@ void NeuralNetwork::consumer(std::shared_ptr<GradientDescent>& sgd) {
         std::shared_ptr<std::pair<SharedStorage, SharedStorage>> out =
             train_args->data_queue.wait_and_pop();
         vals[0] = out->first;
-        forward(vals, type);
+        forward(vals, type, debug);
         loss->grad_loss(grads.back(), vals.back(), out->second, out->second);
-        backwards(grads, vals);
+        backwards(grads, vals, debug);
         train_loss += loss->loss(vals.back(), out->second);
         update_weights(sgd, train_args->optimizer(), train_args->batch_size());
         train_args->advance_total_iter();

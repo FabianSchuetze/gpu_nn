@@ -12,6 +12,7 @@
 #include "loss/loss.h"
 #include "threadsafe_queue.hpp"
 #include "trainArgs.h"
+#include "debug_info.hpp"
 class NeuralNetwork {
    public:
     typedef std::vector<std::shared_ptr<Storage>> VecSharedStorage;
@@ -26,24 +27,23 @@ class NeuralNetwork {
     // What predict function do I need?
     //@brief Returns a prediction from the neural network, calling this
     // function allocates shared storage;
-    Matrix predict(const Matrix&, int);
-    void predict(const Matrix&, SharedStorage&);
+    Matrix predict(const Matrix&, int, DebugInfo&& = DebugInfo("", ""));
     //@brief Returns a prediction from the neural network, calling this
     // function presumes that the SharedStorage is appropriate for all the
     // layers
     // SharedStorage predict(std::vector<SharedStorage>&);
     // NOT DEFINED !!!
     void backwards(std::vector<SharedStorage>& gradients,
-                   const std::vector<SharedStorage>& values);
+                   const std::vector<SharedStorage>& values,DebugInfo&);
     std::vector<SharedStorage> allocate_forward(int);
     std::vector<SharedStorage> allocate_backward(int);
-    void forward(std::vector<SharedStorage>&, const std::string&);
+    void forward(std::vector<SharedStorage>&, const std::string&, DebugInfo&);
     void fill_hiddens(std::vector<SharedStorage>&, const Matrix&);
     void update_weights(std::shared_ptr<GradientDescent>&,
                         std::vector<VecSharedStorage>&, int);
     void train(std::shared_ptr<GradientDescent>&);
     void train(const Matrix&, const Matrix&, std::shared_ptr<GradientDescent>&,
-               Epochs, Patience, BatchSize, bool debug_info=false);
+               Epochs, Patience, BatchSize, DebugInfo&& = DebugInfo("", ""));
     dtype validate(std::chrono::milliseconds);
     void random_numbers(std::vector<int>&, std::mt19937&);
 
@@ -51,9 +51,9 @@ class NeuralNetwork {
     typedef void (NeuralNetwork::*update_func)(
         std::shared_ptr<GradientDescent>&, std::vector<VecSharedStorage>&, int);
     typedef void (NeuralNetwork::*forward_func)(std::vector<SharedStorage>&,
-                                                const std::string&);
+                                                const std::string&, DebugInfo&);
     typedef void (NeuralNetwork::*backward_func)(
-        std::vector<SharedStorage>&, const std::vector<SharedStorage>&);
+        std::vector<SharedStorage>&, const std::vector<SharedStorage>&, DebugInfo&);
     NeuralNetwork::forward_func fun_forward;
     NeuralNetwork::backward_func fun_backward;
     NeuralNetwork::update_func fun_update;
@@ -65,20 +65,21 @@ class NeuralNetwork {
                             std::vector<VecSharedStorage>&, int);
     void update_weights_gpu(std::shared_ptr<GradientDescent>&,
                             std::vector<VecSharedStorage>&, int);
-    void forward_gpu(std::vector<SharedStorage>&, const std::string&);
-    void forward_cpu(std::vector<SharedStorage>&, const std::string&);
+    void forward_gpu(std::vector<SharedStorage>&, const std::string&, DebugInfo&);
+    void forward_cpu(std::vector<SharedStorage>&, const std::string&, DebugInfo&);
     void backward_cpu(std::vector<SharedStorage>&,
-                      const std::vector<SharedStorage>&);
+                      const std::vector<SharedStorage>&, DebugInfo&);
     void backward_gpu(std::vector<SharedStorage>&,
-                      const std::vector<SharedStorage>&);
+                      const std::vector<SharedStorage>&, DebugInfo&);
     void get_new_sample(const std::vector<int>&, Matrix&, Matrix&);
-    void consumer(std::shared_ptr<GradientDescent>&);
+    void consumer(std::shared_ptr<GradientDescent>&, DebugInfo&);
     void producer();
     std::vector<int> predict_sample(int&, int);
     void get_new_predict_sample(const std::vector<int>&, const Matrix&,
                                 Matrix&);
     void consumer_predict(SharedStorage&,
-                          threadsafe_queue<std::vector<SharedStorage>>*);
+                          threadsafe_queue<std::vector<SharedStorage>>*,
+                          DebugInfo&);
     void producer_predict(const Matrix&,
                           threadsafe_queue<std::vector<SharedStorage>>*);
     void append_convolution_layer(Layer*);
@@ -95,8 +96,9 @@ class NeuralNetwork {
     int check_input_dimension(const std::vector<int>&);
     void print_network();
     void display_train_loss(dtype&);
-    void forward_debug_info(const std::vector<SharedStorage>&);
-    void backward_debug_info(const std::vector<SharedStorage>&);
-    void print_layers(std::ofstream&);
+    void predict(const Matrix&, SharedStorage&, DebugInfo&);
+    //void forward_debug_info(const std::vector<SharedStorage>&);
+    //void backward_debug_info(const std::vector<SharedStorage>&);
+    //void print_layers(std::ofstream&);
 };
 #endif

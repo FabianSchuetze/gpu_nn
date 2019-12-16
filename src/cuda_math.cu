@@ -295,42 +295,6 @@ __global__ void masking(int rows, int cols, const double prob, double* d_A) {
     }
 }
 
-__global__ void CudaPoolBackwards(const float* top_diff, const float* mask,
-                                  int window, int stride, int rows, int cols,
-                                  int channels, int batches,
-                                  float* bottom_diff) {
-    int row = (blockIdx.x * blockDim.x + threadIdx.x);
-    int col = (blockIdx.y * blockDim.y + threadIdx.y);
-    int c = (blockIdx.z * blockDim.z + threadIdx.z);
-    int out_height = (rows - window) / stride + 1;
-    int out_width = (cols - window) / stride + 1;
-    if (row < rows && col < cols && c < channels) {
-        const int phstart = (row < window) ? 0 : (row + window) / stride + 1;
-        const int phend = min(row / stride + 1, out_height);
-        const int pwstart = (cols < window) ? 0 : (col + window) / stride + 1;
-        const int pwend = min(col / stride + 1, out_width);
-        const int idx = c * rows * cols + row * cols + col;
-        for (int n = 0; n < batches; ++n) {
-            dtype gradient = 0;
-            for (int ph = phstart; ph < phend; ++ph) {
-                for (int pw = pwstart; pw < pwend; ++pw) {
-                    int li = out_width * (c * out_height + ph) + pw;
-                    if (mask[li] == row * cols + col) {
-                        gradient += top_diff[li];
-                        // bottom_diff[idx] += top_diff[li];
-                    }
-                }
-            }
-            bottom_diff[idx] = gradient;
-            mask += out_width * out_height * channels;
-            top_diff += out_width * out_height * channels;
-            bottom_diff += channels * rows * cols;
-            // bottom_diff[n * channels * rows * cols + c * rows * cols +
-        }
-        // row * cols + col] = gradient;
-    }
-}
-
 __global__ void MaxPoolBackward(const int nthreads, const dtype* const top_diff,
                                 const float* const mask, const int num,
                                 const int channels, const int height,
