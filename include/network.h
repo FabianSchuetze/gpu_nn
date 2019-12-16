@@ -97,8 +97,6 @@ class NeuralNetwork {
     void print_network();
     void display_train_loss(dtype&);
     void predict(const Matrix&, SharedStorage&, DebugInfo&);
-    //void forward_debug_info(const std::vector<SharedStorage>&);
-    //void backward_debug_info(const std::vector<SharedStorage>&);
-    //void print_layers(std::ofstream&);
+    bool continue_training();
 };
 #endif

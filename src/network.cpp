@@ -142,23 +142,6 @@ void NeuralNetwork::forward(vector<SharedStorage>& values,
     (this->*fun_forward)(values, type, debug);
 }
 
-//void NeuralNetwork::forward_debug_info(const vector<SharedStorage>& val) {
-    //train_args->ffw_stream() <<  val[0]->return_data_const().mean();
-    //for (size_t i = 1; i < val.size(); ++i) {
-        //train_args->ffw_stream() << " ";
-        //train_args->ffw_stream() << val[i]->return_data_const().mean();
-        //train_args->ffw_stream() << " ";
-        //train_args->ffw_stream() << val[i]->return_data_const().lpNorm<1>();
-        //for (const SharedStorage& para : layers[i]->return_parameters()) {
-            //train_args->ffw_stream() << " ";
-            //train_args->ffw_stream() <<  para->return_data_const().maxCoeff();
-            //train_args->ffw_stream() << " ";
-            //train_args->ffw_stream() << para->return_data_const().lpNorm<1>();
-        //}
-    //}
-    //train_args->ffw_stream() << "\n";
-//}
-
 void NeuralNetwork::forward_gpu(vector<SharedStorage>& values,
                                 const std::string& type,
                                 DebugInfo& debug) {
