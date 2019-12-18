@@ -28,20 +28,39 @@ print(x_test.shape[0], 'test samples')
 y_train = keras.utils.to_categorical(y_train, num_classes)
 y_test = keras.utils.to_categorical(y_test, num_classes)
 
+# CNN architecture with Keras
 model = Sequential()
 model.add(Conv2D(32, (5, 5), padding='same',
                  input_shape=x_train.shape[1:],
                  kernel_regularizer=l2(0.000)))
-model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-model.add(Conv2D(32, (5, 5), padding='same', kernel_regularizer=l2(0.000)))
-model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-model.add(Conv2D(64, (5, 5), padding='same', kernel_regularizer=l2(0.000)))
-model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-model.add(Flatten())
-model.add(Dense(64, kernel_regularizer=l2(0.000)))
+# model.add(Conv2D(input_shape=trainX[0,:,:,:].shape, filters=32,
+                 # use_bias=True, kernel_size=(3,3)))
 model.add(Activation('relu'))
-model.add(Dense(num_classes, kernel_regularizer=l2(0.000)))
-model.add(Activation('softmax'))
+model.add(Dropout(0.1))
+model.add(Conv2D(filters=64, use_bias=False, kernel_size=(5,5), strides=2))
+model.add(Activation('relu'))
+model.add(Dropout(0.2))
+model.add(Flatten())
+model.add(Dense(128))
+model.add(Activation('relu'))
+model.add(Dropout(0.3))
+model.add(Dense(num_classes, activation="softmax"))
+# model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=    ['accuracy'])
+
+# model = Sequential()
+# model.add(Conv2D(32, (5, 5), padding='same',
+                 # input_shape=x_train.shape[1:],
+                 # kernel_regularizer=l2(0.000)))
+# model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+# model.add(Conv2D(32, (5, 5), padding='same', kernel_regularizer=l2(0.000)))
+# model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+# model.add(Conv2D(64, (5, 5), padding='same', kernel_regularizer=l2(0.000)))
+# model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+# model.add(Flatten())
+# model.add(Dense(64, kernel_regularizer=l2(0.000)))
+# model.add(Activation('relu'))
+# model.add(Dense(num_classes, kernel_regularizer=l2(0.000)))
+# model.add(Activation('softmax'))
 
 # initiate RMSprop optimizer
 opt = keras.optimizers.SGD(lr=0.001, momentum=0.9)
