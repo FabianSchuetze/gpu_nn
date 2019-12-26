@@ -18,7 +18,8 @@ class trainArgs {
     trainArgs() = default;
     trainArgs(const Matrix&, const Matrix&, Epochs, Patience, BatchSize,
               std::shared_ptr<GradientDescent>&,
-              std::deque<std::shared_ptr<Layer>>&);
+              std::deque<std::shared_ptr<Layer>>&,
+              Shuffle shuffle);
     int iter_since_update() { return _iter_since_update; }
     void reset_iter_since_update() { _iter_since_update = 0; }
     void advance_iter_since_update() { _iter_since_update++; };
@@ -41,6 +42,7 @@ class trainArgs {
     const SharedStorage& y_val_shared() { return _y_val_shared; }
     std::vector<std::vector<SharedStorage>>& optimizer() { return _optimizer; }
     threadsafe_queue<std::pair<SharedStorage, SharedStorage>> data_queue;
+    const bool shuffle() {return _shuffle;}
 
    private:
     Matrix _x_train;
@@ -58,6 +60,7 @@ class trainArgs {
     int _batch_size;
     int _epochs;
     int _patience;
+    bool _shuffle;
     void train_test_split(const Matrix&, const Matrix&, dtype);
     void create_optimizers(const std::shared_ptr<GradientDescent>&,
                            const std::deque<std::shared_ptr<Layer>>&);

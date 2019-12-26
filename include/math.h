@@ -43,4 +43,5 @@ void im2col_cpu(const float* data_im, int channels, int rows, int cols,
                 float* data_col);
 void col2im_cpu(const dtype* data_col, int channels, int rows, int cols,
                 int kernel_h, int kernel_w, int pad, int stride, dtype*);
+Matrix sigmoid(const Matrix&);
 #endif

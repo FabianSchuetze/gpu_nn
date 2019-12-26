@@ -306,3 +306,17 @@ void pooling_backward_cpu(const float* src, const float* mask, int window,
         }
     }
 }
+Matrix sigmoid(const Matrix& inp) {
+    Matrix output(Matrix::Zero(inp.rows(), inp.cols()));
+    //Matrix& res = output->return_data();
+    for (int row = 0; row < inp.rows(); row++) {
+        for (int col = 0; col < inp.cols(); col++) {
+            dtype curr = inp(row, col);
+            if (curr > 0)
+                output(row, col) = 1. / (1. + std::exp(-1 * curr));
+            else
+                output(row, col) = std::exp(curr) / (1. + std::exp(curr));
+        }
+    }
+    return output;
+}

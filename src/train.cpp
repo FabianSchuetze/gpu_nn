@@ -116,7 +116,9 @@ void NeuralNetwork::prepare_subset(const vector<int>& pop, vector<int>& subset,
 void NeuralNetwork::maybe_shuffle(vector<int>& pop, int& start, const int& end,
                                   const int& step, std::mt19937& gen) {
     if (start + step >= end) {
-        std::shuffle(pop.begin(), pop.end(), gen);
+        if (train_args->shuffle()) {
+            std::shuffle(pop.begin(), pop.end(), gen);
+        }
         start = 0;
     }
 }
@@ -144,8 +146,10 @@ int NeuralNetwork::check_input_dimension(const std::vector<int>& dim) {
 void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
                           std::shared_ptr<GradientDescent>& sgd, Epochs _epoch,
                           Patience _patience, BatchSize _batch_size,
-                          DebugInfo&& debug_info) {
+                          DebugInfo&& debug_info, Shuffle shuffle) {
     std::vector<int> input_dim = layers[0]->output_dimension();
+    std::cout << "features, target" << features.rows() << ", " << targets.rows()
+              << std::endl;
     int expected_cols = check_input_dimension(input_dim);
     if (expected_cols != features.cols()) {
         std::stringstream ss;
@@ -160,7 +164,7 @@ void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
     }
     train_args =
         std::make_unique<trainArgs>(features, targets, _epoch, _patience,
-                                    _batch_size, sgd, layers);
+                                    _batch_size, sgd, layers, shuffle);
     if (debug_info.is_set()) debug_info.print_layers(layers);
     // train(sgd);
     std::thread produce([&]() { producer(); });
@@ -171,7 +175,7 @@ void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
 
 bool NeuralNetwork::continue_training() {
     return (train_args->current_epoch() < train_args->epochs()) and
-        (train_args->iter_since_update() <= train_args->patience());
+           (train_args->iter_since_update() <= train_args->patience());
 }
 
 void NeuralNetwork::producer() {
@@ -184,9 +188,10 @@ void NeuralNetwork::producer() {
     std::pair<SharedStorage, SharedStorage> data;
     int producer_idx(0);
     int end(train_args->x_train().rows());
-    std::shuffle(population.begin(), population.end(), gen);
+    if (train_args->shuffle())
+        std::shuffle(population.begin(), population.end(), gen);
     while (continue_training()) {
-    //while (train_args->current_epoch() < train_args->epochs()) {
+        // while (train_args->current_epoch() < train_args->epochs()) {
         if (train_args->data_queue.size() < 5) {
             maybe_shuffle(population, producer_idx, end,
                           train_args->batch_size(), gen);
@@ -210,7 +215,7 @@ dtype NeuralNetwork::validate(std::chrono::milliseconds diff) {
     predict(train_args->x_val(), SharedPred, no_debugging);
     total_loss = loss->loss(SharedPred, train_args->y_val_shared());
     size_t obs = train_args->x_val().rows();
-    std::cout << "after iter " << train_args->current_epoch() << "the loss is "
+    std::cout << "after iter " << train_args->current_epoch() << " the loss is "
               << total_loss / obs << ", in " << diff.count() << " milliseconds"
               << std::endl;
     train_args->advance_epoch();
@@ -228,7 +233,8 @@ void NeuralNetwork::display_train_loss(dtype& train_loss) {
     }
 }
 
-void NeuralNetwork::consumer(std::shared_ptr<GradientDescent>& sgd, DebugInfo& debug) {
+void NeuralNetwork::consumer(std::shared_ptr<GradientDescent>& sgd,
+                             DebugInfo& debug) {
     vector<SharedStorage> vals = allocate_forward(train_args->batch_size());
     vector<SharedStorage> grads = allocate_backward(train_args->batch_size());
     auto begin = std::chrono::system_clock::now();
@@ -237,7 +243,7 @@ void NeuralNetwork::consumer(std::shared_ptr<GradientDescent>& sgd, DebugInfo& d
     dtype train_loss(0.);
     dtype val_loss;
     while (continue_training()) {
-    //while (train_args->current_epoch() < train_args->epochs()) {
+        // while (train_args->current_epoch() < train_args->epochs()) {
         std::shared_ptr<std::pair<SharedStorage, SharedStorage>> out =
             train_args->data_queue.wait_and_pop();
         vals[0] = out->first;
@@ -248,15 +254,19 @@ void NeuralNetwork::consumer(std::shared_ptr<GradientDescent>& sgd, DebugInfo& d
         update_weights(sgd, train_args->optimizer(), train_args->batch_size());
         train_args->advance_total_iter();
         display_train_loss(train_loss);
+        // std::cout << "train loss: " << train_loss / train_args->total_iter()
+        //<< " at " << train_args->total_iter() << std::endl;
         if (train_args->total_iter() > train_args->max_total_iter()) {
+            std::cout << " train loss at iter " << train_args->total_iter()
+                      << ": " << train_loss / (train_args->total_iter()) <<
+                      std::endl;
             diff = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::system_clock::now() - begin);
             val_loss = validate(diff);
             if (val_loss < train_args->best_error()) {
                 train_args->reset_iter_since_update();
                 train_args->best_error() = val_loss;
-            }
-            else {
+            } else {
                 train_args->advance_iter_since_update();
             }
             begin = std::chrono::system_clock::now();

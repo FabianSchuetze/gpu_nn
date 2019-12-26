@@ -37,6 +37,8 @@ class NamedPair {
     std::pair<T, T> value_;
 };
 
+struct ShuffleParameter {};
+using Shuffle = NamedType<bool, ShuffleParameter>;
 struct MomentumRateParameter {};
 using MomentumRate = NamedType<dtype, MomentumRateParameter>;
 struct FeaturesParameter {};

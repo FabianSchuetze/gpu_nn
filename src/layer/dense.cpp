@@ -71,7 +71,8 @@ void Dense::initialize_input_dimension(const std::shared_ptr<Layer>& previous) {
     _in = Features(i);
 }
 
-void Dense::initialize_output_dimension() { _out_dim[0] =_out.get(); }
+void Dense::initialize_output_dimension() { 
+    _out_dim[0] =_out.get(); }
 
 void Dense::forward_cpu(const SharedStorage& in, SharedStorage& out,
                         const std::string&) {

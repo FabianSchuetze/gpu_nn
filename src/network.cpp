@@ -163,7 +163,7 @@ void NeuralNetwork::forward_cpu(vector<SharedStorage>& values,
     std::deque<shared_ptr<Layer>>::iterator layer = layers.begin();
     ++layer;
     while (layer != layers.end()) {
-        (*layer)->forward_gpu(values[i], values[i + 1], type);
+        (*layer)->forward_cpu(values[i], values[i + 1], type);
         i++;
         ++layer;
     }

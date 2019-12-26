@@ -4,15 +4,16 @@
 #include <deque>
 #include <fstream>
 #include <list>
+#include <map>
 #include <memory>
 #include <random>
 #include <vector>
+#include "debug_info.hpp"
 #include "gradient_descent/gradient_descent.h"
 #include "layer/layer.h"
 #include "loss/loss.h"
 #include "threadsafe_queue.hpp"
 #include "trainArgs.h"
-#include "debug_info.hpp"
 class NeuralNetwork {
    public:
     typedef std::vector<std::shared_ptr<Storage>> VecSharedStorage;
@@ -34,7 +35,7 @@ class NeuralNetwork {
     // SharedStorage predict(std::vector<SharedStorage>&);
     // NOT DEFINED !!!
     void backwards(std::vector<SharedStorage>& gradients,
-                   const std::vector<SharedStorage>& values,DebugInfo&);
+                   const std::vector<SharedStorage>& values, DebugInfo&);
     std::vector<SharedStorage> allocate_forward(int);
     std::vector<SharedStorage> allocate_backward(int);
     void forward(std::vector<SharedStorage>&, const std::string&, DebugInfo&);
@@ -43,7 +44,12 @@ class NeuralNetwork {
                         std::vector<VecSharedStorage>&, int);
     void train(std::shared_ptr<GradientDescent>&);
     void train(const Matrix&, const Matrix&, std::shared_ptr<GradientDescent>&,
-               Epochs, Patience, BatchSize, DebugInfo&& = DebugInfo("", ""));
+               Epochs, Patience, BatchSize, DebugInfo&& = DebugInfo("", ""),
+               Shuffle = Shuffle(true));
+    //void train_sequence(const std::vector<int>&, const std::map<int, int>&,
+                        //const std::map<int, char>&,
+                        //std::shared_ptr<GradientDescent>&, Epochs, Patience,
+                        //BatchSize, DebugInfo&& = DebugInfo("", ""));
     dtype validate(std::chrono::milliseconds);
     void random_numbers(std::vector<int>&, std::mt19937&);
 
@@ -53,7 +59,8 @@ class NeuralNetwork {
     typedef void (NeuralNetwork::*forward_func)(std::vector<SharedStorage>&,
                                                 const std::string&, DebugInfo&);
     typedef void (NeuralNetwork::*backward_func)(
-        std::vector<SharedStorage>&, const std::vector<SharedStorage>&, DebugInfo&);
+        std::vector<SharedStorage>&, const std::vector<SharedStorage>&,
+        DebugInfo&);
     NeuralNetwork::forward_func fun_forward;
     NeuralNetwork::backward_func fun_backward;
     NeuralNetwork::update_func fun_update;
@@ -65,8 +72,10 @@ class NeuralNetwork {
                             std::vector<VecSharedStorage>&, int);
     void update_weights_gpu(std::shared_ptr<GradientDescent>&,
                             std::vector<VecSharedStorage>&, int);
-    void forward_gpu(std::vector<SharedStorage>&, const std::string&, DebugInfo&);
-    void forward_cpu(std::vector<SharedStorage>&, const std::string&, DebugInfo&);
+    void forward_gpu(std::vector<SharedStorage>&, const std::string&,
+                     DebugInfo&);
+    void forward_cpu(std::vector<SharedStorage>&, const std::string&,
+                     DebugInfo&);
     void backward_cpu(std::vector<SharedStorage>&,
                       const std::vector<SharedStorage>&, DebugInfo&);
     void backward_gpu(std::vector<SharedStorage>&,

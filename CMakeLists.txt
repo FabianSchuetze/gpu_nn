@@ -20,6 +20,7 @@ set(${LIBRARY_TARGET_NAME}_SRC
     src/layer/dropout.cpp
     src/loss/cross_entropy.cpp
     src/layer/input.cpp
+    src/layer/lstm_layer.cpp
     src/network.cpp
     src/train.cpp
     src/gradient_descent/gradient_descent.cpp
@@ -88,6 +89,18 @@ foreach( testsourcefile ${${LIBRARY_TARGET_NAME}_TEST} )
     target_link_libraries(${testname} GPU_NN cuda_obj)
     add_test(${testname} ${testname})
 endforeach( testsourcefile ${${LIBRARY_TARGET_NAME}_TEST})
+
+set(${LIBRARY_TARGET_NAME}_TEST2
+    test/rnn/rnn.cpp
+)
+foreach( testsourcefile ${${LIBRARY_TARGET_NAME}_TEST2} )
+    string( REPLACE "test/rnn/" "" testname ${testsourcefile})
+    #string( REPLACE ".cpp" "" testname ${testsourcefile} )
+    add_executable( ${testname} ${testsourcefile} )
+    target_link_libraries(${testname} GPU_NN ${CUDA_LIBRARIES})
+    target_link_libraries(${testname} GPU_NN cuda_obj)
+    add_test(${testname} ${testname})
+endforeach( testsourcefile ${${LIBRARY_TARGET_NAME}_TEST2})
 #add_subdirectory(third_party/pybind11)
 #pybind11_add_module(NeuralNetwork python/bindings.cpp)
 
