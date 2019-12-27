@@ -46,10 +46,6 @@ class NeuralNetwork {
     void train(const Matrix&, const Matrix&, std::shared_ptr<GradientDescent>&,
                Epochs, Patience, BatchSize, DebugInfo&& = DebugInfo("", ""),
                Shuffle = Shuffle(true));
-    //void train_sequence(const std::vector<int>&, const std::map<int, int>&,
-                        //const std::map<int, char>&,
-                        //std::shared_ptr<GradientDescent>&, Epochs, Patience,
-                        //BatchSize, DebugInfo&& = DebugInfo("", ""));
     dtype validate(std::chrono::milliseconds);
     void random_numbers(std::vector<int>&, std::mt19937&);
 

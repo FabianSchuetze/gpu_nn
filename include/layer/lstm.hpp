@@ -36,6 +36,9 @@ class LSTM : public Layer {
     void initialize_output_dimension() override;
     void initialize_input_dimension(const std::shared_ptr<Layer>&);
     void resize_assistance(int);
+    void nonlinear_transformations(int);
+    void compute_next_state(int t);
+    void multiply_one_col(const SharedStorage&, SharedStorage&, int);
     cublasHandle_t _handle;
     Features _out;
     Features _in;

@@ -1,5 +1,6 @@
 #include "../../include/layer/lstm.hpp"
 #include <memory>
+#include "../../include/cuda_math.h"
 #include "../../include/math.h"
 using Eigen::all;
 
@@ -30,9 +31,6 @@ void LSTM::initialize_states() {
     states[0] = std::make_shared<Storage>(Matrix::Zero(4 * _out.get(), 32));
     states[1] = std::make_shared<Storage>(Matrix::Zero(_out.get(), 32 + 1));
     states[2] = std::make_shared<Storage>(Matrix::Zero(_out.get(), 32 + 1));
-    // batch size guess
-    // states[1]->update_cpu_data(Matrix::Zero(_out.get(), cols + 1));
-    // states[2]->update_cpu_data(Matrix::Zero(_out.get(), cols + 1));
 }
 
 void LSTM::initialize_input_dimension(const std::shared_ptr<Layer>& previous) {
@@ -55,8 +53,65 @@ void LSTM::initialize_input_dimension(const std::shared_ptr<Layer>& previous) {
 
 void LSTM::initialize_output_dimension() { _out_dim[0] = _out.get(); }
 
+void LSTM::multiply_one_col(const SharedStorage& in, SharedStorage& out,
+                            int col) {
+    cublasOperation_t transA = CUBLAS_OP_N;
+    cublasOperation_t transB = CUBLAS_OP_N;
+    int M = in->get_rows();
+    int N = 1;
+    int K = in->get_cols();
+    int LDA = M;
+    int LDB = K;
+    int LDC = M;
+    dtype alpha = 1;
+    dtype beta = 0;
+    const float* d_A = parameters[0]->gpu_pointer_const();
+    const float* d_B = in->gpu_pointer_const() + col * in->get_rows();
+    float* d_C = out->gpu_pointer() + col * in->get_rows();
+    my_cuda_Dgemm(_handle, transA, transB, M, N, K, &alpha, d_A, LDA, d_B, LDB,
+                  &beta, d_C, LDC);
+    beta = 1;
+    d_A = parameters[1]->gpu_pointer_const();
+    d_B = states[0]->gpu_pointer_const() + col * in->get_rows();
+    my_cuda_Dgemm(_handle, transA, transB, M, N, K, &alpha, d_A, LDA, d_B, LDB,
+                  &beta, d_C, LDC);
+    my_add_vec_to_mat_colwise(out, parameters[1], 1.0f);
+}
+
+void LSTM::nonlinear_transformations(int t) {
+    int n_sig = _out.get() * 3;
+    int rows = states[0]->get_rows();
+    cuda_sigmoid(n_sig, 1,
+                 assistance_parameters[0]->gpu_pointer_const() + t * rows,
+                 states[0]->gpu_pointer() + t * rows);
+    cuda_tanh(_out.get(), 1,
+              assistance_parameters[0]->gpu_pointer_const() + t * rows + n_sig,
+              states[0]->gpu_pointer() + t * rows + n_sig);
+}
+
+void LSTM::compute_next_state(int t) {
+    next_lstm_cell(states[1]->get_rows(),
+                        states[0]->gpu_pointer_const() + t * states[0]->get_rows(),
+                        states[1]->gpu_pointer() + t * states[1]->get_rows());
+    next_lstm_state(states[2]->get_rows(),
+                    states[0]->gpu_pointer_const() + t * states[0]->get_rows(),
+                    states[1]->gpu_pointer_const() + t * states[1]->get_rows(),
+                    states[2]->gpu_pointer() + t * states[2]->get_rows());
+}
+
 void LSTM::forward_gpu(const SharedStorage& in, SharedStorage& out,
-                       const std::string&){};
+                       const std::string&) {
+    maybe_resize_state(in->get_cols());
+    int cols = states[2]->get_cols();
+    for (int t = 0; t < in->get_cols(); ++t) {
+        multiply_one_col(in, assistance_parameters[0], t);
+        nonlinear_transformations(t);
+        compute_next_state(t);
+    }
+    out = std::make_shared<Storage>(
+            states[2]->return_data_const().rightCols(cols - 1));
+    // changes this update functions!!!
+};
 
 void LSTM::forward_cpu(const SharedStorage& in, SharedStorage& out,
                        const std::string&) {
@@ -75,7 +130,6 @@ void LSTM::forward_cpu(const SharedStorage& in, SharedStorage& out,
               parameters[1]->return_data_const() * state(all, t) +
               parameters[2]->return_data_const();
         funcs.block(0, t, sigmoid_rows, 1) = sigmoid(tmp.topRows(sigmoid_rows));
-        // funcs.block(0, t, sigmoid_rows, 1));
         funcs.block(sigmoid_rows, t, _out.get(), 1) =
             tmp.bottomRows(_out.get()).array().tanh();
         const Matrix& i = funcs.block(0, t, _out.get(), 1);
@@ -84,7 +138,7 @@ void LSTM::forward_cpu(const SharedStorage& in, SharedStorage& out,
         const Matrix& g = funcs.block(3 * _out.get(), t, _out.get(), 1);
         cell(all, t + 1) =
             f.array() * cell(all, t).array() + i.array() * g.array();
-        state(all, t + 1) = o.array() * state(all, t + 1).array().tanh();
+        state(all, t + 1) = o.array() * cell(all, t + 1).array().tanh();
     }
     out->return_data() = state.rightCols(cols - 1);
 }
@@ -154,13 +208,7 @@ void LSTM::expand_states(int cols) {
 }
 
 void LSTM::maybe_resize_state(int cols) {
-    if (cols != states[0]->get_cols()) {
-        // if (states[2]->get_cols() > 0)
-        reorganize_states(cols);
-        // else
-        // expand_states(cols);
-        //_batch_size = cols;
-    }
+    if (cols != states[0]->get_cols()) reorganize_states(cols);
 }
 
 void LSTM::clip_gradients() {

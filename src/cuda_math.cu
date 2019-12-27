@@ -362,35 +362,6 @@ __global__ void MaxPoolForward(int nthreads, const dtype* bottom_data, int num,
     }
 }
 
-//__global__ void CudaPooling(float const* inp, int window, int stride, int rows,
-                            //int cols, int channels, int out_height,
-                            //int out_width, int batches, float* out,
-                            //float* mask) {
-    //int ph = (blockIdx.x * blockDim.x + threadIdx.x);
-    //int pw = (blockIdx.y * blockDim.y + threadIdx.y);
-    //int c = (blockIdx.z * blockDim.z + threadIdx.z);
-    //if (ph < out_height && pw < out_width && c < channels) {
-        //for (int n = 0; n < batches; n++) {
-            //for (int i = 0; i < window; i++) {
-                //for (int j = 0; j < window; j++) {
-                    //int curRow = ph * stride + i;
-                    //int curCol = pw * stride + j;
-                    //int li = c * cols * rows + curCol * rows + curRow;
-                    //int lo = c * out_width * out_height + pw * out_height + ph;
-                    //if (inp[li] > maxval) {
-                        //maxval = inp[li];
-                        //maxidx = li % (cols * rows);
-                        //mask[lo] = li % (cols * rows);
-                    //}
-                //}
-            //}
-            //inp += rows * cols * channels;
-            //out += out_width * out_height * channels;
-            //mask += out_width * out_height * channels;
-        //}
-    //}
-//}
-
 __global__ void im2col_gpu_kernel(int numThreads, const dtype* data_im,
                                   const int height, const int width,
                                   const int kernel_h, const int kernel_w,
@@ -474,6 +445,53 @@ __global__ void colwise_max(const dtype* in, int rows, int cols, dtype* out) {
         out[index] = maxval;
     }
 }
+
+__global__ void sigmoid(const dtype* in, int rows, int cols, dtype* out) {
+    unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
+    if ((row < rows) && (col < cols)) {
+        unsigned int linear = row + col * rows;
+        dtype curr = in[linear];
+        if (curr > 0)
+            out[linear] = 1. / (1 + expf(-1 * curr));
+        else
+            out[linear] = expf(curr) / (1 + expf(curr));
+    }
+}
+
+__global__ void tanh(const dtype* in, int rows, int cols, dtype* out) {
+    unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
+    if ((row < rows) && (col < cols)) {
+        unsigned int linear = row + col * rows;
+        out[linear] = tanhf(in[linear]);
+    }
+}
+
+
+__global__ void next_lstm_cell(const dtype* funcs, int rows, dtype* out) {
+    unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
+    if (row < rows) {
+        dtype first = funcs[row + rows] * out[row];
+        dtype second = funcs[row] * funcs[row + 3 * rows];
+        out[row + rows] = first + second;
+    }
+}
+
+__global__ void next_lstm_state(const dtype* funcs, const dtype* cell,
+                                int rows, dtype* out) {
+    unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
+    if (row < rows) {
+        out[row + rows] = funcs[row + 2 * rows] * tanhf(cell[row + rows]);
+    }
+}
+        //state(all, t + 1) = o.array() * state(all, t + 1).array().tanh();
+        //const Matrix& i = funcs.block(0, t, _out.get(), 1);
+        //const Matrix& f = funcs.block(_out.get(), t, _out.get(), 1);
+        //const Matrix& o = funcs.block(2 * _out.get(), t, _out.get(), 1);
+        //const Matrix& g = funcs.block(3 * _out.get(), t, _out.get(), 1);
+        //cell(all, t + 1) =
+            //f.array() * cell(all, t).array() + i.array() * g.array();
 
 void add_vec_to_mat_colwise(int rows, int cols, double* matrix,
                             const double* vector, double alpha) {
@@ -717,17 +735,17 @@ void pooling_gpu(const float* bottom_data, int window, int stride, int rows,
     MY_CHECK(cudaPeekAtLastError());
 }
 
-//void pooling_gpu2(const float* bottom_data, int window, int stride, int rows,
-                 //int cols, int channels, int out_height, int out_width,
-                 //int batches, float* top_data, float* mask) {
-    //dim3 block(16, 16, 4);
-    //dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y,
-              //(channels + block.z - 1) / block.z);
-    //CudaPooling<<<grid, block>>>(bottom_data, window, stride, rows, cols,
-                                 //channels, out_height, out_width, batches,
-                                 //top_data, mask);
-    //MY_CHECK(cudaDeviceSynchronize());
-    //MY_CHECK(cudaPeekAtLastError());
+// void pooling_gpu2(const float* bottom_data, int window, int stride, int rows,
+// int cols, int channels, int out_height, int out_width,
+// int batches, float* top_data, float* mask) {
+// dim3 block(16, 16, 4);
+// dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y,
+//(channels + block.z - 1) / block.z);
+// CudaPooling<<<grid, block>>>(bottom_data, window, stride, rows, cols,
+// channels, out_height, out_width, batches,
+// top_data, mask);
+// MY_CHECK(cudaDeviceSynchronize());
+// MY_CHECK(cudaPeekAtLastError());
 //}
 
 void pooling_backward_gpu(const float* src, const float* mask, int window,
@@ -786,3 +804,39 @@ void cuda_colwise_max(const dtype* input, int rows, int cols, dtype* out) {
     MY_CHECK(cudaDeviceSynchronize());
     MY_CHECK(cudaPeekAtLastError());
 }
+
+void cuda_sigmoid(int rows, int cols, const dtype* d_A, dtype* d_B) {
+    dim3 block(16, 16);
+    dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
+    sigmoid<<<grid, block>>>(d_A, rows, cols, d_B);
+    //cudaDeviceSynchronize();
+    MY_CHECK(cudaPeekAtLastError());
+}
+
+void cuda_tanh(int rows, int cols, const dtype* d_A, dtype* d_B) {
+    dim3 block(16, 16);
+    dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
+    tanh<<<grid, block>>>(d_A, rows, cols, d_B);
+    //cudaDeviceSynchronize();
+    MY_CHECK(cudaPeekAtLastError());
+}
+
+void next_lstm_cell(int rows, const dtype* d_A, dtype* d_B) {
+    dim3 block(512);
+    dim3 grid((rows + block.x - 1) / block.x);
+    next_lstm_cell<<<grid, block>>>(d_A, rows, d_B);
+    MY_CHECK(cudaDeviceSynchronize());
+    MY_CHECK(cudaPeekAtLastError());
+}
+
+void next_lstm_state(int rows, const dtype* d_A, const dtype* d_B,
+                          dtype* d_C) {
+    dim3 block(512);
+    dim3 grid((rows + block.x - 1) / block.x);
+    next_lstm_state<<<grid, block>>>(d_A, d_B, rows, d_C);
+    MY_CHECK(cudaDeviceSynchronize());
+    MY_CHECK(cudaPeekAtLastError());
+}
+//__global__ void next_lstm_state(const dtype* funcs, const dtype* cell,
+                                //int rows, dtype* out) {
+//__global__ void next_lstm_cell(const dtype* funcs, int rows, dtype* out) {

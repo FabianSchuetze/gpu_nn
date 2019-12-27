@@ -65,4 +65,9 @@ void cuda_colwise_max(const dtype* input, int rows, int cols, dtype* out);
                  //int cols, int channels, int out_height, int out_width,
                  //int batches, float* top_data, float* mask);
 
+void cuda_tanh(int rows, int cols, const dtype* d_A, dtype* d_B);
+void cuda_sigmoid(int rows, int cols, const dtype* d_A, dtype* d_B);
+void next_lstm_cell(int rows, const dtype* d_A, dtype* d_B);
+void next_lstm_state(int rows, const dtype* d_A, const dtype* d_B,
+                          dtype* d_C);
 #endif
