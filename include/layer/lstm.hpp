@@ -38,7 +38,7 @@ class LSTM : public Layer {
     void resize_assistance(int);
     void nonlinear_transformations(int);
     void compute_next_state(int t);
-    void multiply_one_col(const SharedStorage&, SharedStorage&, int);
+    void multiply_one_col(const SharedStorage&, int);
     cublasHandle_t _handle;
     Features _out;
     Features _in;

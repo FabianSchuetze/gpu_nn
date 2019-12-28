@@ -1,4 +1,5 @@
 #include "../../include/layer/lstm.hpp"
+#include <iostream>
 #include <memory>
 #include "../../include/cuda_math.h"
 #include "../../include/math.h"
@@ -53,13 +54,12 @@ void LSTM::initialize_input_dimension(const std::shared_ptr<Layer>& previous) {
 
 void LSTM::initialize_output_dimension() { _out_dim[0] = _out.get(); }
 
-void LSTM::multiply_one_col(const SharedStorage& in, SharedStorage& out,
-                            int col) {
+void LSTM::multiply_one_col(const SharedStorage& in, int col) {
     cublasOperation_t transA = CUBLAS_OP_N;
     cublasOperation_t transB = CUBLAS_OP_N;
-    int M = in->get_rows();
+    int M = assistance_parameters[0]->get_rows();
     int N = 1;
-    int K = in->get_cols();
+    int K = in->get_rows();
     int LDA = M;
     int LDB = K;
     int LDC = M;
@@ -67,32 +67,32 @@ void LSTM::multiply_one_col(const SharedStorage& in, SharedStorage& out,
     dtype beta = 0;
     const float* d_A = parameters[0]->gpu_pointer_const();
     const float* d_B = in->gpu_pointer_const() + col * in->get_rows();
-    float* d_C = out->gpu_pointer() + col * in->get_rows();
+    float* d_C = assistance_parameters[0]->gpu_pointer();
     my_cuda_Dgemm(_handle, transA, transB, M, N, K, &alpha, d_A, LDA, d_B, LDB,
                   &beta, d_C, LDC);
     beta = 1;
     d_A = parameters[1]->gpu_pointer_const();
-    d_B = states[0]->gpu_pointer_const() + col * in->get_rows();
+    d_B = states[2]->gpu_pointer_const() + col * states[2]->get_rows();
     my_cuda_Dgemm(_handle, transA, transB, M, N, K, &alpha, d_A, LDA, d_B, LDB,
                   &beta, d_C, LDC);
-    my_add_vec_to_mat_colwise(out, parameters[1], 1.0f);
+    my_add_vec_to_mat_colwise(assistance_parameters[0], parameters[2], 1.0f);
 }
 
 void LSTM::nonlinear_transformations(int t) {
     int n_sig = _out.get() * 3;
     int rows = states[0]->get_rows();
     cuda_sigmoid(n_sig, 1,
-                 assistance_parameters[0]->gpu_pointer_const() + t * rows,
+                 assistance_parameters[0]->gpu_pointer_const(),
                  states[0]->gpu_pointer() + t * rows);
     cuda_tanh(_out.get(), 1,
-              assistance_parameters[0]->gpu_pointer_const() + t * rows + n_sig,
+              assistance_parameters[0]->gpu_pointer_const() + n_sig,
               states[0]->gpu_pointer() + t * rows + n_sig);
 }
 
 void LSTM::compute_next_state(int t) {
     next_lstm_cell(states[1]->get_rows(),
-                        states[0]->gpu_pointer_const() + t * states[0]->get_rows(),
-                        states[1]->gpu_pointer() + t * states[1]->get_rows());
+                   states[0]->gpu_pointer_const() + t * states[0]->get_rows(),
+                   states[1]->gpu_pointer() + t * states[1]->get_rows());
     next_lstm_state(states[2]->get_rows(),
                     states[0]->gpu_pointer_const() + t * states[0]->get_rows(),
                     states[1]->gpu_pointer_const() + t * states[1]->get_rows(),
@@ -104,13 +104,12 @@ void LSTM::forward_gpu(const SharedStorage& in, SharedStorage& out,
     maybe_resize_state(in->get_cols());
     int cols = states[2]->get_cols();
     for (int t = 0; t < in->get_cols(); ++t) {
-        multiply_one_col(in, assistance_parameters[0], t);
+        multiply_one_col(in, t);
         nonlinear_transformations(t);
         compute_next_state(t);
     }
     out = std::make_shared<Storage>(
-            states[2]->return_data_const().rightCols(cols - 1));
-    // changes this update functions!!!
+        states[2]->return_data_const().rightCols(cols - 1));
 };
 
 void LSTM::forward_cpu(const SharedStorage& in, SharedStorage& out,

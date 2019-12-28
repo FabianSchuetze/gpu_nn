@@ -13,9 +13,10 @@ void my_cuda_Dgemm(cublasHandle_t handle, cublasOperation_t transA,
                    cublasOperation_t transB, int M, int N, int K, double* alpha,
                    const double*& d_A, int LDA, const double*& d_B, int LDB,
                    double* beta, double*& d_C, int LDC) {
-    // M defines the number of rows in Matrix A and C
-    // N Defines the number of columns of the Matrix B and C
-    // K defiens the number of columns of the Matrhx A and rows of Matix B
+    //  C = α op ( A ) op ( B ) + β C 
+    // M defines the number of rows in Matrix op(A) and C
+    // N Defines the number of columns of the Matrix op(B) and C
+    // K defiens the number of columns of the Matrhx op(A) and rows of Matix B
     CHECK_CUBLAS(cublasDgemm(handle, transA, transB, M, N, K, alpha, d_A, LDA,
                              d_B, LDB, beta, d_C, LDC));
     // MY_CHECK(cudaDeviceSynchronize());
