@@ -24,7 +24,7 @@ trainArgs::trainArgs(const Matrix& features, const Matrix& target,
       _epochs(__epochs.get()),
       _patience(__patience.get()),
       _shuffle(shuffle.get()) {
-    train_test_split(features, target, 0.1);
+    train_test_split(features, target, 0.02);
     _y_val_shared = std::make_shared<Storage>(_y_val.transpose());
     create_optimizers(sgd, layers);
 };
@@ -32,7 +32,8 @@ trainArgs::trainArgs(const Matrix& features, const Matrix& target,
 void trainArgs::create_optimizers(
     const std::shared_ptr<GradientDescent>& sgd,
     const std::deque<std::shared_ptr<Layer>>& layers) {
-    if (sgd->name() == "Momentum")
+    // toDo: better helper class
+    if ((sgd->name() == "Momentum") or (sgd->name() == "AdaGrad"))
         for (std::shared_ptr<Layer> layer : layers) {
             if (layer->n_paras() > 0) {
                 std::vector<SharedStorage> helper;

@@ -257,7 +257,8 @@ void NeuralNetwork::consumer(std::shared_ptr<GradientDescent>& sgd,
         // std::cout << "train loss: " << train_loss / train_args->total_iter()
         //<< " at " << train_args->total_iter() << std::endl;
         if (train_args->total_iter() > train_args->max_total_iter()) {
-            std::cout << " train loss at iter " << train_args->total_iter()
+            std::cout << " train loss at iter " << (train_args->total_iter() / 
+                    train_args->batch_size()) 
                       << ": " << train_loss / (train_args->total_iter()) <<
                       std::endl;
             diff = std::chrono::duration_cast<std::chrono::milliseconds>(

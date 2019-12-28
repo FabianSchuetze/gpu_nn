@@ -50,9 +50,11 @@ int main(int argc, char** argv) {
     std::shared_ptr<Loss> loss =
         std::make_shared<CrossEntropy>(CrossEntropy("CPU"));
     NeuralNetwork n1(s1, loss, "CPU");
-    std::shared_ptr<GradientDescent> sgd = std::make_shared<Momentum>(
-        LearningRate(0.01*32), MomentumRate(0.90));
-    n1.train(input, output, sgd, Epochs(30), Patience(1), BatchSize(32),
+    //std::shared_ptr<GradientDescent> sgd = std::make_shared<Momentum>(
+        //LearningRate(0.01*32), MomentumRate(0.9));
+    std::shared_ptr<GradientDescent> sgd = std::make_shared<AdaGrad>(
+        LearningRate(0.01*32));
+    n1.train(input, output, sgd, Epochs(1000), Patience(1000), BatchSize(32),
              DebugInfo("", ""), Shuffle(false));
             //DebugInfo("forwards_info", "backwards_info"));
      //Matrix predictions = n1.predict(x_test, 10);

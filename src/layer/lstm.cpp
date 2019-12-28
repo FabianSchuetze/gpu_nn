@@ -81,8 +81,7 @@ void LSTM::multiply_one_col(const SharedStorage& in, int col) {
 void LSTM::nonlinear_transformations(int t) {
     int n_sig = _out.get() * 3;
     int rows = states[0]->get_rows();
-    cuda_sigmoid(n_sig, 1,
-                 assistance_parameters[0]->gpu_pointer_const(),
+    cuda_sigmoid(n_sig, 1, assistance_parameters[0]->gpu_pointer_const(),
                  states[0]->gpu_pointer() + t * rows);
     cuda_tanh(_out.get(), 1,
               assistance_parameters[0]->gpu_pointer_const() + n_sig,
@@ -166,7 +165,7 @@ void LSTM::backward_cpu(const SharedStorage& values,
     const Matrix& funcs = states[0]->return_data_const();
     Matrix sigma(Matrix::Zero(_out.get() * 4, sz));
     Matrix sigma_c =
-        Matrix::Ones(_out.get(), sz + 1).array() - cell.array().tanh().pow(2);
+        Matrix::Ones(nh, sz + 1).array() - cell.array().tanh().pow(2);
     construct_sigma_cpu(sigma);
     // grad_out.setZero();
     Vector dcum_s = Vector::Zero(_out.get());
@@ -176,7 +175,7 @@ void LSTM::backward_cpu(const SharedStorage& values,
     Matrix d_tmp = Matrix::Zero(4 * _out.get(), 1);
     Matrix d_all = Matrix::Zero(4 * _out.get(), sz);
     for (int t = sz - 1; t >= 0; --t) {
-        const Matrix& i = funcs.block(0, t, _out.get(), 1);
+        const Matrix& i = funcs.block(0, t, nh, 1);
         const Matrix& f = funcs.block(nh, t, nh, 1);
         const Matrix& o = funcs.block(2 * nh, t, nh, 1);
         const Matrix& g = funcs.block(3 * nh, t, nh, 1);
@@ -198,6 +197,7 @@ void LSTM::backward_cpu(const SharedStorage& values,
         d_all * values->return_data_const().transpose();
     gradients[1]->return_data() = d_all * state.leftCols(sz).transpose();
     gradients[2]->return_data() = d_all.rowwise().sum();
+    clip_gradients();
 }
 
 void LSTM::expand_states(int cols) {

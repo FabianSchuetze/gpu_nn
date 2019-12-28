@@ -12,14 +12,14 @@ Momentum::Momentum(LearningRate _learning_rate, MomentumRate _momentum,
 
 Momentum::~Momentum() { ; };
 
-void Momentum::initialize_gradients(const VecSharedStorage& gradients,
-                                    VecSharedStorage& helper) {
-    for (SharedStorage storage : gradients) {
-        Matrix init = Matrix::Zero(storage->get_rows(), storage->get_cols());
-        SharedStorage tmp = std::make_shared<Storage>(init);
-        helper.push_back(tmp);
-    }
-}
+//void Momentum::initialize_gradients(const VecSharedStorage& gradients,
+                                    //VecSharedStorage& helper) {
+    //for (SharedStorage storage : gradients) {
+        //Matrix init = Matrix::Zero(storage->get_rows(), storage->get_cols());
+        ////SharedStorage tmp = std::make_shared<Storage>(init);
+        //helper.push_back(std::make_shared<Storage>(init));
+    //}
+//}
 
 void Momentum::weight_update_cpu(const VecSharedStorage& curr,
                                  VecSharedStorage& parameters, int batch_size,
