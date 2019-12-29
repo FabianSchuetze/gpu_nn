@@ -1,25 +1,25 @@
 #include <eigen-git-mirror/Eigen/Core>
 #define CATCH_CONFIG_MAIN
-#include "../third_party/catch/catch.hpp"
 #include "../include/common.h"
+#include "../third_party/catch/catch.hpp"
 //#include "../include/layer/lstm.hpp"
 //#include "../include/storage.h"
-#include "../include/neural_network.h"
-#include <iostream>
 #include <sys/time.h>
+#include <iostream>
+#include "../include/neural_network.h"
 
 double cpuSecond() {
     struct timeval tp;
     gettimeofday(&tp, NULL);
     return ((double)tp.tv_sec + (double)tp.tv_usec * 1e-6);
 }
-//int main() {
+// int main() {
 TEST_CASE("NeuralNetwork cpu", "[cpu]") {
     srand((unsigned int)0);
     int outf = 10;
     int inf = 12;
     Init* init = new Glorot();
-    Layer* inp1 = new LSTM(Features(outf), Features(inf),init);
+    Layer* inp1 = new LSTM(Features(outf), Features(inf), init);
     Matrix in = Matrix::Zero(inf, 5);
     in(0, 0) = 1;
     in(2, 1) = 1;
@@ -34,12 +34,12 @@ TEST_CASE("NeuralNetwork cpu", "[cpu]") {
 }
 
 TEST_CASE("NeuralNetwork gpu", "[gpu]") {
-//int main() {
+    // int main() {
     srand((unsigned int)0);
     int outf = 10;
     int inf = 12;
     Init* init2 = new Glorot();
-    Layer* inp12 = new LSTM(Features(outf), Features(inf),init2);
+    Layer* inp12 = new LSTM(Features(outf), Features(inf), init2);
     Matrix in2 = Matrix::Zero(inf, 5);
     in2(0, 0) = 1;
     in2(2, 1) = 1;
@@ -51,4 +51,41 @@ TEST_CASE("NeuralNetwork gpu", "[gpu]") {
     std::shared_ptr<Storage> storage_out2 = std::make_shared<Storage>(out2);
     inp12->forward_gpu(storage_in2, storage_out2, "train");
     REQUIRE(storage_out2->return_data_const().cwiseAbs().minCoeff() > 1e-8);
+}
+
+TEST_CASE("NeuralNetwork forward equivalance", "[forward]") {
+    // int main() {
+    srand((unsigned int)0);
+    int outf = 200;
+    int inf = 66;
+    std::random_device rd;  
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(1, inf -1);
+    Init* init2 = new Glorot();
+    Layer* inp1_cpu = new LSTM(Features(outf), Features(inf), init2);
+    Layer* inp1_gpu = new LSTM(Features(outf), Features(inf), init2);
+    Matrix in2 = Matrix::Zero(inf, 32);
+    for (int i = 0; i < 32; ++i) {
+        int rint = dis(gen);
+        in2(rint, i) = 1.0;
+    }
+    Matrix out_gpu = Matrix::Zero(outf, 32);
+    Matrix out_cpu = Matrix::Zero(outf, 32);
+    std::shared_ptr<Storage> storage_in2 = std::make_shared<Storage>(in2);
+    std::shared_ptr<Storage> storage_gpu = std::make_shared<Storage>(out_gpu);
+    std::shared_ptr<Storage> storage_cpu = std::make_shared<Storage>(out_cpu);
+    double gpuStart = cpuSecond();
+    inp1_gpu->forward_gpu(storage_in2, storage_gpu, "train");
+    double gpuEnd = cpuSecond() - gpuStart;
+    double cpuStart = cpuSecond();
+    inp1_cpu->forward_gpu(storage_in2, storage_cpu, "train");
+    double cpuEnd = cpuSecond() - cpuStart;
+    Matrix diff =
+        storage_cpu->return_data_const() - storage_gpu->return_data_const();
+    dtype out = diff.array().abs().maxCoeff();
+    dtype allowed = 1e-5;
+    std::cout << "The CPU took " << cpuEnd << " and hte GPU took " << gpuEnd
+              << std::endl;
+    std::cout << "maximum difference: " << out << std::endl;
+    REQUIRE(out < allowed);
 }
