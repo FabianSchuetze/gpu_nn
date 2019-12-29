@@ -20,11 +20,12 @@ set(${LIBRARY_TARGET_NAME}_SRC
     src/layer/dropout.cpp
     src/loss/cross_entropy.cpp
     src/layer/input.cpp
-    src/layer/lstm_layer.cpp
+    src/layer/lstm.cpp
     src/network.cpp
     src/train.cpp
     src/gradient_descent/gradient_descent.cpp
     src/gradient_descent/sgd.cpp
+    src/gradient_descent/adagrad.cpp
     src/trainArgs.cpp
     src/layer/convolution.cpp
     src/layer/pooling.cpp
@@ -49,10 +50,13 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fPIC -lopenblas\
     -lcudnn -lcurand -L /usr/lib/cuda/lib64 -lcudart  -lcublas\
     -L /usr/lib/x86_64-linux-gnu -lblas\
     -Wall -std=c++17 -Wno-error=unused-command-line-argument")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-g -O3")
 set(${LIBRARY_TARGET_NAME}_TEST
     #test/normalization.cpp
     test/mnist_lenet.cpp
     test/mnist.cpp
+    test/lstm.cpp
     #test/inits.cpp
     #test/im2col_layer.cpp
     #test/convolution.cpp

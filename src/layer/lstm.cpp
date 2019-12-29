@@ -236,6 +236,25 @@ void LSTM::internal_deriv(int t) {
                            states[3]->gpu_pointer() + t * 4 * nh);
 }
 
+void LSTM::clip_gradients_gpu() {
+    for (SharedStorage& grad : gradients) {
+        ::clip_gradients_gpu(grad->get_rows(), grad->get_cols(), 5.0f,
+                             grad->gpu_pointer());
+    }
+}
+
+void LSTM::para_gradients(const SharedStorage& values) {
+    cublasOperation_t transA = CUBLAS_OP_N;
+    cublasOperation_t transB = CUBLAS_OP_T;
+    my_Dgemm(_handle, transA, transB, states[3], values, gradients[0], 1.0,
+             0.0);
+    my_Dgemm(_handle, transA, transB, states[3], states[2], gradients[1], 1.0,
+             0.0);
+    my_Dgemv(_handle, CUBLAS_OP_N, states[3], assistance_parameters[6],
+             gradients[2], 1., 0);  // bias
+    clip_gradients_gpu();
+}
+
 void LSTM::backward_gpu(const SharedStorage& values,
                         const SharedStorage& grad_in, SharedStorage& grad_out) {
     int sz = grad_in->get_cols();
@@ -249,6 +268,7 @@ void LSTM::backward_gpu(const SharedStorage& values,
         internal_deriv(t);
         multiply_one_col_bwd(grad_out, t);
     };
+    para_gradients(values);
 }
 // assistance_parameters1: dcum_s, dcum_c, dh, dc, d_tmp;
 void LSTM::backward_cpu(const SharedStorage& values,
@@ -352,6 +372,7 @@ void LSTM::initialize_weight(Init* init) {
     parameters.push_back(std::make_shared<Storage>(wh));
     parameters.push_back(std::make_shared<Storage>(b));
     Matrix tmp(Matrix::Zero(4 * _out.get(), 1));
+    // Matrix bias(Matrix::Ones(4 * _out.get(), 1));
     assistance_parameters.push_back(std::make_shared<Storage>(tmp));
     assistance_parameters.push_back(
         std::make_shared<Storage>(Matrix::Zero(_out.get(), 1)));  // dcum_s;
@@ -363,4 +384,6 @@ void LSTM::initialize_weight(Init* init) {
         std::make_shared<Storage>(Matrix::Zero(_out.get(), 1)));  // dc;
     assistance_parameters.push_back(
         std::make_shared<Storage>(Matrix::Zero(4 * _out.get(), 1)));  // d_tmp;
+    assistance_parameters.push_back(
+        std::make_shared<Storage>(Matrix::Ones(4 * _out.get(), 1)));  // d_tmp;
 }

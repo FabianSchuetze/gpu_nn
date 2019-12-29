@@ -27,6 +27,7 @@ class LSTM : public Layer {
     void initialize_weight(Init*);
     void initialize_states();
     void clip_gradients();
+    void clip_gradients_gpu();
     void maybe_resize_state(int);
     void expand_states(int);
     void reorganize_states(int);
@@ -43,6 +44,7 @@ class LSTM : public Layer {
     void new_hidden_state(int, const SharedStorage&);
     void new_cell_state(int, const SharedStorage&);
     void internal_deriv(int);
+    void para_gradients(const SharedStorage&);
     cublasHandle_t _handle;
     Features _out;
     Features _in;

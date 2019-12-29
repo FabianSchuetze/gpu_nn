@@ -73,13 +73,13 @@ __global__ void add_vec_to_mat_colwise_cu(int rows, int cols, const dtype* in,
 }
 
 //__global__ void add_vec_to_mat_colwise_cu(int rows, int cols, const dtype* in,
-                                          //const dtype* vector, dtype* out,
-                                          //dtype alpha) {
-    //// get the current element index for the thread
-    //unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    //if (idx < rows * cols) {
-        //out[idx] = in[idx] + alpha * vector[idx / rows];
-    //}
+// const dtype* vector, dtype* out,
+// dtype alpha) {
+//// get the current element index for the thread
+// unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+// if (idx < rows * cols) {
+// out[idx] = in[idx] + alpha * vector[idx / rows];
+//}
 //}
 __global__ void cuda_exponential(int rows, int cols, double* in) {
     unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -521,6 +521,21 @@ __global__ void cuda_tanh_deriv(int rows, int max_rows, int cols,
     }
 }
 
+__global__ void cuda_clip_gradients(int rows, int cols, dtype max,
+                                    dtype* grad) {
+    unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
+    if ((row < rows) && (col < cols)) {
+        unsigned int linear = row + col * rows;
+        dtype curr = grad[linear];
+        if (curr < -1 * max) {
+            grad[linear] = -1 * max;
+        } else if (curr > max) {
+            grad[linear] = max;
+        }
+    }
+}
+
 void add_vec_to_mat_colwise(int rows, int cols, dtype* matrix,
                             const dtype* vector, dtype alpha) {
     dim3 block(256);
@@ -699,7 +714,7 @@ void multiply_elementwise(int rows, int cols, const dtype* d_A,
     dim3 block(16, 16);
     dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     multiply_ele<<<grid, block>>>(rows, cols, d_A, d_B, d_C);
-    cudaDeviceSynchronize();
+    // cudaDeviceSynchronize();
     MY_CHECK(cudaPeekAtLastError());
 }
 
@@ -825,7 +840,7 @@ void compute_deriv_cell(int rows, int cols, const dtype* cell,
     dim3 block(16, 16);
     dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     cuda_compute_deriv_cell<<<grid, block>>>(rows, cols, cell, deriv_cell);
-    //MY_CHECK(cudaDeviceSynchronize());
+    // MY_CHECK(cudaDeviceSynchronize());
     MY_CHECK(cudaPeekAtLastError());
 }
 
@@ -834,7 +849,7 @@ void new_cell_state(int rows, const dtype* dcum_c, const dtype* dh,
     dim3 block(512);
     dim3 grid((rows + block.x - 1) / block.x);
     cuda_new_cell_state<<<grid, block>>>(rows, dcum_c, dh, o, sigma_c, dc);
-    //MY_CHECK(cudaDeviceSynchronize());
+    // MY_CHECK(cudaDeviceSynchronize());
     MY_CHECK(cudaPeekAtLastError());
 }
 
@@ -843,7 +858,7 @@ void internal_deriv(int rows, const dtype* dh, const dtype* dc,
     dim3 block(512);
     dim3 grid((rows + block.x - 1) / block.x);
     cuda_internal_deriv<<<grid, block>>>(rows, dh, dc, cell, funcs, d_tmp);
-    //MY_CHECK(cudaDeviceSynchronize());
+    // MY_CHECK(cudaDeviceSynchronize());
     MY_CHECK(cudaPeekAtLastError());
 }
 
@@ -868,6 +883,14 @@ void tanh_deriv(int rows, int max_rows, int cols, const dtype* in, dtype* out) {
     dim3 block(16, 16);
     dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     cuda_tanh_deriv<<<grid, block>>>(rows, max_rows, cols, in, out);
+    // MY_CHECK(cudaDeviceSynchronize());
+    MY_CHECK(cudaPeekAtLastError());
+}
+
+void clip_gradients_gpu(int rows, int cols, dtype max, dtype* grad) {
+    dim3 block(16, 16);
+    dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
+    cuda_clip_gradients<<<grid, block>>>(rows, cols, max, grad);
     // MY_CHECK(cudaDeviceSynchronize());
     MY_CHECK(cudaPeekAtLastError());
 }

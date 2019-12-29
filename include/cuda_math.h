@@ -70,4 +70,5 @@ void internal_deriv(int, const dtype*, const dtype*, const dtype*, const dtype*,
 void copy_data(int, int, const dtype*, dtype*);
 void tanh_deriv(int, int, int, const dtype*, dtype*);
 void sigmoid_deriv(int, int, int, const dtype*, dtype*);
+void clip_gradients_gpu(int, int, dtype, dtype*);
 #endif
