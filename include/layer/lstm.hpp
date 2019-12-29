@@ -30,7 +30,8 @@ class LSTM : public Layer {
     void maybe_resize_state(int);
     void expand_states(int);
     void reorganize_states(int);
-    void construct_sigma_cpu(Matrix&);
+    void construct_sigma_cpu();
+    void construct_sigma_gpu();
     // void initialize_bias(int, int);
     void initialize_grad();
     void initialize_output_dimension() override;

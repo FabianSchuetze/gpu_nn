@@ -18,17 +18,13 @@ void my_cuda_Dgemv(cublasHandle_t, cublasOperation_t, int M, int N,
 void my_cuda_Dgemv(cublasHandle_t, cublasOperation_t, int M, int N,
                    float* alpha, const float*& d_A, const float*& d_B,
                    float* beta, float*& d_C);
-void add_vec_to_mat_colwise(int, int, double*, const double*, double);
-void add_vec_to_mat_colwise(int, int, float*, const float*, float);
-// void add_vec_to_mat_colwise(int, int, const double*, const double*, double*,
-// double);
+void add_vec_to_mat_colwise(int, int, dtype*, const dtype*, dtype);
 void add_vec_to_mat_colwise(int, int, const dtype*, const dtype*, dtype*,
                             dtype);
 void exponential(int, int, double*);
 void exponential(int, int, float*);
 void divide_colwise(int, int, double*, const double*);
 void divide_colwise(int, int, float*, const float*);
-//void multiply_elementwise(int, int, const float*, const float*, float*);
 void multiply_elementwise(int, int, const dtype*, const dtype*, dtype*);
 void relu(int, int, double*, const double*);
 void relu(int, int, float*, const float*);
@@ -62,10 +58,6 @@ void col2im_gpu(const dtype* data_col, int channels, int height, int width,
                 int kernel_h, int kernel_w, int pad, int stride,
                 dtype* data_im);
 void cuda_colwise_max(const dtype* input, int rows, int cols, dtype* out);
-// void pooling_gpu2(const float* bottom_data, int window, int stride, int rows,
-// int cols, int channels, int out_height, int out_width,
-// int batches, float* top_data, float* mask);
-
 void cuda_tanh(int rows, int cols, const dtype* d_A, dtype* d_B);
 void cuda_sigmoid(int rows, int cols, const dtype* d_A, dtype* d_B);
 void next_lstm_cell(int rows, const dtype* d_A, dtype* d_B);
@@ -74,5 +66,8 @@ void compute_deriv_cell(int, int, const dtype*, dtype*);
 void new_cell_state(int, const dtype*, const dtype*, const dtype*, const dtype*,
                     dtype*);
 void internal_deriv(int, const dtype*, const dtype*, const dtype*, const dtype*,
-                   dtype*);
+                    dtype*);
+void copy_data(int, int, const dtype*, dtype*);
+void tanh_deriv(int, int, int, const dtype*, dtype*);
+void sigmoid_deriv(int, int, int, const dtype*, dtype*);
 #endif

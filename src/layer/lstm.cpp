@@ -1,9 +1,15 @@
 #include "../../include/layer/lstm.hpp"
+#include <sys/time.h>
 #include <iostream>
 #include <memory>
 #include "../../include/cuda_math.h"
 #include "../../include/math.h"
 using Eigen::all;
+double cpuSecond2() {
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+    return ((double)tp.tv_sec + (double)tp.tv_usec * 1e-6);
+}
 
 LSTM::LSTM(Features out, Features in, Init* init)
     : Layer("LSTM"), _out(out), _in(in), states(6), assistance_parameters(0) {
@@ -95,30 +101,24 @@ void LSTM::multiply_one_col_bwd(SharedStorage& out, int col) {
     dtype alpha = 1;
     dtype beta = 0;
     const float* d_A = parameters[1]->gpu_pointer_const();
-    const float* d_B = states[3]->gpu_pointer_const() + col * out->get_rows();
+    const float* d_B =
+        states[3]->gpu_pointer_const() + col * states[3]->get_rows();
     float* d_C = assistance_parameters[1]->gpu_pointer();
     my_cuda_Dgemm(_handle, transA, transB, M, N, K, &alpha, d_A, LDA, d_B, LDB,
                   &beta, d_C, LDC);
     d_A = parameters[0]->gpu_pointer_const();
-    d_B = states[2]->gpu_pointer_const() + col * states[2]->get_rows();
+    M = parameters[0]->get_cols();
+    K = parameters[0]->get_rows();
+    LDA = K;
+    LDB = K;
+    LDC = M;
     d_C = out->gpu_pointer() + col * out->get_rows();
     my_cuda_Dgemm(_handle, transA, transB, M, N, K, &alpha, d_A, LDA, d_B, LDB,
                   &beta, d_C, LDC);
-    multiply_elementwise(out->get_rows(), 1,
-                         assistance_parameters[4]->gpu_pointer_const(),
-                         states[0]->gpu_pointer_const() +
-                             col * 4 * out->get_rows() + out->get_rows(),
-                         assistance_parameters[2]->gpu_pointer());
-    // assistance_parameters[0], parameters[2], 1.0f);
-    //::multiply_elementwise(
-    // 4 * nh, 1, states[4]->gpu_pointer_const() + t * 4 * nh,
-    // assistance_parameters[5]->gpu_pointer_const(),
-    // states[3]->gpu_pointer() + t * 4 * nh);
-    // dcum_s =
-    // parameters[1]->return_data_const().transpose() * d_all(all, t);
-    // grad_out->return_data()(all, t) =
-    // parameters[0]->return_data_const().transpose() * d_all(all, t);
-    // dcum_c = dc.array() * f.array();
+    multiply_elementwise(
+        out->get_rows(), 1, assistance_parameters[4]->gpu_pointer_const(),
+        states[0]->gpu_pointer_const() + col * 4 * _out.get() + _out.get(),
+        assistance_parameters[2]->gpu_pointer());
 }
 
 void LSTM::nonlinear_transformations(int t) {
@@ -144,14 +144,14 @@ void LSTM::compute_next_state(int t) {
 void LSTM::forward_gpu(const SharedStorage& in, SharedStorage& out,
                        const std::string&) {
     maybe_resize_state(in->get_cols());
-    int cols = states[2]->get_cols();
     for (int t = 0; t < in->get_cols(); ++t) {
         multiply_one_col_fwd(in, t);
         nonlinear_transformations(t);
         compute_next_state(t);
     }
-    out = std::make_shared<Storage>(
-        states[2]->return_data_const().rightCols(cols - 1));
+    copy_data(out->get_rows(), out->get_cols(),
+              states[2]->gpu_pointer_const() + states[2]->get_rows(),
+              out->gpu_pointer());
 };
 
 void LSTM::forward_cpu(const SharedStorage& in, SharedStorage& out,
@@ -184,7 +184,8 @@ void LSTM::forward_cpu(const SharedStorage& in, SharedStorage& out,
     out->return_data() = state.rightCols(cols - 1);
 }
 
-void LSTM::construct_sigma_cpu(Matrix& sigma) {
+void LSTM::construct_sigma_cpu() {
+    Matrix& sigma = states[4]->return_data();
     const Matrix& state = states[0]->return_data_const();
     int n_sig = 3 * _out.get();
     sigma.topRows(n_sig) = state.topRows(n_sig).array() *
@@ -193,6 +194,14 @@ void LSTM::construct_sigma_cpu(Matrix& sigma) {
     sigma.bottomRows(_out.get()) =
         Matrix::Ones(_out.get(), sigma.cols()).array() -
         state.bottomRows(_out.get()).array().pow(2);
+}
+
+void LSTM::construct_sigma_gpu() {
+    int n_sig = 3 * _out.get();
+    ::sigmoid_deriv(n_sig, states[0]->get_rows(), states[0]->get_cols(),
+                    states[0]->gpu_pointer_const(), states[4]->gpu_pointer());
+    ::tanh_deriv(_out.get(), states[0]->get_rows(), states[0]->get_cols(),
+                 states[0]->gpu_pointer_const(), states[4]->gpu_pointer());
 }
 
 void LSTM::new_hidden_state(int t, const SharedStorage& grad_in) {
@@ -225,7 +234,6 @@ void LSTM::internal_deriv(int t) {
                            states[4]->gpu_pointer_const() + t * 4 * nh,
                            assistance_parameters[5]->gpu_pointer_const(),
                            states[3]->gpu_pointer() + t * 4 * nh);
-    // d_all(all, t) = sigma(all, t).array() * d_tmp.array();
 }
 
 void LSTM::backward_gpu(const SharedStorage& values,
@@ -234,11 +242,14 @@ void LSTM::backward_gpu(const SharedStorage& values,
     compute_deriv_cell(states[5]->get_rows(), states[5]->get_cols(),
                        states[1]->gpu_pointer_const(),
                        states[5]->gpu_pointer());
+    construct_sigma_gpu();
     for (int t = sz - 1; t >= 0; --t) {
         new_hidden_state(t, grad_in);
         new_cell_state(t, states[5]);
         internal_deriv(t);
         multiply_one_col_bwd(grad_out, t);
+        std::cout << "gpu\n"
+                  << assistance_parameters[2]->return_data_const() << std::endl;
     };
 }
 // assistance_parameters1: dcum_s, dcum_c, dh, dc, d_tmp;
@@ -252,7 +263,7 @@ void LSTM::backward_cpu(const SharedStorage& values,
     Matrix& sigma = states[4]->return_data();
     Matrix sigma_c =
         Matrix::Ones(nh, sz + 1).array() - cell.array().tanh().pow(2);
-    construct_sigma_cpu(sigma);
+    construct_sigma_cpu();
     Matrix& dcum_s = assistance_parameters[1]->return_data();
     Matrix& dcum_c = assistance_parameters[2]->return_data();
     Matrix& dh = assistance_parameters[3]->return_data();
@@ -279,6 +290,8 @@ void LSTM::backward_cpu(const SharedStorage& values,
         grad_out->return_data()(all, t) =
             parameters[0]->return_data_const().transpose() * d_all(all, t);
         dcum_c = dc.array() * f.array();
+        std::cout << "cpu\n"
+                  << assistance_parameters[2]->return_data_const() << std::endl;
     }
     gradients[0]->return_data() =
         d_all * values->return_data_const().transpose();
