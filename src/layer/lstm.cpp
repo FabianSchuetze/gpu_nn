@@ -210,8 +210,8 @@ void LSTM::new_hidden_state(int t, const SharedStorage& grad_in) {
     dtype* next_state = assistance_parameters[3]->gpu_pointer();
     int rows = assistance_parameters[3]->get_rows();
     int cols = 1;
-    float alpha = 1;
-    add_vec_to_mat_colwise(rows, cols, in, last_state, next_state, alpha);
+    matrix_addition(rows, cols, in, last_state,
+                     next_state, 1.0f, 1.0f);
 }
 
 void LSTM::new_cell_state(int t, const SharedStorage& sigma_c) {
@@ -244,12 +244,14 @@ void LSTM::backward_gpu(const SharedStorage& values,
                        states[5]->gpu_pointer());
     construct_sigma_gpu();
     for (int t = sz - 1; t >= 0; --t) {
+        //std::cout << "incming dcum_s gpu\n"
+                  //<< assistance_parameters[1]->return_data_const() << std::endl;
         new_hidden_state(t, grad_in);
+        //std::cout << "gpu\n"
+                  //<< assistance_parameters[3]->return_data_const() << std::endl;
         new_cell_state(t, states[5]);
         internal_deriv(t);
         multiply_one_col_bwd(grad_out, t);
-        std::cout << "gpu\n"
-                  << assistance_parameters[2]->return_data_const() << std::endl;
     };
 }
 // assistance_parameters1: dcum_s, dcum_c, dh, dc, d_tmp;
@@ -277,7 +279,11 @@ void LSTM::backward_cpu(const SharedStorage& values,
         const Matrix& f = funcs.block(nh, t, nh, 1);
         const Matrix& o = funcs.block(2 * nh, t, nh, 1);
         const Matrix& g = funcs.block(3 * nh, t, nh, 1);
+        //std::cout << "incming dcum_s cpu\n"
+                  //<< assistance_parameters[1]->return_data_const() << std::endl;
         dh = grad_in->return_data_const()(all, t) + dcum_s;
+        //std::cout << "cpu\n"
+                  //<< assistance_parameters[3]->return_data_const() << std::endl;
         dc = dcum_c.array() +
              dh.array() * o.array() * sigma_c(all, t + 1).array();
         d_tmp.block(2 * nh, 0, nh, 1) =
@@ -290,8 +296,6 @@ void LSTM::backward_cpu(const SharedStorage& values,
         grad_out->return_data()(all, t) =
             parameters[0]->return_data_const().transpose() * d_all(all, t);
         dcum_c = dc.array() * f.array();
-        std::cout << "cpu\n"
-                  << assistance_parameters[2]->return_data_const() << std::endl;
     }
     gradients[0]->return_data() =
         d_all * values->return_data_const().transpose();

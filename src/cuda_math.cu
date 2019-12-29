@@ -71,6 +71,16 @@ __global__ void add_vec_to_mat_colwise_cu(int rows, int cols, const dtype* in,
         out[idx] = in[idx] + alpha * vector[idx / rows];
     }
 }
+
+//__global__ void add_vec_to_mat_colwise_cu(int rows, int cols, const dtype* in,
+                                          //const dtype* vector, dtype* out,
+                                          //dtype alpha) {
+    //// get the current element index for the thread
+    //unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    //if (idx < rows * cols) {
+        //out[idx] = in[idx] + alpha * vector[idx / rows];
+    //}
+//}
 __global__ void cuda_exponential(int rows, int cols, double* in) {
     unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < rows * cols) {
@@ -658,7 +668,6 @@ void matrix_addition(int rows, int cols, const float* A, const float* B,
     dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     cuda_matrix_addition<<<grid, block>>>(rows, cols, A, B, C, alpha_A,
                                           alpha_B);
-    // cudaDeviceSynchronize();
     MY_CHECK(cudaPeekAtLastError());
     // MY_CHECK(cudaDeviceSynchronize());
 }
