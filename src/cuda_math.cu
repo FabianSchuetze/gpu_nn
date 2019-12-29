@@ -13,7 +13,7 @@ void my_cuda_Dgemm(cublasHandle_t handle, cublasOperation_t transA,
                    cublasOperation_t transB, int M, int N, int K, double* alpha,
                    const double*& d_A, int LDA, const double*& d_B, int LDB,
                    double* beta, double*& d_C, int LDC) {
-    //  C = α op ( A ) op ( B ) + β C 
+    //  C = α op ( A ) op ( B ) + β C
     // M defines the number of rows in Matrix op(A) and C
     // N Defines the number of columns of the Matrix op(B) and C
     // K defiens the number of columns of the Matrhx op(A) and rows of Matix B
@@ -76,19 +76,18 @@ __global__ void add_vec_to_mat_colwise_cu(int rows, int cols, float* matrix,
     }
 }
 
-__global__ void add_vec_to_mat_colwise_cu(int rows, int cols, const double* in,
-                                          const double* vector, double* out,
-                                          double alpha) {
-    // get the current element index for the thread
-    unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx < rows * cols) {
-        out[idx] = in[idx] + alpha * vector[idx / rows];
-    }
-}
+//__global__ void add_vec_to_mat_colwise_cu(int rows, int cols, const double*
+// in, const double* vector, double* out, double alpha) {
+//// get the current element index for the thread
+// unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+// if (idx < rows * cols) {
+// out[idx] = in[idx] + alpha * vector[idx / rows];
+//}
+//}
 
-__global__ void add_vec_to_mat_colwise_cu(int rows, int cols, const float* in,
-                                          const float* vector, float* out,
-                                          float alpha) {
+__global__ void add_vec_to_mat_colwise_cu(int rows, int cols, const dtype* in,
+                                          const dtype* vector, dtype* out,
+                                          dtype alpha) {
     // get the current element index for the thread
     unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < rows * cols) {
@@ -258,18 +257,18 @@ __global__ void cuda_matrix_addition_inplace(int rows, int cols,
     }
 }
 
-__global__ void multiply_ele(int rows, int cols, const float* d_A,
-                             const float* d_B, float* d_C) {
-    unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
-    unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
-    unsigned int linear = row + col * rows;
-    if ((row < rows) && (col < cols)) {
-        d_C[linear] = d_A[linear] * d_B[linear];
-    }
-}
+//__global__ void multiply_ele(int rows, int cols, const float* d_A,
+                             //const float* d_B, float* d_C) {
+    //unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
+    //unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
+    //unsigned int linear = row + col * rows;
+    //if ((row < rows) && (col < cols)) {
+        //d_C[linear] = d_A[linear] * d_B[linear];
+    //}
+//}
 
-__global__ void multiply_ele(int rows, int cols, const double* d_A,
-                             const double* d_B, double* d_C) {
+__global__ void multiply_ele(int rows, int cols, const dtype* d_A,
+                             const dtype* d_B, dtype* d_C) {
     unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
     unsigned int linear = row + col * rows;
@@ -469,7 +468,6 @@ __global__ void tanh(const dtype* in, int rows, int cols, dtype* out) {
     }
 }
 
-
 __global__ void next_lstm_cell(const dtype* funcs, int rows, dtype* out) {
     unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
     if (row < rows) {
@@ -479,20 +477,54 @@ __global__ void next_lstm_cell(const dtype* funcs, int rows, dtype* out) {
     }
 }
 
-__global__ void next_lstm_state(const dtype* funcs, const dtype* cell,
-                                int rows, dtype* out) {
+__global__ void next_lstm_state(const dtype* funcs, const dtype* cell, int rows,
+                                dtype* out) {
     unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
     if (row < rows) {
         out[row + rows] = funcs[row + 2 * rows] * tanhf(cell[row + rows]);
     }
 }
-        //state(all, t + 1) = o.array() * state(all, t + 1).array().tanh();
-        //const Matrix& i = funcs.block(0, t, _out.get(), 1);
-        //const Matrix& f = funcs.block(_out.get(), t, _out.get(), 1);
-        //const Matrix& o = funcs.block(2 * _out.get(), t, _out.get(), 1);
-        //const Matrix& g = funcs.block(3 * _out.get(), t, _out.get(), 1);
-        //cell(all, t + 1) =
-            //f.array() * cell(all, t).array() + i.array() * g.array();
+
+__global__ void cuda_compute_deriv_cell(int rows, int cols, const dtype* cell,
+                                        dtype* deriv_cell) {
+    unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
+    if ((row < rows) && (col < cols)) {
+        unsigned int linear = row + col * rows;
+        deriv_cell[linear] = 1.0 - tanhf(cell[linear]) * tanhf(cell[linear]);
+    }
+}
+
+__global__ void cuda_new_cell_state(int rows, const dtype* dcum_c,
+                                    const dtype* dh, const dtype* o,
+                                    const dtype* sigma_c, dtype* dc) {
+    unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
+    if (row < rows) {
+        dc[row] = dcum_c[row] + dh[row] * o[row] * sigma_c[row];
+    }
+}
+
+__global__ void cuda_internal_deriv(int rows, const dtype* dh, const dtype* dc,
+                                    const dtype* cell, const dtype* funcs,
+                                    dtype* d_tmp) {
+    unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
+    if (row < rows) {
+        d_tmp[2 * rows + row] = dh[row] * tanhf(cell[row + rows]);
+        d_tmp[row] = dc[row] * funcs[3 * rows + row];
+        d_tmp[row + rows] = dc[row] * cell[row];
+        d_tmp[3 * rows + row] = dc[row] * funcs[row];
+    }
+}
+// const Matrix& i = funcs.block(0, t, nh, 1);
+// const Matrix& f = funcs.block(nh, t, nh, 1);
+// const Matrix& o = funcs.block(2 * nh, t, nh, 1);
+// const Matrix& g = funcs.block(3 * nh, t, nh, 1);
+
+// d_tmp.block(2 * nh, 0, nh, 1) =
+// dh.array() * cell(all, t + 1).array().tanh();
+// d_tmp.block(0, 0, nh, 1) = dc.array() * g.array();
+// d_tmp.block(nh, 0, nh, 1) = dc.array() * cell(all, t).array();
+// d_tmp.block(3 * nh, 0, nh, 1) = dc.array() * i.array();
 
 void add_vec_to_mat_colwise(int rows, int cols, double* matrix,
                             const double* vector, double alpha) {
@@ -516,19 +548,19 @@ void add_vec_to_mat_colwise(int rows, int cols, float* matrix,
     // cudaDeviceSynronize();
 }
 
-void add_vec_to_mat_colwise(int rows, int cols, const double* in,
-                            const double* vector, double* out, double alpha) {
-    dim3 block(256);
-    dim3 grid((rows * cols + block.x - 1) / block.x);
-    add_vec_to_mat_colwise_cu<<<grid, block>>>(rows, cols, in, vector, out,
-                                               alpha);
-    MY_CHECK(cudaPeekAtLastError());
-    // MY_CHECK(cudaDeviceSynchronize());
-    // cudaDeviceSynronize();
-}
+// void add_vec_to_mat_colwise(int rows, int cols, const double* in,
+// const double* vector, double* out, double alpha) {
+// dim3 block(256);
+// dim3 grid((rows * cols + block.x - 1) / block.x);
+// add_vec_to_mat_colwise_cu<<<grid, block>>>(rows, cols, in, vector, out,
+// alpha);
+// MY_CHECK(cudaPeekAtLastError());
+//// MY_CHECK(cudaDeviceSynchronize());
+//// cudaDeviceSynronize();
+//}
 
-void add_vec_to_mat_colwise(int rows, int cols, const float* in,
-                            const float* vector, float* out, float alpha) {
+void add_vec_to_mat_colwise(int rows, int cols, const dtype* in,
+                            const dtype* vector, dtype* out, dtype alpha) {
     dim3 block(256);
     dim3 grid((rows * cols + block.x - 1) / block.x);
     add_vec_to_mat_colwise_cu<<<grid, block>>>(rows, cols, in, vector, out,
@@ -690,8 +722,8 @@ void matrix_addition_inplace(int rows, int cols, const double* gradient,
     // MY_CHECK(cudaDeviceSynchronize());
 }
 
-void multiply_elementwise(int rows, int cols, const float* d_A,
-                          const float* d_B, float* d_C) {
+void multiply_elementwise(int rows, int cols, const dtype* d_A,
+                          const dtype* d_B, dtype* d_C) {
     dim3 block(16, 16);
     dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     multiply_ele<<<grid, block>>>(rows, cols, d_A, d_B, d_C);
@@ -699,14 +731,14 @@ void multiply_elementwise(int rows, int cols, const float* d_A,
     MY_CHECK(cudaPeekAtLastError());
 }
 
-void multiply_elementwise(int rows, int cols, const double* d_A,
-                          const double* d_B, double* d_C) {
-    dim3 block(16, 16);
-    dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
-    multiply_ele<<<grid, block>>>(rows, cols, d_A, d_B, d_C);
-    cudaDeviceSynchronize();
-    MY_CHECK(cudaPeekAtLastError());
-}
+//void multiply_elementwise(int rows, int cols, const double* d_A,
+                          //const double* d_B, double* d_C) {
+    //dim3 block(16, 16);
+    //dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
+    //multiply_ele<<<grid, block>>>(rows, cols, d_A, d_B, d_C);
+    //cudaDeviceSynchronize();
+    //MY_CHECK(cudaPeekAtLastError());
+//}
 
 void cuda_masking(int rows, int cols, const float prob, float* d_A) {
     dim3 block(16, 16);
@@ -810,7 +842,7 @@ void cuda_sigmoid(int rows, int cols, const dtype* d_A, dtype* d_B) {
     dim3 block(16, 16);
     dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     sigmoid<<<grid, block>>>(d_A, rows, cols, d_B);
-    //cudaDeviceSynchronize();
+    // cudaDeviceSynchronize();
     MY_CHECK(cudaPeekAtLastError());
 }
 
@@ -818,7 +850,7 @@ void cuda_tanh(int rows, int cols, const dtype* d_A, dtype* d_B) {
     dim3 block(16, 16);
     dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     tanh<<<grid, block>>>(d_A, rows, cols, d_B);
-    //cudaDeviceSynchronize();
+    // cudaDeviceSynchronize();
     MY_CHECK(cudaPeekAtLastError());
 }
 
@@ -830,14 +862,38 @@ void next_lstm_cell(int rows, const dtype* d_A, dtype* d_B) {
     MY_CHECK(cudaPeekAtLastError());
 }
 
-void next_lstm_state(int rows, const dtype* d_A, const dtype* d_B,
-                          dtype* d_C) {
+void next_lstm_state(int rows, const dtype* d_A, const dtype* d_B, dtype* d_C) {
     dim3 block(512);
     dim3 grid((rows + block.x - 1) / block.x);
     next_lstm_state<<<grid, block>>>(d_A, d_B, rows, d_C);
     MY_CHECK(cudaDeviceSynchronize());
     MY_CHECK(cudaPeekAtLastError());
 }
-//__global__ void next_lstm_state(const dtype* funcs, const dtype* cell,
-                                //int rows, dtype* out) {
-//__global__ void next_lstm_cell(const dtype* funcs, int rows, dtype* out) {
+
+void compute_deriv_cell(int rows, int cols, const dtype* cell,
+                        dtype* deriv_cell) {
+    dim3 block(16, 16);
+    dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
+    cuda_compute_deriv_cell<<<grid, block>>>(rows, cols, cell, deriv_cell);
+    MY_CHECK(cudaDeviceSynchronize());
+    MY_CHECK(cudaPeekAtLastError());
+}
+
+void new_cell_state(int rows, const dtype* dcum_c, const dtype* dh,
+                    const dtype* o, const dtype* sigma_c, dtype* dc) {
+    dim3 block(512);
+    dim3 grid((rows + block.x - 1) / block.x);
+    cuda_new_cell_state<<<grid, block>>>(rows, dcum_c, dh, o, sigma_c, dc);
+    MY_CHECK(cudaDeviceSynchronize());
+    MY_CHECK(cudaPeekAtLastError());
+}
+
+void internal_deriv(int rows, const dtype* dh, const dtype* dc,
+                    const dtype* cell, const dtype* funcs, dtype* d_tmp) {
+    dim3 block(512);
+    dim3 grid((rows + block.x - 1) / block.x);
+    cuda_internal_deriv<<<grid, block>>>(rows, dh, dc, cell, funcs, d_tmp);
+    MY_CHECK(cudaDeviceSynchronize());
+    MY_CHECK(cudaPeekAtLastError());
+}
+

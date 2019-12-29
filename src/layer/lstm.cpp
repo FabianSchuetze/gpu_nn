@@ -6,7 +6,7 @@
 using Eigen::all;
 
 LSTM::LSTM(Features out, Features in, Init* init)
-    : Layer("LSTM"), _out(out), _in(in), states(3), assistance_parameters(0) {
+    : Layer("LSTM"), _out(out), _in(in), states(6), assistance_parameters(0) {
     _previous = NULL;
     cublasStatus_t stat = cublasCreate(&_handle);
     CHECK_CUBLAS(stat);
@@ -17,7 +17,7 @@ LSTM::LSTM(Features out, Features in, Init* init)
 }
 
 LSTM::LSTM(Features out, const std::shared_ptr<Layer>& previous, Init* init)
-    : Layer("LSTM"), _out(out), _in(0), states(3), assistance_parameters(0) {
+    : Layer("LSTM"), _out(out), _in(0), states(6), assistance_parameters(0) {
     _previous = previous;
     initialize_input_dimension(previous);
     cublasStatus_t stat = cublasCreate(&_handle);
@@ -32,6 +32,9 @@ void LSTM::initialize_states() {
     states[0] = std::make_shared<Storage>(Matrix::Zero(4 * _out.get(), 32));
     states[1] = std::make_shared<Storage>(Matrix::Zero(_out.get(), 32 + 1));
     states[2] = std::make_shared<Storage>(Matrix::Zero(_out.get(), 32 + 1));
+    states[3] = std::make_shared<Storage>(Matrix::Zero(4 * _out.get(), 32));
+    states[4] = std::make_shared<Storage>(Matrix::Zero(4 * _out.get(), 32));
+    states[5] = std::make_shared<Storage>(Matrix::Zero(_out.get(), 32 + 1));
 }
 
 void LSTM::initialize_input_dimension(const std::shared_ptr<Layer>& previous) {
@@ -54,7 +57,7 @@ void LSTM::initialize_input_dimension(const std::shared_ptr<Layer>& previous) {
 
 void LSTM::initialize_output_dimension() { _out_dim[0] = _out.get(); }
 
-void LSTM::multiply_one_col(const SharedStorage& in, int col) {
+void LSTM::multiply_one_col_fwd(const SharedStorage& in, int col) {
     cublasOperation_t transA = CUBLAS_OP_N;
     cublasOperation_t transB = CUBLAS_OP_N;
     int M = assistance_parameters[0]->get_rows();
@@ -76,6 +79,44 @@ void LSTM::multiply_one_col(const SharedStorage& in, int col) {
     my_cuda_Dgemm(_handle, transA, transB, M, N, K, &alpha, d_A, LDA, d_B, LDB,
                   &beta, d_C, LDC);
     my_add_vec_to_mat_colwise(assistance_parameters[0], parameters[2], 1.0f);
+}
+
+void LSTM::multiply_one_col_bwd(SharedStorage& out, int col) {
+    cublasOperation_t transA = CUBLAS_OP_T;
+    cublasOperation_t transB = CUBLAS_OP_N;
+    int M = parameters[1]->get_cols();
+    int N = 1;
+    int K = parameters[1]->get_rows();
+    int LDA = K;
+    int LDB = K;
+    int LDC = M;
+    dtype alpha = 1;
+    dtype beta = 0;
+    const float* d_A = parameters[1]->gpu_pointer_const();
+    const float* d_B = states[3]->gpu_pointer_const() + col * out->get_rows();
+    float* d_C = assistance_parameters[1]->gpu_pointer();
+    my_cuda_Dgemm(_handle, transA, transB, M, N, K, &alpha, d_A, LDA, d_B, LDB,
+                  &beta, d_C, LDC);
+    d_A = parameters[0]->gpu_pointer_const();
+    d_B = states[2]->gpu_pointer_const() + col * states[2]->get_rows();
+    d_C = out->gpu_pointer() + col * out->get_rows();
+    my_cuda_Dgemm(_handle, transA, transB, M, N, K, &alpha, d_A, LDA, d_B, LDB,
+                  &beta, d_C, LDC);
+    multiply_elementwise(out->get_rows(), 1,
+                         assistance_parameters[4]->gpu_pointer_const(),
+                         states[0]->gpu_pointer_const() +
+                             col * 4 * out->get_rows() + out->get_rows(),
+                         assistance_parameters[2]->gpu_pointer());
+    // assistance_parameters[0], parameters[2], 1.0f);
+    //::multiply_elementwise(
+    // 4 * nh, 1, states[4]->gpu_pointer_const() + t * 4 * nh,
+    // assistance_parameters[5]->gpu_pointer_const(),
+    // states[3]->gpu_pointer() + t * 4 * nh);
+    // dcum_s =
+    // parameters[1]->return_data_const().transpose() * d_all(all, t);
+    // grad_out->return_data()(all, t) =
+    // parameters[0]->return_data_const().transpose() * d_all(all, t);
+    // dcum_c = dc.array() * f.array();
 }
 
 void LSTM::nonlinear_transformations(int t) {
@@ -103,7 +144,7 @@ void LSTM::forward_gpu(const SharedStorage& in, SharedStorage& out,
     maybe_resize_state(in->get_cols());
     int cols = states[2]->get_cols();
     for (int t = 0; t < in->get_cols(); ++t) {
-        multiply_one_col(in, t);
+        multiply_one_col_fwd(in, t);
         nonlinear_transformations(t);
         compute_next_state(t);
     }
@@ -152,10 +193,53 @@ void LSTM::construct_sigma_cpu(Matrix& sigma) {
         state.bottomRows(_out.get()).array().pow(2);
 }
 
-void LSTM::backward_gpu(const SharedStorage& values,
-                        const SharedStorage& grad_in,
-                        SharedStorage& grad_out){};
+void LSTM::new_hidden_state(int t, const SharedStorage& grad_in) {
+    const dtype* in = grad_in->gpu_pointer_const() + t * grad_in->get_rows();
+    const dtype* last_state = assistance_parameters[1]->gpu_pointer_const();
+    dtype* next_state = assistance_parameters[3]->gpu_pointer();
+    int rows = assistance_parameters[3]->get_rows();
+    int cols = 1;
+    float alpha = 1;
+    add_vec_to_mat_colwise(rows, cols, in, last_state, next_state, alpha);
+}
 
+void LSTM::new_cell_state(int t, const SharedStorage& sigma_c) {
+    int rows = assistance_parameters[2]->get_rows();
+    ::new_cell_state(rows, assistance_parameters[2]->gpu_pointer_const(),
+                     assistance_parameters[3]->gpu_pointer_const(),
+                     states[0]->gpu_pointer_const() + t * 4 * rows + 2 * rows,
+                     sigma_c->gpu_pointer_const() + (t + 1) * rows,
+                     assistance_parameters[4]->gpu_pointer());
+}
+
+void LSTM::internal_deriv(int t) {
+    int nh = states[1]->get_rows();
+    ::internal_deriv(nh, assistance_parameters[3]->gpu_pointer_const(),
+                     assistance_parameters[4]->gpu_pointer_const(),
+                     states[1]->gpu_pointer_const() + t * nh,
+                     states[0]->gpu_pointer_const() + t * 4 * nh,
+                     assistance_parameters[5]->gpu_pointer());
+    ::multiply_elementwise(4 * nh, 1,
+                           states[4]->gpu_pointer_const() + t * 4 * nh,
+                           assistance_parameters[5]->gpu_pointer_const(),
+                           states[3]->gpu_pointer() + t * 4 * nh);
+    // d_all(all, t) = sigma(all, t).array() * d_tmp.array();
+}
+
+void LSTM::backward_gpu(const SharedStorage& values,
+                        const SharedStorage& grad_in, SharedStorage& grad_out) {
+    int sz = grad_in->get_cols();
+    compute_deriv_cell(states[5]->get_rows(), states[5]->get_cols(),
+                       states[1]->gpu_pointer_const(),
+                       states[5]->gpu_pointer());
+    for (int t = sz - 1; t >= 0; --t) {
+        new_hidden_state(t, grad_in);
+        new_cell_state(t, states[5]);
+        internal_deriv(t);
+        multiply_one_col_bwd(grad_out, t);
+    };
+}
+// assistance_parameters1: dcum_s, dcum_c, dh, dc, d_tmp;
 void LSTM::backward_cpu(const SharedStorage& values,
                         const SharedStorage& grad_in, SharedStorage& grad_out) {
     int nh = _out.get();
@@ -163,27 +247,28 @@ void LSTM::backward_cpu(const SharedStorage& values,
     const Matrix& state = states[2]->return_data_const();
     const Matrix& cell = states[1]->return_data_const();
     const Matrix& funcs = states[0]->return_data_const();
-    Matrix sigma(Matrix::Zero(_out.get() * 4, sz));
+    Matrix& sigma = states[4]->return_data();
     Matrix sigma_c =
         Matrix::Ones(nh, sz + 1).array() - cell.array().tanh().pow(2);
     construct_sigma_cpu(sigma);
-    // grad_out.setZero();
-    Vector dcum_s = Vector::Zero(_out.get());
-    Vector dcum_c = Vector::Zero(_out.get());
-    Vector dh = Vector::Zero(_out.get());
-    Matrix dc = Vector::Zero(_out.get());
-    Matrix d_tmp = Matrix::Zero(4 * _out.get(), 1);
-    Matrix d_all = Matrix::Zero(4 * _out.get(), sz);
+    Matrix& dcum_s = assistance_parameters[1]->return_data();
+    Matrix& dcum_c = assistance_parameters[2]->return_data();
+    Matrix& dh = assistance_parameters[3]->return_data();
+    Matrix& dc = assistance_parameters[4]->return_data();
+    Matrix& d_tmp = assistance_parameters[5]->return_data();
+    Matrix& d_all = states[3]->return_data();
+    dcum_s.setZero();
+    dcum_c.setZero();
     for (int t = sz - 1; t >= 0; --t) {
         const Matrix& i = funcs.block(0, t, nh, 1);
         const Matrix& f = funcs.block(nh, t, nh, 1);
         const Matrix& o = funcs.block(2 * nh, t, nh, 1);
         const Matrix& g = funcs.block(3 * nh, t, nh, 1);
         dh = grad_in->return_data_const()(all, t) + dcum_s;
-        d_tmp.block(2 * nh, 0, nh, 1) =
-            dh.array() * cell(all, t + 1).array().tanh();
         dc = dcum_c.array() +
              dh.array() * o.array() * sigma_c(all, t + 1).array();
+        d_tmp.block(2 * nh, 0, nh, 1) =
+            dh.array() * cell(all, t + 1).array().tanh();
         d_tmp.block(0, 0, nh, 1) = dc.array() * g.array();
         d_tmp.block(nh, 0, nh, 1) = dc.array() * cell(all, t).array();
         d_tmp.block(3 * nh, 0, nh, 1) = dc.array() * i.array();
@@ -204,6 +289,9 @@ void LSTM::expand_states(int cols) {
     states[0] = std::make_shared<Storage>(Matrix::Zero(4 * _out.get(), cols));
     states[1] = std::make_shared<Storage>(Matrix::Zero(_out.get(), cols + 1));
     states[2] = std::make_shared<Storage>(Matrix::Zero(_out.get(), cols + 1));
+    states[3] = std::make_shared<Storage>(Matrix::Zero(4 * _out.get(), cols));
+    states[4] = std::make_shared<Storage>(Matrix::Zero(4 * _out.get(), cols));
+    states[5] = std::make_shared<Storage>(Matrix::Zero(_out.get(), cols + 1));
 }
 
 void LSTM::maybe_resize_state(int cols) {
@@ -254,4 +342,14 @@ void LSTM::initialize_weight(Init* init) {
     parameters.push_back(std::make_shared<Storage>(b));
     Matrix tmp(Matrix::Zero(4 * _out.get(), 1));
     assistance_parameters.push_back(std::make_shared<Storage>(tmp));
+    assistance_parameters.push_back(
+        std::make_shared<Storage>(Matrix::Zero(_out.get(), 1)));  // dcum_s;
+    assistance_parameters.push_back(
+        std::make_shared<Storage>(Matrix::Zero(_out.get(), 1)));  // dcum_c;
+    assistance_parameters.push_back(
+        std::make_shared<Storage>(Matrix::Zero(_out.get(), 1)));  // dh;
+    assistance_parameters.push_back(
+        std::make_shared<Storage>(Matrix::Zero(_out.get(), 1)));  // dc;
+    assistance_parameters.push_back(
+        std::make_shared<Storage>(Matrix::Zero(4 * _out.get(), 1)));  // d_tmp;
 }
