@@ -116,7 +116,8 @@ void LSTM::multiply_one_col_bwd(SharedStorage& out, int col) {
     my_cuda_Dgemm(_handle, transA, transB, M, N, K, &alpha, d_A, LDA, d_B, LDB,
                   &beta, d_C, LDC);
     multiply_elementwise(
-        out->get_rows(), 1, assistance_parameters[4]->gpu_pointer_const(),
+        assistance_parameters[2]->get_rows(), 1,
+        assistance_parameters[4]->gpu_pointer_const(),
         states[0]->gpu_pointer_const() + col * 4 * _out.get() + _out.get(),
         assistance_parameters[2]->gpu_pointer());
 }
@@ -210,8 +211,7 @@ void LSTM::new_hidden_state(int t, const SharedStorage& grad_in) {
     dtype* next_state = assistance_parameters[3]->gpu_pointer();
     int rows = assistance_parameters[3]->get_rows();
     int cols = 1;
-    matrix_addition(rows, cols, in, last_state,
-                     next_state, 1.0f, 1.0f);
+    matrix_addition(rows, cols, in, last_state, next_state, 1.0f, 1.0f);
 }
 
 void LSTM::new_cell_state(int t, const SharedStorage& sigma_c) {
@@ -244,11 +244,7 @@ void LSTM::backward_gpu(const SharedStorage& values,
                        states[5]->gpu_pointer());
     construct_sigma_gpu();
     for (int t = sz - 1; t >= 0; --t) {
-        //std::cout << "incming dcum_s gpu\n"
-                  //<< assistance_parameters[1]->return_data_const() << std::endl;
         new_hidden_state(t, grad_in);
-        //std::cout << "gpu\n"
-                  //<< assistance_parameters[3]->return_data_const() << std::endl;
         new_cell_state(t, states[5]);
         internal_deriv(t);
         multiply_one_col_bwd(grad_out, t);
@@ -279,11 +275,7 @@ void LSTM::backward_cpu(const SharedStorage& values,
         const Matrix& f = funcs.block(nh, t, nh, 1);
         const Matrix& o = funcs.block(2 * nh, t, nh, 1);
         const Matrix& g = funcs.block(3 * nh, t, nh, 1);
-        //std::cout << "incming dcum_s cpu\n"
-                  //<< assistance_parameters[1]->return_data_const() << std::endl;
         dh = grad_in->return_data_const()(all, t) + dcum_s;
-        //std::cout << "cpu\n"
-                  //<< assistance_parameters[3]->return_data_const() << std::endl;
         dc = dcum_c.array() +
              dh.array() * o.array() * sigma_c(all, t + 1).array();
         d_tmp.block(2 * nh, 0, nh, 1) =

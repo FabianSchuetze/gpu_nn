@@ -825,7 +825,7 @@ void compute_deriv_cell(int rows, int cols, const dtype* cell,
     dim3 block(16, 16);
     dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     cuda_compute_deriv_cell<<<grid, block>>>(rows, cols, cell, deriv_cell);
-    MY_CHECK(cudaDeviceSynchronize());
+    //MY_CHECK(cudaDeviceSynchronize());
     MY_CHECK(cudaPeekAtLastError());
 }
 
@@ -834,7 +834,7 @@ void new_cell_state(int rows, const dtype* dcum_c, const dtype* dh,
     dim3 block(512);
     dim3 grid((rows + block.x - 1) / block.x);
     cuda_new_cell_state<<<grid, block>>>(rows, dcum_c, dh, o, sigma_c, dc);
-    MY_CHECK(cudaDeviceSynchronize());
+    //MY_CHECK(cudaDeviceSynchronize());
     MY_CHECK(cudaPeekAtLastError());
 }
 
@@ -843,7 +843,7 @@ void internal_deriv(int rows, const dtype* dh, const dtype* dc,
     dim3 block(512);
     dim3 grid((rows + block.x - 1) / block.x);
     cuda_internal_deriv<<<grid, block>>>(rows, dh, dc, cell, funcs, d_tmp);
-    MY_CHECK(cudaDeviceSynchronize());
+    //MY_CHECK(cudaDeviceSynchronize());
     MY_CHECK(cudaPeekAtLastError());
 }
 

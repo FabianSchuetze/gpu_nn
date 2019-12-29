@@ -32,7 +32,6 @@ class LSTM : public Layer {
     void reorganize_states(int);
     void construct_sigma_cpu();
     void construct_sigma_gpu();
-    // void initialize_bias(int, int);
     void initialize_grad();
     void initialize_output_dimension() override;
     void initialize_input_dimension(const std::shared_ptr<Layer>&);
