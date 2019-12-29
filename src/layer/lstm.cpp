@@ -76,6 +76,8 @@ void LSTM::multiply_one_col_fwd(const SharedStorage& in, int col) {
     beta = 1;
     d_A = parameters[1]->gpu_pointer_const();
     d_B = states[2]->gpu_pointer_const() + col * states[2]->get_rows();
+    K = states[2]->get_rows();
+    LDB = K;
     my_cuda_Dgemm(_handle, transA, transB, M, N, K, &alpha, d_A, LDA, d_B, LDB,
                   &beta, d_C, LDC);
     my_add_vec_to_mat_colwise(assistance_parameters[0], parameters[2], 1.0f);
