@@ -1,18 +1,19 @@
 #pragma once
-#ifndef adagrad_hpp
-#define adagrad_hpp
+#ifndef rmsprop_hpp
+#define rmsprop_hpp
 #include <memory>
 #include <vector>
 #include "gradient_descent.h"
-class AdaGrad : public GradientDescent {
+class RMSProp : public GradientDescent {
    public:
-    AdaGrad(LearningRate, WeightDecay = WeightDecay(0.));
-    virtual ~AdaGrad();
+    RMSProp(LearningRate, DecayRate, WeightDecay = WeightDecay(0.),
+            LearingRateDecay = LearingRateDecay(0, 1.));
+    virtual ~RMSProp();
     void weight_update_cpu(const VecSharedStorage&, VecSharedStorage&,
                            int, VecSharedStorage&) override;
     void weight_update_gpu(const VecSharedStorage&, VecSharedStorage&,
                            int, VecSharedStorage&) override;
    private:
-    //void initialize_gradients(const VecSharedStorage&, VecSharedStorage&);
+    DecayRate decay;
 };
 #endif

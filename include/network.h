@@ -52,7 +52,6 @@ class NeuralNetwork {
                Epochs, Patience, BatchSize, std::vector<Metric*>&,
                DebugInfo&& = DebugInfo("", ""), Shuffle = Shuffle(true));
     dtype validate(std::chrono::milliseconds);
-    void random_numbers(std::vector<int>&, std::mt19937&);
 
    private:
     typedef void (NeuralNetwork::*update_func)(

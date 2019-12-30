@@ -4,8 +4,11 @@
 using std::vector;
 
 CharRNN::CharRNN(int length, NeuralNetwork* nn,
-                 const std::map<int, char>& ix_to_char)
-    : Metric("CharRNN", nn), _length(length), _ix_to_char(ix_to_char) {
+                 const std::map<int, char>& ix_to_char, dtype _temp)
+    : Metric("CharRNN", nn),
+      _length(length),
+      _ix_to_char(ix_to_char),
+      temperature(_temp) {
     gen.seed(0);
 };
 
@@ -30,17 +33,22 @@ int CharRNN::pick_value(const Matrix& input) {
 
 void CharRNN::validate(const Matrix& features, const Matrix& targets) {
     DebugInfo no_debugging("", "");
-    int out_size = targets.cols();
-    Matrix input = Matrix::Zero(1, features.cols());
-    std::uniform_int_distribution<int> dist(0, features.rows() -1);
+    std::uniform_int_distribution<int> dist(0, features.rows() - 1);
     int start = dist(gen);
-    input(0, Eigen::all) = features(start, Eigen::all);
     vector<int> sequence = {start};
+    vector<SharedStorage> vals = _nn->allocate_forward(1);
+    vals[0]->update_cpu_data(features(start, Eigen::all).transpose());
+    const std::string type("predict");
     for (int i = 0; i < _length; ++i) {
-        Matrix res = _nn->predict(input, out_size);
-        int sample = pick_value(res);
-        input.setZero();
-        input(0, sample) = 1;
+        _nn->forward(vals, type, no_debugging);
+        if (temperature < 1) {
+            vals[vals.size() - 2]->return_data() /= temperature;
+            _nn->layers[_nn->layers.size() - 1]->forward_cpu(
+                vals[vals.size() - 2], vals[vals.size() - 1], "predict");
+        }
+        int sample = pick_value(vals.back()->return_data_const().transpose());
+        vals[0]->return_data().setZero();
+        vals[0]->return_data()(sample, 0) = 1;
         sequence.push_back(sample);
     }
     convert_to_stdout(sequence);

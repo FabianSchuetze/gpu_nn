@@ -122,13 +122,6 @@ void NeuralNetwork::maybe_shuffle(vector<int>& pop, int& start, const int& end,
     }
 }
 
-void NeuralNetwork::random_numbers(vector<int>& samples, std::mt19937& gen) {
-    if (!train_args) throw std::runtime_error("Train args is not set");
-    std::uniform_int_distribution<> uniform(0,
-                                            train_args->x_train().rows() - 1);
-    for (size_t i = 0; i < samples.size(); i++) samples[i] = uniform(gen);
-}
-
 void NeuralNetwork::get_new_sample(const vector<int>& samples, Matrix& x_train,
                                    Matrix& y_train) {
     if (!train_args) throw std::runtime_error("Train args is not set");
@@ -254,10 +247,6 @@ void NeuralNetwork::consumer(std::shared_ptr<GradientDescent>& sgd,
         train_args->advance_total_iter();
         display_train_loss(train_loss);
         if (train_args->total_iter() > train_args->max_total_iter()) {
-            std::cout << " train loss at iter "
-                      << (train_args->total_iter() / train_args->batch_size())
-                      << ": " << train_loss / (train_args->total_iter())
-                      << std::endl;
             diff = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::system_clock::now() - begin);
             val_loss = validate(diff);
@@ -296,7 +285,6 @@ void NeuralNetwork::consumer(std::shared_ptr<GradientDescent>& sgd,
 // std::chrono::nanoseconds diff_3;
 // while (train_args->current_epoch() < train_args->epochs()) {
 // begin_fill = std::chrono::system_clock::now();
-// random_numbers(samples, gen);
 // get_new_sample(samples, x_train, y_train);
 // SharedTarget->update_cpu_data(y_train);
 // fill_hiddens(vals, x_train);

@@ -62,6 +62,8 @@ struct LearningRateParameter {};
 using LearningRate = NamedType<dtype, LearningRateParameter>;
 struct WeightDecayParameter {};
 using WeightDecay = NamedType<dtype, WeightDecayParameter>;
+struct DecayRateParameter {};
+using DecayRate = NamedType<dtype, DecayRateParameter>;
 struct LearingRateDecayParameter {};
 using LearingRateDecay = NamedPairDiff<int, dtype, LearingRateDecayParameter>;
 struct EpochParamter {};

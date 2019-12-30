@@ -12,11 +12,24 @@
 typedef std::shared_ptr<Layer> s_Layer;
 using std::make_shared;
 
+ void print_Matrix_to_stdout2(const Matrix& val, std::string loc) {
+ int rows(val.rows()), cols(val.cols());
+ std::ofstream myfile(loc);
+ myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
+ myfile << std::fixed;
+ myfile << std::setprecision(2);
+ for (int row = 0; row < rows; ++row) {
+ myfile << val(row, 0);
+ for (int col = 1; col < cols; ++col) {
+ myfile << ", " << val(row, col);
+}
+ myfile << std::endl;
+}
+}
 
 int main(int argc, char** argv) {
-    //std::ifstream t = std::ifstream("ft.txt");
-    std::ifstream t = std::ifstream("shakespeare.txt");
-    std::cout << "here" << std::endl;
+    //std::ifstream t = std::ifstream("shakespeare.txt");
+    std::ifstream t = std::ifstream("input.txt");
     std::vector<int> vec;
     char c;
     while (t >> std::noskipws >> c) {
@@ -44,26 +57,21 @@ int main(int argc, char** argv) {
         output(i, out) = 1.0f;
         in = out;
     }
-    Init* init = new Normal(0., 0.01);
+    Init* init = new Glorot();
     s_Layer l1 = make_shared<Input>(Features(input.cols()));
-    s_Layer rnn1 = make_shared<LSTM>(Features(256), l1, init);
-    s_Layer rnn2 = make_shared<LSTM>(Features(256), rnn1, init);
+    s_Layer rnn1 = make_shared<LSTM>(Features(128), l1, init);
+    s_Layer rnn2 = make_shared<LSTM>(Features(128), rnn1, init);
     s_Layer d1 = make_shared<Dense>(Features(input.cols()), rnn2,init);
     s_Layer s1 = make_shared<Softmax>(d1);
     std::shared_ptr<Loss> loss =
         std::make_shared<CrossEntropy>(CrossEntropy("CPU"));
     NeuralNetwork n1(s1, loss, "CPU");
-    std::shared_ptr<GradientDescent> sgd = std::make_shared<Momentum>(
-        LearningRate(0.01*32), MomentumRate(0.9),
-        WeightDecay(0), LearingRateDecay(10, 0.95));
     std::vector<Metric*> test_func(0);
-    Metric* val = new CharRNN(200, &n1, ix_to_char);
+    Metric* val = new CharRNN(500, &n1, ix_to_char, 0.5);
     test_func.push_back(val);
-    //std::shared_ptr<GradientDescent> sgd = std::make_shared<AdaGrad>(
-        //LearningRate(0.01*32));
-    n1.train(input, output, sgd, Epochs(1000), Patience(1000), BatchSize(32),
+    std::shared_ptr<GradientDescent> sgd = std::make_shared<AdaGrad>(
+        LearningRate(0.002*100), DecayRate(0.95),
+        WeightDecay(0), LearingRateDecay(10, 0.95));
+    n1.train(input, output, sgd, Epochs(1000), Patience(1000), BatchSize(100),
             test_func, DebugInfo("", ""), Shuffle(false));
-            //DebugInfo("forwards_info", "backwards_info"));
-     //Matrix predictions = n1.predict(x_test, 10);
-     //n_missclassified(predictions, y_test);
 }
