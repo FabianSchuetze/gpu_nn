@@ -54,7 +54,8 @@ int main(int argc, char** argv) {
         std::make_shared<CrossEntropy>(CrossEntropy("CPU"));
     NeuralNetwork n1(s1, loss, "CPU");
     std::shared_ptr<GradientDescent> sgd = std::make_shared<Momentum>(
-        LearningRate(0.01*32), MomentumRate(0.9));
+        LearningRate(0.01*32), MomentumRate(0.9),
+        WeightDecay(0), LearingRateDecay(10, 0.95));
     std::vector<Metric*> test_func(0);
     Metric* val = new CharRNN(200, &n1, ix_to_char);
     test_func.push_back(val);

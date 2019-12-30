@@ -6,7 +6,8 @@
 #include "gradient_descent.h"
 class Momentum : public GradientDescent {
    public:
-    Momentum(LearningRate, MomentumRate, WeightDecay = WeightDecay(0.));
+    Momentum(LearningRate, MomentumRate, WeightDecay = WeightDecay(0.),
+             LearingRateDecay = LearingRateDecay(0, 1.));
     virtual ~Momentum();
     void weight_update_cpu(const VecSharedStorage&, VecSharedStorage&,
                            int, VecSharedStorage&) override;

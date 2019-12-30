@@ -12,16 +12,21 @@ class GradientDescent {
     typedef std::vector<SharedStorage> VecSharedStorage;
     LearningRate learing_rate;
     WeightDecay weight_decay;
+    LearingRateDecay lr_decay;
     std::string _name;
 
    public:
-    explicit GradientDescent(LearningRate, WeightDecay = WeightDecay(0.));
-    GradientDescent(LearningRate, const std::string&, WeightDecay = WeightDecay(0.));
-    virtual ~GradientDescent() {};
-    virtual void weight_update_cpu(const VecSharedStorage&,
-                                   VecSharedStorage&, int, VecSharedStorage&);
-    virtual void weight_update_gpu(const VecSharedStorage&,
-                                   VecSharedStorage&, int, VecSharedStorage&);
-    virtual const std::string& name() {return _name;}
+    GradientDescent(LearningRate, WeightDecay = WeightDecay(0.),
+                             LearingRateDecay = LearingRateDecay(0, 1.0));
+    GradientDescent(LearningRate, const std::string&,
+                    WeightDecay = WeightDecay(0.),
+                    LearingRateDecay = LearingRateDecay(0, 1.0));
+    virtual ~GradientDescent(){};
+    void learning_rate_decay(int);
+    virtual void weight_update_cpu(const VecSharedStorage&, VecSharedStorage&,
+                                   int, VecSharedStorage&);
+    virtual void weight_update_gpu(const VecSharedStorage&, VecSharedStorage&,
+                                   int, VecSharedStorage&);
+    virtual const std::string& name() { return _name; }
 };
 #endif

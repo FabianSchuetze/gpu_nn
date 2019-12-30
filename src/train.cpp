@@ -271,6 +271,7 @@ void NeuralNetwork::consumer(std::shared_ptr<GradientDescent>& sgd,
             }
             begin = std::chrono::system_clock::now();
             train_loss = 0;
+            sgd->learning_rate_decay(train_args->current_epoch());
         }
     }
 }

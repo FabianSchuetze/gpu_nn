@@ -6,20 +6,12 @@
 #include "../../include/neural_network.h"
 
 Momentum::Momentum(LearningRate _learning_rate, MomentumRate _momentum,
-                   WeightDecay _weight_decay)
-    : GradientDescent(_learning_rate, "Momentum", _weight_decay),
+                   WeightDecay _weight_decay,
+                   LearingRateDecay _lr_decay)
+    : GradientDescent(_learning_rate, "Momentum", _weight_decay, _lr_decay),
       momentum(_momentum){};
 
 Momentum::~Momentum() { ; };
-
-//void Momentum::initialize_gradients(const VecSharedStorage& gradients,
-                                    //VecSharedStorage& helper) {
-    //for (SharedStorage storage : gradients) {
-        //Matrix init = Matrix::Zero(storage->get_rows(), storage->get_cols());
-        ////SharedStorage tmp = std::make_shared<Storage>(init);
-        //helper.push_back(std::make_shared<Storage>(init));
-    //}
-//}
 
 void Momentum::weight_update_cpu(const VecSharedStorage& curr,
                                  VecSharedStorage& parameters, int batch_size,
@@ -40,7 +32,6 @@ void Momentum::weight_update_cpu(const VecSharedStorage& curr,
 void Momentum::weight_update_gpu(const VecSharedStorage& curr,
                                  VecSharedStorage& parameters, int batch_size,
                                  VecSharedStorage& helper) {
-    //dtype effective_learing_rate = learing_rate / batch_size;
     dtype alpha_A = momentum.get();
     dtype alpha_B = -1 * learing_rate.get() / batch_size;
     dtype lower = -1 * learing_rate.get() * weight_decay.get();

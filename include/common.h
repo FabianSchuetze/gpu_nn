@@ -37,6 +37,21 @@ class NamedPair {
     std::pair<T, T> value_;
 };
 
+template <typename T1, typename T2, typename Paramter>
+class NamedPairDiff {
+   public:
+    explicit NamedPairDiff(T1 const v1, T2 const v2) : value_() {
+        value_ = std::make_pair(v1, v2);
+    }
+    std::pair<T1, T2>& get() { return value_; }
+    T1& first() const { return const_cast<T1&>(value_.first); }
+    T2& second()  const { return const_cast<T2&> (value_.second); }
+    std::pair<T1, T2> const& get() const { return value_; }
+
+   private:
+    std::pair<T1, T2> value_;
+};
+
 struct ShuffleParameter {};
 using Shuffle = NamedType<bool, ShuffleParameter>;
 struct MomentumRateParameter {};
@@ -47,6 +62,8 @@ struct LearningRateParameter {};
 using LearningRate = NamedType<dtype, LearningRateParameter>;
 struct WeightDecayParameter {};
 using WeightDecay = NamedType<dtype, WeightDecayParameter>;
+struct LearingRateDecayParameter {};
+using LearingRateDecay = NamedPairDiff<int, dtype, LearingRateDecayParameter>;
 struct EpochParamter {};
 using Epochs = NamedType<int, EpochParamter>;
 struct PatienceParamter {};
