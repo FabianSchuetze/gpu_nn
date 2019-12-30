@@ -30,7 +30,7 @@ void GradientDescent::weight_update_gpu(const VecSharedStorage&,
 };
 
 void GradientDescent::learning_rate_decay(int curr_epoch) {
-    if (curr_epoch >= lr_decay.first()) {
+    if ((curr_epoch >= lr_decay.first()) and (lr_decay.second() < 1) ) {
         dtype decay = lr_decay.second();
         learing_rate.get() *= decay;
         std::cout << "the learning rate has been reduced to: "

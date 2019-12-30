@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
     std::vector<Metric*> test_func(0);
     Metric* val = new CharRNN(500, &n1, ix_to_char, 0.5);
     test_func.push_back(val);
-    std::shared_ptr<GradientDescent> sgd = std::make_shared<AdaGrad>(
+    std::shared_ptr<GradientDescent> sgd = std::make_shared<RMSProp>(
         LearningRate(0.002*100), DecayRate(0.95),
         WeightDecay(0), LearingRateDecay(10, 0.95));
     n1.train(input, output, sgd, Epochs(1000), Patience(1000), BatchSize(100),
