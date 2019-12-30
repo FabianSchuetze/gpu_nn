@@ -12,6 +12,7 @@
 #include "../include/loss/cross_entropy.h"
 #include "../include/network.h"
 #include "../include/threadsafe_queue.hpp"
+#include "../include/metrics/metric.hpp"
 
 using Eigen::all;
 using std::make_shared;
@@ -82,8 +83,6 @@ void NeuralNetwork::update_weights_cpu(std::shared_ptr<GradientDescent>& opt,
             const vector<SharedStorage>& gradients = layer->return_gradients();
             VecSharedStorage& helper = helpers[i++];
             opt->weight_update_cpu(gradients, parameters, batch_size, helper);
-            //// WHEN CALCULATING GRADIENTS IN BATCHES THAT"S NOT NEEDED, MIGHT
-            // BE DANGEROUS!!!
         }
     }
 }
@@ -146,7 +145,8 @@ int NeuralNetwork::check_input_dimension(const std::vector<int>& dim) {
 void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
                           std::shared_ptr<GradientDescent>& sgd, Epochs _epoch,
                           Patience _patience, BatchSize _batch_size,
-                          DebugInfo&& debug_info, Shuffle shuffle) {
+                          vector<Metric*>& metrics, DebugInfo&& debug_info,
+                          Shuffle shuffle) {
     std::vector<int> input_dim = layers[0]->output_dimension();
     std::cout << "features, target" << features.rows() << ", " << targets.rows()
               << std::endl;
@@ -168,7 +168,7 @@ void NeuralNetwork::train(const Matrix& features, const Matrix& targets,
     if (debug_info.is_set()) debug_info.print_layers(layers);
     // train(sgd);
     std::thread produce([&]() { producer(); });
-    std::thread consume([&]() { consumer(sgd, debug_info); });
+    std::thread consume([&]() { consumer(sgd, debug_info, metrics); });
     produce.join();
     consume.join();
 }
@@ -234,7 +234,7 @@ void NeuralNetwork::display_train_loss(dtype& train_loss) {
 }
 
 void NeuralNetwork::consumer(std::shared_ptr<GradientDescent>& sgd,
-                             DebugInfo& debug) {
+                             DebugInfo& debug, vector<Metric*>& metrics) {
     vector<SharedStorage> vals = allocate_forward(train_args->batch_size());
     vector<SharedStorage> grads = allocate_backward(train_args->batch_size());
     auto begin = std::chrono::system_clock::now();
@@ -243,7 +243,6 @@ void NeuralNetwork::consumer(std::shared_ptr<GradientDescent>& sgd,
     dtype train_loss(0.);
     dtype val_loss;
     while (continue_training()) {
-        // while (train_args->current_epoch() < train_args->epochs()) {
         std::shared_ptr<std::pair<SharedStorage, SharedStorage>> out =
             train_args->data_queue.wait_and_pop();
         vals[0] = out->first;
@@ -254,16 +253,16 @@ void NeuralNetwork::consumer(std::shared_ptr<GradientDescent>& sgd,
         update_weights(sgd, train_args->optimizer(), train_args->batch_size());
         train_args->advance_total_iter();
         display_train_loss(train_loss);
-        // std::cout << "train loss: " << train_loss / train_args->total_iter()
-        //<< " at " << train_args->total_iter() << std::endl;
         if (train_args->total_iter() > train_args->max_total_iter()) {
-            std::cout << " train loss at iter " << (train_args->total_iter() / 
-                    train_args->batch_size()) 
-                      << ": " << train_loss / (train_args->total_iter()) <<
-                      std::endl;
+            std::cout << " train loss at iter "
+                      << (train_args->total_iter() / train_args->batch_size())
+                      << ": " << train_loss / (train_args->total_iter())
+                      << std::endl;
             diff = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::system_clock::now() - begin);
             val_loss = validate(diff);
+            for (Metric* metric : metrics) 
+                metric->validate(train_args->x_val(), train_args->y_val());
             if (val_loss < train_args->best_error()) {
                 train_args->reset_iter_since_update();
                 train_args->best_error() = val_loss;

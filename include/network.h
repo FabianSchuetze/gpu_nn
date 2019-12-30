@@ -14,7 +14,12 @@
 #include "loss/loss.h"
 #include "threadsafe_queue.hpp"
 #include "trainArgs.h"
+//#include "metrics/metric.hpp"
+class Metric;
 class NeuralNetwork {
+    friend class Metric;
+    friend class CharRNN;
+
    public:
     typedef std::vector<std::shared_ptr<Storage>> VecSharedStorage;
     // I NEED TO THINK ABOUT THE MOVE CONSTCUTOR
@@ -44,8 +49,8 @@ class NeuralNetwork {
                         std::vector<VecSharedStorage>&, int);
     void train(std::shared_ptr<GradientDescent>&);
     void train(const Matrix&, const Matrix&, std::shared_ptr<GradientDescent>&,
-               Epochs, Patience, BatchSize, DebugInfo&& = DebugInfo("", ""),
-               Shuffle = Shuffle(true));
+               Epochs, Patience, BatchSize, std::vector<Metric*>&,
+               DebugInfo&& = DebugInfo("", ""), Shuffle = Shuffle(true));
     dtype validate(std::chrono::milliseconds);
     void random_numbers(std::vector<int>&, std::mt19937&);
 
@@ -77,7 +82,8 @@ class NeuralNetwork {
     void backward_gpu(std::vector<SharedStorage>&,
                       const std::vector<SharedStorage>&, DebugInfo&);
     void get_new_sample(const std::vector<int>&, Matrix&, Matrix&);
-    void consumer(std::shared_ptr<GradientDescent>&, DebugInfo&);
+    void consumer(std::shared_ptr<GradientDescent>&, DebugInfo&,
+                  std::vector<Metric*>&);
     void producer();
     std::vector<int> predict_sample(int&, int);
     void get_new_predict_sample(const std::vector<int>&, const Matrix&,

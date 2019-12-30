@@ -2,6 +2,8 @@
 #include <memory>
 //#include <type_traits>
 #include "../../include/neural_network.h"
+#include "../../include/metrics/char_rnn.hpp"
+#include "../../include/metrics/metric.hpp"
 //#include "../../include/utils/normalization.hpp"
 //#include "../../third_party/cifar10/include/cifar/get_data.h"
 #include <iostream>
@@ -12,7 +14,8 @@ using std::make_shared;
 
 
 int main(int argc, char** argv) {
-    std::ifstream t = std::ifstream("ft.txt");
+    //std::ifstream t = std::ifstream("ft.txt");
+    std::ifstream t = std::ifstream("shakespeare.txt");
     std::cout << "here" << std::endl;
     std::vector<int> vec;
     char c;
@@ -43,19 +46,22 @@ int main(int argc, char** argv) {
     }
     Init* init = new Normal(0., 0.01);
     s_Layer l1 = make_shared<Input>(Features(input.cols()));
-    s_Layer rnn1 = make_shared<LSTM>(Features(100), l1, init);
-    s_Layer rnn2 = make_shared<LSTM>(Features(100), rnn1, init);
+    s_Layer rnn1 = make_shared<LSTM>(Features(256), l1, init);
+    s_Layer rnn2 = make_shared<LSTM>(Features(256), rnn1, init);
     s_Layer d1 = make_shared<Dense>(Features(input.cols()), rnn2,init);
     s_Layer s1 = make_shared<Softmax>(d1);
     std::shared_ptr<Loss> loss =
         std::make_shared<CrossEntropy>(CrossEntropy("CPU"));
     NeuralNetwork n1(s1, loss, "CPU");
-    //std::shared_ptr<GradientDescent> sgd = std::make_shared<Momentum>(
-        //LearningRate(0.01*32), MomentumRate(0.9));
-    std::shared_ptr<GradientDescent> sgd = std::make_shared<AdaGrad>(
-        LearningRate(0.01*32));
+    std::shared_ptr<GradientDescent> sgd = std::make_shared<Momentum>(
+        LearningRate(0.01*32), MomentumRate(0.9));
+    std::vector<Metric*> test_func(0);
+    Metric* val = new CharRNN(200, &n1, ix_to_char);
+    test_func.push_back(val);
+    //std::shared_ptr<GradientDescent> sgd = std::make_shared<AdaGrad>(
+        //LearningRate(0.01*32));
     n1.train(input, output, sgd, Epochs(1000), Patience(1000), BatchSize(32),
-             DebugInfo("", ""), Shuffle(false));
+            test_func, DebugInfo("", ""), Shuffle(false));
             //DebugInfo("forwards_info", "backwards_info"));
      //Matrix predictions = n1.predict(x_test, 10);
      //n_missclassified(predictions, y_test);
