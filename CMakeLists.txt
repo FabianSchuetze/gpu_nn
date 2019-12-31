@@ -25,7 +25,7 @@ set(${LIBRARY_TARGET_NAME}_SRC
     src/train.cpp
     src/gradient_descent/gradient_descent.cpp
     src/gradient_descent/sgd.cpp
-    src/gradient_descent/adagrad.cpp
+    src/gradient_descent/rmsprop.cpp
     src/trainArgs.cpp
     src/layer/convolution.cpp
     src/layer/pooling.cpp
@@ -38,6 +38,8 @@ set(${LIBRARY_TARGET_NAME}_SRC
     src/initalization/glorot.cpp
     src/initalization/lcn.cpp
     src/debug_info.cpp
+    src/metrics/char_rnn.cpp
+    src/metrics/missclassified.cpp
 )
 if (UNIX)
   add_library(${LIBRARY_TARGET_NAME} SHARED ${${LIBRARY_TARGET_NAME}_SRC})
@@ -52,34 +54,36 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fPIC -lopenblas\
     -Wall -std=c++17 -Wno-error=unused-command-line-argument")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-g -O3")
-set(${LIBRARY_TARGET_NAME}_TEST
-    #test/normalization.cpp
-    test/mnist_lenet.cpp
-    test/mnist.cpp
-    test/lstm.cpp
-    #test/inits.cpp
-    #test/im2col_layer.cpp
-    #test/convolution.cpp
-    #test/softmax.cpp
-    #test/dense.cpp
-    #test/cross_entropy.cpp
-    #test/forward.cpp
-    #test/backward.cpp
-    #test/sgd.cpp
-    #test/dropout.cpp
-    #test/pooling.cpp
-    #test/momentum.cpp
-)
 
-enable_testing()
-foreach( testsourcefile ${${LIBRARY_TARGET_NAME}_TEST} )
-    string( REPLACE "test/" "" testname ${testsourcefile})
-    #string( REPLACE ".cpp" "" testname ${testsourcefile} )
-    add_executable( ${testname} ${testsourcefile} )
-    target_link_libraries(${testname} GPU_NN ${CUDA_LIBRARIES})
-    target_link_libraries(${testname} GPU_NN cuda_obj)
-    add_test(${testname} ${testname})
-endforeach( testsourcefile ${${LIBRARY_TARGET_NAME}_TEST})
+add_subdirectory(test)
+#set(${LIBRARY_TARGET_NAME}_TEST
+    ##test/normalization.cpp
+    ##test/mnist_lenet.cpp
+    ##test/mnist.cpp
+    ##test/lstm.cpp
+    ##test/inits.cpp
+    ##test/im2col_layer.cpp
+    ##test/convolution.cpp
+    ##test/softmax.cpp
+    ##test/dense.cpp
+    ##test/cross_entropy.cpp
+    ##test/forward.cpp
+    ##test/backward.cpp
+    ##test/sgd.cpp
+    ##test/dropout.cpp
+    ##test/pooling.cpp
+    #test/momentum.cpp
+#)
+
+#enable_testing()
+#foreach( testsourcefile ${${LIBRARY_TARGET_NAME}_TEST} )
+    #string( REPLACE "test/" "" testname ${testsourcefile})
+    ##string( REPLACE ".cpp" "" testname ${testsourcefile} )
+    #add_executable( ${testname} ${testsourcefile} )
+    #target_link_libraries(${testname} GPU_NN ${CUDA_LIBRARIES})
+    #target_link_libraries(${testname} GPU_NN cuda_obj)
+    #add_test(${testname} ${testname})
+#endforeach( testsourcefile ${${LIBRARY_TARGET_NAME}_TEST})
 
 set(${LIBRARY_TARGET_NAME}_TEST
     test/cifar/cifar10.cpp

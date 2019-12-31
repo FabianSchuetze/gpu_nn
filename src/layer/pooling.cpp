@@ -99,21 +99,10 @@ void Pooling::forward_gpu(const std::shared_ptr<Storage>& in,
                           std::shared_ptr<Storage>& out, const std::string&) {
     check_masking(out);
     check_input_size(in);
-    // dtype min = -FLT_MAX;
-    // out->update_gpu_data(&min);
-    // put out to minus infiity
     pooling_gpu(in->gpu_pointer_const(), _window.get(), _stride.get(),
                 _inp.first(), _inp.second(), _channels.get(), _out.first(),
                 _out.second(), batch_size, out->gpu_pointer(),
                 mask->gpu_pointer());
-    //dump_file2(mask->cpu_pointer(), mask->get_cols() * mask->get_rows(),
-               //"mask.txt");
-    // pooling_gpu2(in->gpu_pointer_const(), _window.get(), _stride.get(),
-    //_inp.first(), _inp.second(), _channels.get(), _out.first(),
-    //_out.second(), batch_size, out->gpu_pointer(),
-    // mask2->gpu_pointer());
-    // dump_file2(mask2->cpu_pointer(), mask->get_cols() * mask->get_rows(),
-    //"dump2.txt");
 }
 
 void Pooling::forward_cpu(const std::shared_ptr<Storage>& in,
@@ -121,7 +110,8 @@ void Pooling::forward_cpu(const std::shared_ptr<Storage>& in,
     check_masking(in);
     check_input_size(in);
     dtype min = -FLT_MAX;
-    out->update_cpu_data(&min);
+    //out->return_data().fill(min);
+    out->update_cpu_data(min);
     pooling_cpu(in->cpu_pointer_const(), _window.get(), _stride.get(),
                 _inp.first(), _inp.second(), _channels.get(), _out.first(),
                 _out.second(), batch_size, out->cpu_pointer(),

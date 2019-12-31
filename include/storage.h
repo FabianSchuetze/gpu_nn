@@ -13,7 +13,7 @@ class Storage {
     ~Storage();
     const dtype* cpu_pointer_const();
     const dtype* gpu_pointer_const();
-    void update_cpu_data(const dtype*);
+    void update_cpu_data(const dtype);
     void update_cpu_data(Matrix);
     void update_gpu_data(const dtype);
     void update_gpu_data(const dtype*);

@@ -4,9 +4,8 @@
 #include "../include/common.h"
 #include "../include/neural_network.h"
 #include "../third_party/catch/catch.hpp"
-//#include "../include/layer/softmax.h"
-//#include "../include/storage.h"
 #include <sys/time.h>
+#include <iostream>
 
 double cpuSecond() {
     struct timeval tp;
@@ -59,6 +58,7 @@ TEST_CASE("Pooling gpu", "[gpu]") {
 }
 
 TEST_CASE("Pooling forward comparison", "[comparison]") {
+//int main() {
     Window window(2);
     Stride stride(2);
     ImageShape image(270, 270);
@@ -91,7 +91,7 @@ TEST_CASE("Pooling forward comparison", "[comparison]") {
     dtype maxDiff = diff.cwiseAbs().maxCoeff();
     REQUIRE(cpuEnd > gpuEnd);
     REQUIRE(maxDiff < 1e-6);
-    // std::cout << "maxdiff " << maxdiff << std::endl;
+     std::cout << "maxdiff " << maxDiff << std::endl;
     std::cout << "The CPU took " << cpuEnd << " and hte GPU took " << gpuEnd
               << std::endl;
 }
