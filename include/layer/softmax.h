@@ -26,7 +26,7 @@ class Softmax : public Layer {
     cublasHandle_t _handle;
     SharedStorage max;
     SharedStorage ones;
-    void resize_maybe(int);
+    void resize_maybe(int, int);
     void create_storage();
 };
 #endif

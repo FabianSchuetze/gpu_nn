@@ -6,8 +6,8 @@ set(${LIBRARY_TARGET_NAME}_TEST
     #lstm.cpp
     #inits.cpp
     #im2col_layer.cpp
-    #convolution.cpp
-    #softmax.cpp
+    convolution.cpp
+    softmax.cpp
     dense.cpp
     cross_entropy.cpp
     forward.cpp

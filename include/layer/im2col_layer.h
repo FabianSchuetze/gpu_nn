@@ -9,7 +9,6 @@ class Im2ColLayer : public Layer {
    public:
     explicit Im2ColLayer(const std::shared_ptr<Convolution>& convolution_layer);
     virtual ~Im2ColLayer() { };
-    //std::vector<int> output_dimension() const override;
     void forward_gpu(const SharedStorage&, SharedStorage&,
                      const std::string&) override;
     void forward_cpu(const SharedStorage&, SharedStorage&,

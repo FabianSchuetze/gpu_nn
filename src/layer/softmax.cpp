@@ -47,24 +47,22 @@ void Softmax::forward_cpu(const SharedStorage& in, SharedStorage& out,
         out_ref(all, i) = out_ref(all, i).array() / summation(i);
 }
 
-void Softmax::resize_maybe(int cols) {
-    if (cols != max->get_rows()) {
-        max = make_shared<Storage>(Matrix::Zero(cols, 1));
+void Softmax::resize_maybe(int features, int obs) {
+    if (obs != max->get_rows()) {
+        max = make_shared<Storage>(Matrix::Zero(obs, 1));
+    }
+    if (_out_dim[0] != features) {
+        _out_dim[0] = features;
+        ones = make_shared<Storage>(Matrix::Ones(features, 1));
     }
 }
 
 void Softmax::forward_gpu(const SharedStorage& in, SharedStorage& out,
                           const std::string&) {
     int rows = in->get_rows();
-    int cols = in->get_cols();
-    resize_maybe(cols);
-    // Ones could be part of the class definition
-    //SharedStorage ones = make_shared<Storage>(Matrix::Ones(rows, 1));
-    //SharedStorage tmp = make_shared<Storage>(Matrix::Zero(cols, 1));
-    //SharedStorage tmp2 = make_shared<Storage>(Matrix::Zero(cols, 1));
-    cuda_colwise_max(in->gpu_pointer_const(), rows, cols, max->gpu_pointer());
-    // I NEED TO ADD THE PROPER MAX REDUCTION ALGORITHM!
-    //my_Dgemv(_handle, CUBLAS_OP_T, in, ones, tmp, 1, 1);
+    int obs = in->get_cols();
+    resize_maybe(rows, obs);
+    cuda_colwise_max(in->gpu_pointer_const(), rows, obs, max->gpu_pointer());
     my_add_vec_to_mat_colwise(in, max, out, -1.0f);
     my_Exponential(out);
     my_Dgemv(_handle, CUBLAS_OP_T, out, ones, max, 1, 0.0f);

@@ -24,7 +24,7 @@ Convolution::Convolution(FilterShape filtershape, Pad pad, Stride stride,
       _channels(channels) {
     cublasStatus_t stat = cublasCreate(&_handle);
     CHECK_CUBLAS(stat);
-    // initialize_output_dimension();
+    initialize_output_dimension();
     initialize_weight(init);
     initialize_bias();
     initialize_grad();
@@ -66,8 +66,9 @@ void Convolution::initialize_input_dimension(
               " output don't match. Received\n";
         std::copy(shapes.begin(), shapes.end(),
                   std::ostream_iterator<int>(ss, " "));
-        ss << "in:\n" << __PRETTY_FUNCTION__ << "\ncalled from " << __FILE__
-           << " at " << __LINE__;
+        ss << "in:\n"
+           << __PRETTY_FUNCTION__ << "\ncalled from " << __FILE__ << " at "
+           << __LINE__;
         throw std::invalid_argument(ss.str());
     }
 }
@@ -95,7 +96,7 @@ void Convolution::initialize_grad() {
     Matrix tmp = Matrix(rows, cols).setZero();
     int bias_rows = _filters.get() * _out.first() * _out.second();
     Matrix bias_tmp = Matrix(bias_rows, 1).setZero();
-    Matrix assistance = Matrix::Ones(32, 1);//guess, potentially resized
+    Matrix assistance = Matrix::Ones(32, 1);  // guess, potentially resized
     gradients.push_back(std::make_shared<Storage>(tmp));
     gradients.push_back(std::make_shared<Storage>(bias_tmp));
     assistance_parameters.push_back(std::make_shared<Storage>(assistance));
@@ -110,7 +111,7 @@ void Convolution::initialize_weight(Init* init) {
     int rows = _channels.get() * _kernel.first() * _kernel.second();
     Matrix weights = Matrix::Random(rows, cols);
     weights *= glorot_scale;
-    //Matrix weights = init->weights(rows, cols);
+    // Matrix weights = init->weights(rows, cols);
     parameters.push_back(std::make_shared<Storage>(weights));
 }
 
@@ -231,10 +232,10 @@ void dump_file(const dtype* val, int size) {
 void Convolution::backward_gpu(const SharedStorage& values,
                                const SharedStorage& gradient_in,
                                SharedStorage& gradient_out) {
-    //check_size_backwards(values, gradient_out);
+    // check_size_backwards(values, gradient_out);
     resize_assistance(gradient_in);
-    //int size = gradient_in->get_cols() * gradient_in->get_rows();
-    //dump_file(gradient_in->cpu_pointer(), size);
+    // int size = gradient_in->get_cols() * gradient_in->get_rows();
+    // dump_file(gradient_in->cpu_pointer(), size);
     int M, N, K;
     backwards_weight_grad_para(M, N, K);
     const float* valp = values->gpu_pointer_const();

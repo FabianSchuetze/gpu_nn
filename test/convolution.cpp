@@ -14,6 +14,22 @@ double cpuSecond() {
     gettimeofday(&tp, NULL);
     return ((double)tp.tv_sec + (double)tp.tv_usec * 1e-6);
 }
+typedef std::shared_ptr<Layer> s_Layer;
+using std::make_shared;
+void print_Matrix_to_stdout(const Matrix& val, std::string loc) {
+    int rows(val.rows()), cols(val.cols());
+    std::ofstream myfile(loc);
+    myfile << "dimensions: rows, cols: " << rows << ", " << cols << std::endl;
+    myfile << std::fixed;
+    myfile << std::setprecision(2);
+    for (int row = 0; row < rows; ++row) {
+        myfile << val(row, 0);
+        for (int col = 1; col < cols; ++col) {
+            myfile << ", " << val(row, col);
+        }
+        myfile << std::endl;
+    }
+}
 
 TEST_CASE("NeuralNetwork cpu", "[cpu]") {
     srand((unsigned int)time(0));
@@ -28,11 +44,15 @@ TEST_CASE("NeuralNetwork cpu", "[cpu]") {
         (image.first() + 2 * pad.get() - kernel.first()) / stride.get() + 1;
     int out_width =
         (image.second() + 2 * pad.get() - kernel.second()) / stride.get() + 1;
-    Layer* inp1 =
-        new Im2ColLayer(kernel, pad, stride, image, channels);
-    Layer* l2 = new Convolution(kernel, pad, stride, filters, image, channels);
+    Init* init = new Glorot();
+    s_Layer l2 = make_shared<Convolution>(kernel, pad, stride, filters, image,
+                                          channels, init);
+    s_Layer inp1 =
+        make_shared<Im2ColLayer>(std::dynamic_pointer_cast<Convolution>(l2));
+    // l2);
     Matrix _input = Matrix::Random(
         image.first() * image.second() * channels.get(), batches);
+    print_Matrix_to_stdout(_input, "input_cpu");
     std::shared_ptr<Storage> input = std::make_shared<Storage>(_input);
     Matrix _out =
         Matrix::Zero(out_height * out_width, channels.get() * kernel.first() *
@@ -43,6 +63,7 @@ TEST_CASE("NeuralNetwork cpu", "[cpu]") {
     std::shared_ptr<Storage> conv_out = std::make_shared<Storage>(_out2);
     inp1->forward_cpu(input, output_cpu, "train");
     l2->forward_cpu(output_cpu, conv_out, "train");
+    print_Matrix_to_stdout(output_cpu->return_data_const(), "cpu");
 }
 
 TEST_CASE("NeuralNetwork gpu", "[gpu]") {
@@ -58,11 +79,14 @@ TEST_CASE("NeuralNetwork gpu", "[gpu]") {
         (image.first() + 2 * pad.get() - kernel.first()) / stride.get() + 1;
     int out_width =
         (image.second() + 2 * pad.get() - kernel.second()) / stride.get() + 1;
-    Layer* inp1 =
-        new Im2ColLayer(kernel, pad, stride, image, channels);
-    Layer* l2 = new Convolution(kernel, pad, stride, filters, image, channels);
+    Init* init = new Glorot();
+    s_Layer l2 = make_shared<Convolution>(kernel, pad, stride, filters, image,
+                                          channels, init);
+    s_Layer inp1 =
+        make_shared<Im2ColLayer>(std::dynamic_pointer_cast<Convolution>(l2));
     Matrix _input = Matrix::Random(
         image.first() * image.second() * channels.get(), batches);
+    print_Matrix_to_stdout(_input, "input_gpu");
     std::shared_ptr<Storage> input = std::make_shared<Storage>(_input);
     Matrix _out =
         Matrix::Zero(out_height * out_width, channels.get() * kernel.first() *
@@ -73,6 +97,7 @@ TEST_CASE("NeuralNetwork gpu", "[gpu]") {
     std::shared_ptr<Storage> conv_out = std::make_shared<Storage>(_out2);
     inp1->forward_gpu(input, output_cpu, "train");
     l2->forward_gpu(output_cpu, conv_out, "train");
+    print_Matrix_to_stdout(output_cpu->return_data_const(), "cpu");
 }
 
 TEST_CASE("NeuralNetwork forward equivalence", "[forward equivalance]") {
@@ -88,14 +113,15 @@ TEST_CASE("NeuralNetwork forward equivalence", "[forward equivalance]") {
         (image.first() + 2 * pad.get() - kernel.first()) / stride.get() + 1;
     int out_width =
         (image.second() + 2 * pad.get() - kernel.second()) / stride.get() + 1;
-    Layer* im2col_cpu =
-        new Im2ColLayer(kernel, pad, stride, image, channels);
-    Layer* im2col_gpu =
-        new Im2ColLayer(kernel, pad, stride, image, channels);
-    Layer* conv_cpu =
-        new Convolution(kernel, pad, stride, filters, image, channels);
-    Layer* conv_gpu =
-        new Convolution(kernel, pad, stride, filters, image, channels);
+    Init* init = new Glorot();
+    s_Layer conv_cpu = make_shared<Convolution>(kernel, pad, stride, filters,
+                                                image, channels, init);
+    s_Layer im2col_cpu = make_shared<Im2ColLayer>(
+        std::dynamic_pointer_cast<Convolution>(conv_cpu));
+    s_Layer conv_gpu = make_shared<Convolution>(kernel, pad, stride, filters,
+                                                image, channels, init);
+    s_Layer im2col_gpu = make_shared<Im2ColLayer>(
+        std::dynamic_pointer_cast<Convolution>(conv_gpu));
     Matrix _input = Matrix::Random(
         image.first() * image.second() * channels.get(), batches);
     std::shared_ptr<Storage> input = std::make_shared<Storage>(_input);
@@ -120,11 +146,12 @@ TEST_CASE("NeuralNetwork forward equivalence", "[forward equivalance]") {
     cpuStart = cpuSecond();
     conv_cpu->forward_cpu(output_cpu, conv_out_cpu, "train");
     double cpuEnd = cpuSecond() - cpuStart;
-    delete conv_cpu;
-    delete im2col_cpu;
+    // delete conv_cpu;
+    // delete conv_cpu;
+    // delete im2col_cpu;
     // GPU
     im2col_gpu->forward_gpu(input, output_gpu, "train");
-    delete im2col_gpu;
+    // delete im2col_gpu;
     double gpuStart = cpuSecond();
     conv_gpu->forward_gpu(output_gpu, conv_out_gpu, "train");
     double gpuEnd = cpuSecond() - gpuStart;
@@ -150,9 +177,11 @@ TEST_CASE("NeuralNetwork backward gpu", "[backward gpu]") {
         (image.first() + 2 * pad.get() - kernel.first()) / stride.get() + 1;
     int out_width =
         (image.second() + 2 * pad.get() - kernel.second()) / stride.get() + 1;
-    Layer* inp1 =
-        new Im2ColLayer(kernel, pad, stride, image, channels);
-    Layer* l2 = new Convolution(kernel, pad, stride, filters, image, channels);
+    Init* init = new Glorot();
+    s_Layer l2 = make_shared<Convolution>(kernel, pad, stride, filters, image,
+                                          channels, init);
+    s_Layer inp1 =
+        make_shared<Im2ColLayer>(std::dynamic_pointer_cast<Convolution>(l2));
     Matrix _input = Matrix::Random(
         image.first() * image.second() * channels.get(), batches);
     std::shared_ptr<Storage> input = std::make_shared<Storage>(_input);
@@ -173,7 +202,7 @@ TEST_CASE("NeuralNetwork backward gpu", "[backward gpu]") {
     inp1->forward_gpu(input, output_cpu, "train");
     l2->forward_gpu(output_cpu, conv_out, "train");
     l2->backward_gpu(output_cpu, grad_in, grad_out);
-    //std::cout << grad_out->return_data_const() << std::endl;
+    // std::cout << grad_out->return_data_const() << std::endl;
 }
 
 TEST_CASE("NeuralNetwork backward cpu", "[backward cpu]") {
@@ -189,9 +218,11 @@ TEST_CASE("NeuralNetwork backward cpu", "[backward cpu]") {
         (image.first() + 2 * pad.get() - kernel.first()) / stride.get() + 1;
     int out_width =
         (image.second() + 2 * pad.get() - kernel.second()) / stride.get() + 1;
-    Layer* inp1 =
-        new Im2ColLayer(kernel, pad, stride, image, channels);
-    Layer* l2 = new Convolution(kernel, pad, stride, filters, image, channels);
+    Init* init = new Glorot();
+    s_Layer l2 = make_shared<Convolution>(kernel, pad, stride, filters, image,
+                                          channels, init);
+    s_Layer inp1 =
+        make_shared<Im2ColLayer>(std::dynamic_pointer_cast<Convolution>(l2));
     Matrix _input = Matrix::Random(
         image.first() * image.second() * channels.get(), batches);
     std::shared_ptr<Storage> input = std::make_shared<Storage>(_input);
@@ -212,7 +243,7 @@ TEST_CASE("NeuralNetwork backward cpu", "[backward cpu]") {
     inp1->forward_cpu(input, output_cpu, "train");
     l2->forward_cpu(output_cpu, conv_out, "train");
     l2->backward_cpu(output_cpu, grad_in, grad_out);
-    //std::cout << "cpu\n" << grad_out->return_data_const() << std::endl;
+    // std::cout << "cpu\n" << grad_out->return_data_const() << std::endl;
 }
 
 TEST_CASE("NeuralNetwork backward equivalence", "[backward equivalance]") {
@@ -229,14 +260,15 @@ TEST_CASE("NeuralNetwork backward equivalence", "[backward equivalance]") {
         (image.first() + 2 * pad.get() - kernel.first()) / stride.get() + 1;
     int out_width =
         (image.second() + 2 * pad.get() - kernel.second()) / stride.get() + 1;
-    Layer* im2col_cpu =
-        new Im2ColLayer(kernel, pad, stride, image, channels);
-    Layer* im2col_gpu =
-        new Im2ColLayer(kernel, pad, stride, image, channels);
-    Layer* conv_cpu =
-        new Convolution(kernel, pad, stride, filters, image, channels);
-    Layer* conv_gpu =
-        new Convolution(kernel, pad, stride, filters, image, channels);
+    Init* init = new Glorot();
+    s_Layer conv_cpu = make_shared<Convolution>(kernel, pad, stride, filters,
+                                                image, channels, init);
+    s_Layer im2col_cpu = make_shared<Im2ColLayer>(
+        std::dynamic_pointer_cast<Convolution>(conv_cpu));
+    s_Layer conv_gpu = make_shared<Convolution>(kernel, pad, stride, filters,
+                                                image, channels, init);
+    s_Layer im2col_gpu = make_shared<Im2ColLayer>(
+        std::dynamic_pointer_cast<Convolution>(conv_gpu));
     Matrix _input = Matrix::Random(
         image.first() * image.second() * channels.get(), batches);
     Matrix _grad_out_cpu =

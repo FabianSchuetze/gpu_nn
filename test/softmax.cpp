@@ -5,6 +5,7 @@
 #include "../include/layer/softmax.h"
 #include "../include/storage.h"
 #include <sys/time.h>
+#include <iostream>
 
 double cpuSecond() {
     struct timeval tp;
@@ -12,6 +13,7 @@ double cpuSecond() {
     return ((double)tp.tv_sec + (double)tp.tv_usec * 1e-6);
 }
 TEST_CASE("NeuralNetwork gpu", "[gpu]") {
+//int main() {
     srand((unsigned int) time(0));
     Layer* inp1 = new Softmax;
     //Softmax s1;
@@ -21,6 +23,7 @@ TEST_CASE("NeuralNetwork gpu", "[gpu]") {
     std::shared_ptr<Storage> storage_in = std::make_shared<Storage>(in);
     std::shared_ptr<Storage> storage_out = std::make_shared<Storage>(out);
     inp1->forward_gpu(storage_in, storage_out, "train");
+    std::cout << storage_out->return_data_const() << std::endl;
     Vector sum = storage_out->return_data_const().colwise().sum();
     REQUIRE(sum(0) == Approx(1.0));
     REQUIRE(sum.sum() == Approx(5));
