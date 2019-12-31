@@ -72,23 +72,14 @@ __global__ void add_vec_to_mat_colwise_cu(int rows, int cols, const dtype* in,
     }
 }
 
-//__global__ void add_vec_to_mat_colwise_cu(int rows, int cols, const dtype* in,
-// const dtype* vector, dtype* out,
-// dtype alpha) {
-//// get the current element index for the thread
-// unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
-// if (idx < rows * cols) {
-// out[idx] = in[idx] + alpha * vector[idx / rows];
+//__global__ void cuda_exponential(int rows, int cols, double* in) {
+    //unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    //if (idx < rows * cols) {
+        //in[idx] = exp(in[idx]);
+    //}
 //}
-//}
-__global__ void cuda_exponential(int rows, int cols, double* in) {
-    unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    if (idx < rows * cols) {
-        in[idx] = exp(in[idx]);
-    }
-}
 
-__global__ void cuda_exponential(int rows, int cols, float* in) {
+__global__ void cuda_exponential(int rows, int cols, dtype* in) {
     unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < rows * cols) {
         in[idx] = exp(in[idx]);
@@ -215,8 +206,8 @@ __global__ void cuda_matrix_addition_inplace(int rows, int cols,
                                              const float alpha) {
     unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
-    unsigned int linear = row + col * rows;
     if ((row < rows) && (col < cols)) {
+        unsigned int linear = row + col * rows;
         d_B[linear] += alpha * d_A[linear];
     }
 }
@@ -226,8 +217,8 @@ __global__ void cuda_matrix_addition(int rows, int cols, const float* d_A,
                                      const float alpha_A, const float alpha_B) {
     unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int col = blockIdx.y * blockDim.y + threadIdx.y;
-    unsigned int linear = row + col * rows;
     if ((row < rows) && (col < cols)) {
+        unsigned int linear = row + col * rows;
         float tmp = alpha_B * d_B[linear] + alpha_A * d_A[linear];
         d_C[linear] = tmp;
     }
@@ -555,18 +546,10 @@ void add_vec_to_mat_colwise(int rows, int cols, const dtype* in,
                                                alpha);
     MY_CHECK(cudaPeekAtLastError());
     // MY_CHECK(cudaDeviceSynchronize());
-    // cudaDeviceSynronize();
 }
 
-void exponential(int rows, int cols, double* in) {
-    dim3 block(256);
-    dim3 grid((rows * cols + block.x - 1) / block.x);
-    cuda_exponential<<<grid, block>>>(rows, cols, in);
-    MY_CHECK(cudaPeekAtLastError());
-    MY_CHECK(cudaDeviceSynchronize());
-}
 
-void exponential(int rows, int cols, float* in) {
+void exponential(int rows, int cols, dtype* in) {
     dim3 block(256);
     dim3 grid((rows * cols + block.x - 1) / block.x);
     cuda_exponential<<<grid, block>>>(rows, cols, in);
@@ -677,8 +660,8 @@ void cross_entropy_gradient(int rows, int cols, const float* prediction,
     // MY_CHECK(cudaDeviceSynchronize());
 }
 
-void matrix_addition(int rows, int cols, const float* A, const float* B,
-                     float* C, const float alpha_A, const float alpha_B) {
+void matrix_addition(int rows, int cols, const dtype* A, const dtype* B,
+                     dtype* C, const dtype alpha_A, const dtype alpha_B) {
     dim3 block(16, 16);
     dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     cuda_matrix_addition<<<grid, block>>>(rows, cols, A, B, C, alpha_A,
@@ -693,7 +676,6 @@ void matrix_addition_inplace(int rows, int cols, const float* gradient,
     dim3 grid((rows + block.x - 1) / block.x, (cols + block.y - 1) / block.y);
     cuda_matrix_addition_inplace<<<grid, block>>>(rows, cols, gradient,
                                                   parameters, alpha);
-    // cudaDeviceSynchronize();
     MY_CHECK(cudaPeekAtLastError());
     // MY_CHECK(cudaDeviceSynchronize());
 }

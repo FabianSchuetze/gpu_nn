@@ -14,7 +14,6 @@ StochasticGradientDescent::~StochasticGradientDescent() { ; };
 void StochasticGradientDescent::weight_update_cpu(
     const VecSharedStorage& gradients, VecSharedStorage& parameters,
     int batch_size, VecSharedStorage&) {
-    // dtype effective_learing_rate = learing_rate.get() / batch_size;
     for (size_t i = 0; i < parameters.size(); ++i) {
         const Matrix& curr = parameters[i]->return_data_const();
         Matrix new_weight = curr -
@@ -28,12 +27,11 @@ void StochasticGradientDescent::weight_update_cpu(
 void StochasticGradientDescent::weight_update_gpu(
     const VecSharedStorage& gradients, VecSharedStorage& parameters,
     int batch_size, VecSharedStorage&) {
-    // dtype effective_learing_rate = learing_rate.get() / batch_size;
     for (size_t i = 0; i < parameters.size(); ++i) {
         SharedStorage& para = parameters[i];
         const SharedStorage& grad = gradients[i];
+        dtype alpha_A = 1 - 1 * learing_rate.get() * weight_decay.get();
         dtype alpha_B = -1 * learing_rate.get() / batch_size;
-        dtype alpha_A = -1 * learing_rate.get() * weight_decay.get();
         my_Matrix_addition(para, grad, para, alpha_A, alpha_B);
     }
 }

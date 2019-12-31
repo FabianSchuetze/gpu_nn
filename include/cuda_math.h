@@ -21,8 +21,8 @@ void my_cuda_Dgemv(cublasHandle_t, cublasOperation_t, int M, int N,
 void add_vec_to_mat_colwise(int, int, dtype*, const dtype*, dtype);
 void add_vec_to_mat_colwise(int, int, const dtype*, const dtype*, dtype*,
                             dtype);
-void exponential(int, int, double*);
-void exponential(int, int, float*);
+//void exponential(int, int, double*);
+void exponential(int, int, dtype*);
 void divide_colwise(int, int, double*, const double*);
 void divide_colwise(int, int, float*, const float*);
 void multiply_elementwise(int, int, const dtype*, const dtype*, dtype*);
@@ -38,8 +38,8 @@ void cross_entropy_gradient(int, int, const double*, const double*, double*);
 void cross_entropy_gradient(int, int, const float*, const float*, float*);
 void matrix_addition_inplace(int, int, const float*, float*, const float);
 void matrix_addition_inplace(int, int, const double*, double*, const float);
-void matrix_addition(int, int, const float*, const float*, float*, const float,
-                     const float);
+void matrix_addition(int, int, const dtype*, const dtype*, dtype*, const dtype,
+                     const dtype);
 void cuda_init(int, int, curandState*, int);
 void cuda_masking(int, int, float, float*);
 void cuda_masking(int, int, double, double*);

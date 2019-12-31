@@ -8,12 +8,12 @@ set(${LIBRARY_TARGET_NAME}_TEST
     #test/im2col_layer.cpp
     #test/convolution.cpp
     #test/softmax.cpp
-    #test/dense.cpp
+    #dense.cpp
     #test/cross_entropy.cpp
     #test/forward.cpp
     #test/backward.cpp
-    #test/sgd.cpp
-    #test/dropout.cpp
+    sgd.cpp
+    dropout.cpp
     pooling.cpp
     momentum.cpp
 )

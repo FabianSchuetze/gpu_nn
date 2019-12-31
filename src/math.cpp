@@ -247,15 +247,10 @@ void col2im_cpu(const dtype* data_col, int channels, int rows, int cols,
         }
     }
 }
-// I NEED TO RESET THE DATA TO -INF!!!
+
 void pooling_cpu(const float* src, int window, int stride, int rows, int cols,
-                 int channels, int n_batches, int out_height, int out_width,
+                 int channels, int out_height, int out_width, int n_batches,
                  float* dest, float* mask) {
-    //if (((rows - window) % stride) or ((cols - window) % stride)) {
-        //throw std::invalid_argument("Doesnt match");
-    //}
-    //int out_height = (rows - window) / stride + 1;
-    //int out_width = (cols - window) / stride + 1;
     for (int n = 0; n < n_batches; ++n) {
         for (int c = 0; c < channels; ++c) {
             for (int ph = 0; ph < out_height; ++ph) {
@@ -264,8 +259,6 @@ void pooling_cpu(const float* src, int window, int stride, int rows, int cols,
                     int wstart = pw * stride;
                     int hend = std::min(hstart + window, rows);
                     int wend = std::min(wstart + window, cols);
-                    // int hend = hstart + window;
-                    // int wend = wstart + window;
                     hstart = std::max(hstart, 0);
                     wstart = std::max(wstart, 0);
                     const int pool_index = ph * out_width + pw;
