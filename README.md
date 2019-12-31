@@ -114,3 +114,11 @@ To Do
    [Hogwild](https://papers.nips.cc/paper/4390-hogwild-a-lock-free-approach-to-parallelizing-stochastic-gradient-descent) (which is often used in models with spares inputs such as word embeddings) or [Distbelief](https://static.googleusercontent.com/media/research.google.com/en//archive/large_deep_networks_nips2012.pdf)
 3. At the moment, the code can only backpropagate from one head, a more
    flexible implementation would be nice.
+
+Tests
+-----
+All the layers and optimizers have both GPU and CPU functions. The equivalence
+of the results is checked with dedicated tests. Similary, I test that the GPU
+implementation is never slower than the CPU version.
+
+

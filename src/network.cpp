@@ -231,8 +231,9 @@ void NeuralNetwork::predict(const Matrix& input, SharedStorage& SharedTarget,
     consume.join();
 }
 
-Matrix NeuralNetwork::predict(const Matrix& input, int output_size, DebugInfo&&
+Matrix NeuralNetwork::predict(const Matrix& input, DebugInfo&&
                               debug) {
+    int output_size = layers.back()->output_dimension()[0];
     Matrix output = Matrix::Zero(output_size, input.rows());
     SharedStorage SharedTarget = std::make_shared<Storage>(output);
     predict(input, SharedTarget, debug);

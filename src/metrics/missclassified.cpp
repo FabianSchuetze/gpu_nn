@@ -5,8 +5,8 @@ Missclassified::Missclassified(NeuralNetwork* nn)
     : Metric("Missclassified", nn) { };
 
 void Missclassified::validate(const Matrix& features, const Matrix& targets) {
-    int out_size = targets.cols();
-    Matrix res = _nn->predict(features, out_size);
+    //int out_size = targets.cols();
+    Matrix res = _nn->predict(features);
     n_missclassified(res, targets);
 }
 

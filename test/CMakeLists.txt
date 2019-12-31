@@ -1,17 +1,17 @@
 
 set(${LIBRARY_TARGET_NAME}_TEST
-    #test/normalization.cpp
-    #test/mnist_lenet.cpp
-    #test/mnist.cpp
-    #test/lstm.cpp
-    #test/inits.cpp
-    #test/im2col_layer.cpp
-    #test/convolution.cpp
-    #test/softmax.cpp
-    #dense.cpp
-    #test/cross_entropy.cpp
-    #test/forward.cpp
-    #test/backward.cpp
+    #normalization.cpp
+    #mnist_lenet.cpp
+    #mnist.cpp
+    #lstm.cpp
+    #inits.cpp
+    #im2col_layer.cpp
+    #convolution.cpp
+    #softmax.cpp
+    dense.cpp
+    cross_entropy.cpp
+    forward.cpp
+    backward.cpp
     sgd.cpp
     dropout.cpp
     pooling.cpp

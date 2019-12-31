@@ -67,9 +67,10 @@ void Storage::update_gpu_data(const dtype* src,
     recent_head = "GPU";
 }
 
-void Storage::update_cpu_data(const dtype* src) {
-    memcpy(_data.data(), src, _data.size() * sizeof(dtype));
-    MY_CHECK(cudaDeviceSynchronize());
+void Storage::update_cpu_data(const dtype src) {
+    _data.fill(src);
+    //memcpy(_data.data(), src, _data.size() * sizeof(dtype));
+    //MY_CHECK(cudaDeviceSynchronize());
     recent_head = "CPU";
 }
 

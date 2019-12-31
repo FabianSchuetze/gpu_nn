@@ -30,10 +30,9 @@ class NeuralNetwork {
     NeuralNetwork(NeuralNetwork&&) = delete;
     NeuralNetwork& operator=(const NeuralNetwork&) = delete;
     NeuralNetwork& operator=(NeuralNetwork&&) = delete;
-    // What predict function do I need?
     //@brief Returns a prediction from the neural network, calling this
     // function allocates shared storage;
-    Matrix predict(const Matrix&, int, DebugInfo&& = DebugInfo("", ""));
+    Matrix predict(const Matrix&, DebugInfo&& = DebugInfo("", ""));
     //@brief Returns a prediction from the neural network, calling this
     // function presumes that the SharedStorage is appropriate for all the
     // layers

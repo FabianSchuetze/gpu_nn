@@ -110,7 +110,6 @@ void Pooling::forward_cpu(const std::shared_ptr<Storage>& in,
     check_masking(in);
     check_input_size(in);
     dtype min = -FLT_MAX;
-    //out->return_data().fill(min);
     out->update_cpu_data(min);
     pooling_cpu(in->cpu_pointer_const(), _window.get(), _stride.get(),
                 _inp.first(), _inp.second(), _channels.get(), _out.first(),
@@ -126,8 +125,6 @@ void Pooling::backward_gpu(const SharedStorage&,
                          _stride.get(), _inp.first(), _inp.second(),
                          _channels.get(), _out.first(), _out.second(),
                          batch_size, gradient_out->gpu_pointer());
-    //int size = gradient_out->get_rows() * gradient_out->get_cols();
-    //dump_file2(gradient_out->cpu_pointer(), size, "grad_out.txt");
 };
 
 void Pooling::backward_cpu(const SharedStorage&,
