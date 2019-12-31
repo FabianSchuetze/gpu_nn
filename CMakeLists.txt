@@ -56,59 +56,9 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-g -O3")
 
 add_subdirectory(test)
-#set(${LIBRARY_TARGET_NAME}_TEST
-    ##test/normalization.cpp
-    ##test/mnist_lenet.cpp
-    ##test/mnist.cpp
-    ##test/lstm.cpp
-    ##test/inits.cpp
-    ##test/im2col_layer.cpp
-    ##test/convolution.cpp
-    ##test/softmax.cpp
-    ##test/dense.cpp
-    ##test/cross_entropy.cpp
-    ##test/forward.cpp
-    ##test/backward.cpp
-    ##test/sgd.cpp
-    ##test/dropout.cpp
-    ##test/pooling.cpp
-    #test/momentum.cpp
-#)
+add_subdirectory(examples/cifar)
+add_subdirectory(examples/rnn)
 
-#enable_testing()
-#foreach( testsourcefile ${${LIBRARY_TARGET_NAME}_TEST} )
-    #string( REPLACE "test/" "" testname ${testsourcefile})
-    ##string( REPLACE ".cpp" "" testname ${testsourcefile} )
-    #add_executable( ${testname} ${testsourcefile} )
-    #target_link_libraries(${testname} GPU_NN ${CUDA_LIBRARIES})
-    #target_link_libraries(${testname} GPU_NN cuda_obj)
-    #add_test(${testname} ${testname})
-#endforeach( testsourcefile ${${LIBRARY_TARGET_NAME}_TEST})
-
-set(${LIBRARY_TARGET_NAME}_TEST
-    test/cifar/cifar10.cpp
-    test/cifar/create_data.cpp
-)
-foreach( testsourcefile ${${LIBRARY_TARGET_NAME}_TEST} )
-    string( REPLACE "test/cifar/" "" testname ${testsourcefile})
-    #string( REPLACE ".cpp" "" testname ${testsourcefile} )
-    add_executable( ${testname} ${testsourcefile} )
-    target_link_libraries(${testname} GPU_NN ${CUDA_LIBRARIES})
-    target_link_libraries(${testname} GPU_NN cuda_obj)
-    add_test(${testname} ${testname})
-endforeach( testsourcefile ${${LIBRARY_TARGET_NAME}_TEST})
-
-set(${LIBRARY_TARGET_NAME}_TEST2
-    test/rnn/rnn.cpp
-)
-foreach( testsourcefile ${${LIBRARY_TARGET_NAME}_TEST2} )
-    string( REPLACE "test/rnn/" "" testname ${testsourcefile})
-    #string( REPLACE ".cpp" "" testname ${testsourcefile} )
-    add_executable( ${testname} ${testsourcefile} )
-    target_link_libraries(${testname} GPU_NN ${CUDA_LIBRARIES})
-    target_link_libraries(${testname} GPU_NN cuda_obj)
-    add_test(${testname} ${testname})
-endforeach( testsourcefile ${${LIBRARY_TARGET_NAME}_TEST2})
 #add_subdirectory(third_party/pybind11)
 #pybind11_add_module(NeuralNetwork python/bindings.cpp)
 
