@@ -3,7 +3,7 @@ sudo: true
 
 matrix:
   include:
-    -name: CUDA 9
+    - name: CUDA 9
     env:
         -CUDA = 9.1.85
         -CUDA_SHORT = 9.1
