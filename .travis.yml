@@ -14,7 +14,7 @@ matrix:
         - CC='gcc-7'
 
 before_install:
-  - sudo add-apt-repository ppa:graphics-drivers/ppa
+  - sudo add-apt-repository -y ppa:graphics-drivers/ppa
   - sudo apt update
   - sudo ubuntu-drivers autoinstall
   - sudo reboot now
