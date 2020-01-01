@@ -4,10 +4,11 @@ sudo: true
 matrix:
   include:
     - name: CUDA 9
-    env:
-        -CUDA = 9.1.85
-        -CUDA_SHORT = 9.1
-        -UBUNTU_VERSION=ubuntu1804
+      env:
+      - CUDA=9.1.85
+      - CUDA_SHORT=9.1
+      - UBUNTU_VERSION=ubuntu1804
+      dist: xenial
     - os: linux
       compiler: gcc
       addons: &gcc7
