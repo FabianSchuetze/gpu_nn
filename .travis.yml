@@ -4,7 +4,9 @@ sudo: true
 matrix:
   include:
     - os: linux
-      compiler: gcc
+      compiler: 
+        - gcc
+        - clang
       addons: &gcc7
         apt:
           sources: ['ubuntu-toolchain-r-test']
@@ -27,5 +29,5 @@ install:
 script:
   - mkdir build
   - cd build
-  - cmake -DCMAKE_BUILD_TYPE=Release ..
+  - cmake -D CMAKE_C_COMPILER=gcc CMAKE_CXX_COMPILER=clang++
   - make
