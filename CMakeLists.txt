@@ -49,7 +49,7 @@ endif(UNIX)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fPIC -lopenblas\
     -Wunused -Wunused-member-function -Wunused-function\
     -Wunneeded-member-function\
-    -lcudnn -lcurand -L /usr/lib/cuda/lib64 -lcudart  -lcublas\
+    -lcurand -L /usr/lib/cuda/lib64 -lcudart  -lcublas\
     -L /usr/lib/x86_64-linux-gnu -lblas\
     -Wall -std=c++17 -Wno-error=unused-command-line-argument")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
