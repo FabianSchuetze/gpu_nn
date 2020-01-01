@@ -1,0 +1,3 @@
+/home/fabian/Documents/work/mnist/mnist/example/CMakeFiles/rebuild_cache.dir
+/home/fabian/Documents/work/mnist/mnist/example/CMakeFiles/mnist_example.dir
+/home/fabian/Documents/work/mnist/mnist/example/CMakeFiles/edit_cache.dir

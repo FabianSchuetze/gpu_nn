@@ -1,0 +1,32 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/fabian/Documents/work/mnist/mnist/example/main.cpp
+iostream
+-
+mnist/mnist_reader.hpp
+/home/fabian/Documents/work/mnist/mnist/example/mnist/mnist_reader.hpp
+
+/home/fabian/Documents/work/mnist/mnist/include/mnist/mnist_reader.hpp
+fstream
+-
+iostream
+-
+string
+-
+vector
+-
+cstdint
+-
+memory
+-
+mnist_reader_common.hpp
+/home/fabian/Documents/work/mnist/mnist/include/mnist/mnist_reader_common.hpp
+
+/home/fabian/Documents/work/mnist/mnist/include/mnist/mnist_reader_common.hpp
+
