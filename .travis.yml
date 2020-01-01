@@ -18,7 +18,6 @@ before_install:
   - sudo apt update
   - sudo apt-get install ubuntu-drivers-common
   #- sudo ubuntu-drivers auto-install
-  - sudo reboot now
   - sudo apt install nvidia-cuda-toolkit gcc-6
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 
