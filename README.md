@@ -19,7 +19,10 @@ Strenghts
 
 Examples
 --------
-####A deep neural network for MNIST
+The repo contains examples for deep neural networks, CNNs and RNNs. The
+examples can be found in the folder `examples`
+
+#### A deep neural network for MNIST
 ----------------------------------------
 The standard MNIST example is developed in [test/mnist.cpp](test/mnist.cpp). Running this file, prints the following information to `stdout`
 ```shell
@@ -120,5 +123,6 @@ Tests
 All the layers and optimizers have both GPU and CPU functions. The equivalence
 of the results is checked with dedicated tests. Similary, I test that the GPU
 implementation is never slower than the CPU version.
+
 
 

@@ -1,9 +1,9 @@
 #include <stdlib.h>
 //#include <type_traits>
 #include <memory>
-#include "../include/neural_network.h"
-#include "../include/metrics/missclassified.hpp"
-#include "../third_party/mnist/include/mnist/get_data.h"
+#include "../../include/neural_network.h"
+#include "../../include/metrics/missclassified.hpp"
+#include "../../third_party/mnist/include/mnist/get_data.h"
 
 typedef std::shared_ptr<Layer> s_Layer;
 using std::make_shared;

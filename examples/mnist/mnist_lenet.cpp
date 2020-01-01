@@ -1,7 +1,8 @@
 #include <stdlib.h>
 //#include <type_traits>
-#include "../include/neural_network.h"
-#include "../third_party/mnist/include/mnist/get_data.h"
+#include "../../include/neural_network.h"
+#include "../../third_party/mnist/include/mnist/get_data.h"
+#include "../../include/metrics/missclassified.hpp"
 
 typedef std::shared_ptr<Layer> s_Layer;
 using std::make_shared;
@@ -26,6 +27,9 @@ int main(int argc, char** argv) {
     std::shared_ptr<GradientDescent> sgd =
         std::make_shared<Momentum>(LearningRate(0.001), MomentumRate(0.90),
                                     WeightDecay(0.004));
+    std::vector<Metric*> metrics;
+    Metric* val = new Missclassified(&n1);
+    metrics.push_back(val);
     n1.train(data.get_x_train(), data.get_y_train(), sgd, Epochs(30),
-             Patience(10), BatchSize(32));
+             Patience(10), BatchSize(32), metrics);
 }

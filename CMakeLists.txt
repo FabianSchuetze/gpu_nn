@@ -58,6 +58,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-g -O3")
 add_subdirectory(test)
 add_subdirectory(examples/cifar)
 add_subdirectory(examples/rnn)
+add_subdirectory(examples/mnist)
 
 #add_subdirectory(third_party/pybind11)
 #pybind11_add_module(NeuralNetwork python/bindings.cpp)

@@ -103,15 +103,16 @@ void Convolution::initialize_grad() {
 }
 
 void Convolution::initialize_weight(Init* init) {
+    // this is the same init as keras uses for conv, overwrite init, not good
     int receptive_field = _kernel.first() * _kernel.second();
     int fan_in = receptive_field * _channels.get();
     int fan_out = receptive_field * _filters.get();
     dtype glorot_scale = std::sqrt(6.) / std::sqrt(fan_in + fan_out);
     int cols = _filters.get();
     int rows = _channels.get() * _kernel.first() * _kernel.second();
+    srand((unsigned int)0);
     Matrix weights = Matrix::Random(rows, cols);
     weights *= glorot_scale;
-    // Matrix weights = init->weights(rows, cols);
     parameters.push_back(std::make_shared<Storage>(weights));
 }
 

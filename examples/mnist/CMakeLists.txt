@@ -1,22 +1,9 @@
-
 set(${LIBRARY_TARGET_NAME}_TEST
-    #normalization.cpp
-    lstm.cpp
-    inits.cpp
-    convolution.cpp
-    softmax.cpp
-    dense.cpp
-    cross_entropy.cpp
-    forward.cpp
-    backward.cpp
-    sgd.cpp
-    dropout.cpp
-    pooling.cpp
-    momentum.cpp
+    mnist_lenet.cpp
+    mnist.cpp
 )
-
-enable_testing()
 foreach( testsourcefile ${${LIBRARY_TARGET_NAME}_TEST} )
+    #string( REPLACE "test/cifar/" "" testname ${testsourcefile})
     string( REPLACE ".cpp" "" testname ${testsourcefile} )
     add_executable( ${testname} ${testsourcefile} )
     target_link_libraries(${testname} GPU_NN ${CUDA_LIBRARIES})

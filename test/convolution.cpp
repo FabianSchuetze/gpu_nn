@@ -52,7 +52,6 @@ TEST_CASE("NeuralNetwork cpu", "[cpu]") {
     // l2);
     Matrix _input = Matrix::Random(
         image.first() * image.second() * channels.get(), batches);
-    print_Matrix_to_stdout(_input, "input_cpu");
     std::shared_ptr<Storage> input = std::make_shared<Storage>(_input);
     Matrix _out =
         Matrix::Zero(out_height * out_width, channels.get() * kernel.first() *
@@ -63,7 +62,6 @@ TEST_CASE("NeuralNetwork cpu", "[cpu]") {
     std::shared_ptr<Storage> conv_out = std::make_shared<Storage>(_out2);
     inp1->forward_cpu(input, output_cpu, "train");
     l2->forward_cpu(output_cpu, conv_out, "train");
-    print_Matrix_to_stdout(output_cpu->return_data_const(), "cpu");
 }
 
 TEST_CASE("NeuralNetwork gpu", "[gpu]") {
@@ -86,7 +84,6 @@ TEST_CASE("NeuralNetwork gpu", "[gpu]") {
         make_shared<Im2ColLayer>(std::dynamic_pointer_cast<Convolution>(l2));
     Matrix _input = Matrix::Random(
         image.first() * image.second() * channels.get(), batches);
-    print_Matrix_to_stdout(_input, "input_gpu");
     std::shared_ptr<Storage> input = std::make_shared<Storage>(_input);
     Matrix _out =
         Matrix::Zero(out_height * out_width, channels.get() * kernel.first() *
@@ -97,7 +94,6 @@ TEST_CASE("NeuralNetwork gpu", "[gpu]") {
     std::shared_ptr<Storage> conv_out = std::make_shared<Storage>(_out2);
     inp1->forward_gpu(input, output_cpu, "train");
     l2->forward_gpu(output_cpu, conv_out, "train");
-    print_Matrix_to_stdout(output_cpu->return_data_const(), "cpu");
 }
 
 TEST_CASE("NeuralNetwork forward equivalence", "[forward equivalance]") {
@@ -118,6 +114,7 @@ TEST_CASE("NeuralNetwork forward equivalence", "[forward equivalance]") {
                                                 image, channels, init);
     s_Layer im2col_cpu = make_shared<Im2ColLayer>(
         std::dynamic_pointer_cast<Convolution>(conv_cpu));
+    //Init* init_gpu = new Glorot();
     s_Layer conv_gpu = make_shared<Convolution>(kernel, pad, stride, filters,
                                                 image, channels, init);
     s_Layer im2col_gpu = make_shared<Im2ColLayer>(
