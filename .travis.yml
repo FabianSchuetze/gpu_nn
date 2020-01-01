@@ -29,5 +29,5 @@ install:
 script:
   - mkdir build
   - cd build
-  - cmake -D CMAKE_C_COMPILER=gcc -D CMAKE_CXX_COMPILER=clang++
+  - cmake -D CMAKE_C_COMPILER=gcc -D CMAKE_CXX_COMPILER=clang++ ..
   - make
